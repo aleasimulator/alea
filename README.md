@@ -9,8 +9,7 @@ The sources are stored in the Netbeans IDE project format. You can download Netb
 For the proper function you have to include simjava.jar (re-modified in Jan 2009) which is [here](http://www.fi.muni.cz/~xklusac/alea/download/simjava.jar).
 You will also need gridsim.jar which you can download [here](http://www.gridbus.org/gridsim/).
 
-#####Further information
-Find on http://www.fi.muni.cz/~xklusac/alea/index.html.
+Further information find on http://www.fi.muni.cz/~xklusac/alea/index.html.
 
 #####Software licence:
 This software is the result of the research intent No. 0021622419 (Ministry of Education, Youth and Sports of the Czech Republic) and the grant No. 201/07/0205 (Grant Agency of the Czech Republic) and this result is consistent with the expected objectives of these projects. The owner of the result is Masaryk University, a public high school, ID: 00216224. Masaryk University allows other companies and individuals to use this software free of charge and without territorial restrictions under the terms of the LGPL licence. 
