@@ -9,7 +9,7 @@ The sources are stored in the Netbeans IDE project format. You can download Netb
 For the proper function you have to include simjava.jar (re-modified in Jan 2009) which is [here](http://www.fi.muni.cz/~xklusac/alea/download/simjava.jar).
 You will also need gridsim.jar which you can download [here](http://www.gridbus.org/gridsim/).
 
-The data sets are available at: http://www.cs.huji.ac.il/labs/parallel/workload/logs.html.
+The data sets are available at http://www.cs.huji.ac.il/labs/parallel/workload/logs.html.
 
 For further information, please refer to http://www.fi.muni.cz/~xklusac/alea/index.html.
 
