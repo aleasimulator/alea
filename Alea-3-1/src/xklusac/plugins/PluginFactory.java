@@ -4,6 +4,7 @@ import xklusac.plugins.Plugin;
 
 /**
  * Class PluginFactory is used for creating Plugin instances.
+ * 
  * @author Gabriela Podolnikova
  */
 public class PluginFactory {
@@ -17,7 +18,7 @@ public class PluginFactory {
      *
      * @return the instance of the plugin, but not initialized yet
      *
-     * @throws InstantiationException
+     * @throws RuntimeException
      *             if the plugin could not be properly created
      */
     public static Plugin createPlugin(String className) {

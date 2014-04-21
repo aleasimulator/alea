@@ -47,7 +47,7 @@
       <p>Could not load configuration file!</p>
       <p>Please do one of the following:</p>
       <ul>
-          <li>Set environment property ALEA_HOME. It must point to the root directory of the Alea project.</li>
+          <li>Set ALEA_HOME environment variable. It must point to the root directory of the Alea project.</li>
           <li>Copy the Alea configuration file into the WEB-INF folder of this web application.</li>
       </ul>
          

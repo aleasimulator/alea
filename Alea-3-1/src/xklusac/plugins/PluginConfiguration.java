@@ -1,7 +1,9 @@
 package xklusac.plugins;
 
 /**
- * Class PluginConfiguration contains the constants for plugin configuration.
+ * Class PluginConfiguration contains the common keys for plugin configuration
+ * items.
+ * 
  * @author Gabriela Podolnikova
  */
 public class PluginConfiguration {

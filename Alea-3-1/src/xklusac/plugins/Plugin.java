@@ -6,7 +6,9 @@ import xklusac.environment.ResultCollector;
 import xklusac.environment.SchedulerData;
 
 /**
- * Interface Plugin defines the methodes that all plugins should override.
+ * Alea supports custom simulation metrics. These metrics can be implemented
+ * as plugins. This interface defines the methods that all plugins should override.
+ * 
  * @author Gabriela Podolnikova
  */
 public interface Plugin {
@@ -35,13 +37,13 @@ public interface Plugin {
     void cumulate(ComplexGridlet gridletReceived);
     
     /**
-     * Compute metric with given intitialization and cumulation.
+     * Compute the final result of the metric.
      * 
      * @param rc
      *        an instance of the ResultCollector class
      * @param sd 
      *        an instance of the SchedulerData class
-     * @return String with calculated result.
+     * @return String with the calculated result.
      */
     Double calculate (ResultCollector rc, SchedulerData sd);
 }

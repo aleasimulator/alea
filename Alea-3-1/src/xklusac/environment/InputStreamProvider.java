@@ -3,14 +3,17 @@ package xklusac.environment;
 import java.io.InputStream;
 
 /**
- * Interface InputStreamProvider defines the method that the ServletInputStreamProvider should implement.
+ * Interface for providing an InputStream.
+ * 
  * @author Gabriela Podolnikova
  */
 public interface InputStreamProvider {
     
     /**
-     * Returns the stream of a file in the given context in the web application.
-     * @return the resource as stream
+     * Returns an InputStream. This method can be invoked repeatedly. Each invocation returns
+     * a new instance of the InputStream containing the same data.
+     * 
+     * @return an InputStream instance
      */
     public InputStream getInputStream();
 }

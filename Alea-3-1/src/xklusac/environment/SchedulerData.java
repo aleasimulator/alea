@@ -1,7 +1,9 @@
 package xklusac.environment;
 
 /**
- * Class SchedulerData store the data for the scheduler.
+ * This class stores the simulation data for the scheduler entity.
+ * This data can be used for the calculation of simulation metrics.
+ * 
  * @author Gabriela Podolnikova
  */
 public class SchedulerData {
@@ -17,6 +19,7 @@ public class SchedulerData {
     
     /**
      * Creates a new instance of SchedulerData.
+     * 
      * @param av_PEs
      * @param wav_PEs
      * @param failureTime

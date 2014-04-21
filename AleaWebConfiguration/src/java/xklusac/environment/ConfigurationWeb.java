@@ -1,8 +1,9 @@
 package xklusac.environment;
 
 /**
- * Class ConfigurationWeb is used as a supporting class for the index.jsp
- * Contains the constants.
+ * Class ConfigurationWeb is used as an auxiliary class for the index.jsp.
+ * Defines HTTP parameters and their values.
+ * 
  * @author Gabriela Podolnikova
  */
 public class ConfigurationWeb {

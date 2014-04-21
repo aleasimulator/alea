@@ -6,6 +6,7 @@ import xklusac.environment.SchedulerData;
 
 /**
  * Class AverageWaitTimePlugin represents the plugin for average wait time.
+ * 
  * @author Gabriela Podolnikova
  */
 public class AverageWaitTimePlugin extends AbstractPlugin implements Plugin {
@@ -13,7 +14,7 @@ public class AverageWaitTimePlugin extends AbstractPlugin implements Plugin {
     private double waitTime;
 
     /**
-     * @see Plugin
+     * @see Plugin#cumulate(xklusac.environment.ComplexGridlet) 
      */
     @Override
     public void cumulate(ComplexGridlet gridletReceived) {
@@ -25,7 +26,7 @@ public class AverageWaitTimePlugin extends AbstractPlugin implements Plugin {
     }
 
     /**
-     * @see Plugin
+     * @see Plugin#calculate(xklusac.environment.ResultCollector, xklusac.environment.SchedulerData) 
      */    
     @Override
     public Double calculate(ResultCollector rc, SchedulerData sd) {

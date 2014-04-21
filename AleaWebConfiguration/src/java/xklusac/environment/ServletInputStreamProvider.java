@@ -4,8 +4,11 @@ import java.io.InputStream;
 import javax.servlet.ServletContext;
 
 /**
- * Class ServletInputStreamProvider implements the method of InputStreanProvider class.
- * It provides the input stream for the web application for the Alea configuration.
+ * Class ServletInputStreamProvider implements the InputStreanProvider class.
+ * It provides the input stream for the given File and ServletContext.
+ * 
+ * It can be used to provide the input for AleaConfiguration.
+ * 
  * @author Gabriela Podolnikova
  */
 public class ServletInputStreamProvider implements InputStreamProvider {
@@ -14,9 +17,10 @@ public class ServletInputStreamProvider implements InputStreamProvider {
     private final ServletContext servletContext;
     
     /**
-     * Creates new instance of ServletInputStreamProvider.
+     * Creates a new instance of ServletInputStreamProvider.
+     * 
      * @param fileName the name of the file to be loaded
-     * @param servletContext the context for the web application
+     * @param servletContext the context of the web application
      */
     public ServletInputStreamProvider(String fileName, ServletContext servletContext) {
         this.fileName = fileName;
@@ -24,7 +28,7 @@ public class ServletInputStreamProvider implements InputStreamProvider {
     } 
     
     /**
-     * @see InputStreamProvider 
+     * @see InputStreamProvider#getInputStream() 
      */
     @Override
     public InputStream getInputStream() {

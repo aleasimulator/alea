@@ -276,9 +276,11 @@ public class ExperimentSetup {
     private static String[] dir = new String[3];
     
     /**
-     * Creates the path.
-     * @param level where the results should be stored
-     * @return the path to the directory at the specified level
+     * Creates the path for storing simulation results.
+     * 
+     * @param level the depth of directory tree
+     * 
+     * @return the path to the appropriate directory at the specified level
      */
     public static String getDir(int level) {
         String directory = dir[0];
@@ -294,7 +296,8 @@ public class ExperimentSetup {
     }*/
     
     /**
-     * This method returns date in the specified format.
+     * This method returns the current date.
+     * 
      * @return the date
      */
     public static String getDate() {
@@ -304,7 +307,7 @@ public class ExperimentSetup {
     }
     
     /**
-     * The main method - create all entities and starts the simulation. <br> It
+     * The main method - create all entities and start the simulation. <br> It
      * is also capable of multiple starts of the simulation with different setup
      * (machine count, job parameters, data sets).
      */

@@ -13,12 +13,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import xklusac.extensions.Input;
 import xklusac.extensions.Output;
 import xklusac.plugins.Plugin;
-import xklusac.plugins.PluginConfiguration;
 
 /**
  * Class ResultCollector<p> This class stores results into csv file(s) and
@@ -184,8 +182,10 @@ public class ResultCollector {
     }
     
     /**
-     * Appends all headers
+     * Serializes headers into a String.
+     * 
      * @param headers array with all headers
+     * 
      * @return headers in one String
      */
     private static String generatePluginHeaders(String[] headers) {
@@ -330,10 +330,12 @@ public class ResultCollector {
     }
     
     /**
-     * Append all plugin value in one string.
-     * @param pluginsValues an array with all plugin values
-     * @param experiment_count count of experiments
-     * @return one string with all plugin values
+     * Serialize all plugin values in one String.
+     * 
+     * @param pluginsValues an array with results from all plugins
+     * @param experiment_count the number of experiments
+     * 
+     * @return one string with all values
      */
     private String getPluginResultString(double[] pluginsValues, int experiment_count) {
         StringBuilder sb = new StringBuilder();
@@ -771,7 +773,9 @@ public class ResultCollector {
     }
 
     /**
-     * @param plugins the plugins to set
+     * Sets the plugins to be used throughout the simulation.
+     * 
+     * @param plugins the plugins to use
      */
     public void setPlugins(List<Plugin> plugins) {
         this.plugins = plugins;

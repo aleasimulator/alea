@@ -4,7 +4,8 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Class AbstractPlugin implements the functonality of plugins that is the same for all plugins.
+ * Class AbstractPlugin provides a common basis for custom plugins.
+ * 
  * @author Gabriela Podolnikova
  */
 abstract class AbstractPlugin implements Plugin {
@@ -13,7 +14,7 @@ abstract class AbstractPlugin implements Plugin {
     private Map<String, String> pluginConfiguration;
     
     /**
-     * @see Plugin
+     * @see Plugin#init(java.util.Map) 
      */
     @Override
     public void init(Map<String, String> pluginConfiguration) {
@@ -21,7 +22,7 @@ abstract class AbstractPlugin implements Plugin {
     }
     
     /**
-     * @see Plugin
+     * @see Plugin#getPluginConfiguration() 
      */
     @Override
     public Map<String, String> getPluginConfiguration() {

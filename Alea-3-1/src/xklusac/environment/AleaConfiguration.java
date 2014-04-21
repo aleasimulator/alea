@@ -21,8 +21,8 @@ import java.util.logging.Logger;
 import xklusac.plugins.PluginConfiguration;
 
 /**
- * Class AleaConfiguration works for loading the properties files.
- * The configuration for the simulation or the description file for the web application.
+ * This class provides access to property files. These files hold
+ * the configuration for the simulation or the descriptions of the configurable items.
  * @author Gabriela Podolnikova
  */
 public class AleaConfiguration {
@@ -37,7 +37,9 @@ public class AleaConfiguration {
     /**
      * Creates a new instance of AleaConfiguration.
      * Loads the configuration file.
-     * @throws IOException 
+     * 
+     * @throws IOException
+     * if the configuration file cannot be loaded.
      */
     public AleaConfiguration() throws IOException {
         this("configuration.properties");
@@ -46,8 +48,11 @@ public class AleaConfiguration {
     /**
      * Creates a new instance of AleaConfiguration.
      * Loads the file with the given path.
-     * @param path to the file which should be loaded
+     * 
+     * @param path the path to the file that should be loaded
+     * 
      * @throws IOException 
+     * if the file cannot be loaded.
      */
     public AleaConfiguration(String path) throws IOException {
         fileName=path;
@@ -60,8 +65,11 @@ public class AleaConfiguration {
     /**
      * Creates a new instances of AleaConfiguration.
      * Loads the given stream.
+     * 
      * @param inputStreamProvider stream to be loaded
+     * 
      * @throws IOException 
+     * if the file cannot be loaded.
      */
     public AleaConfiguration(InputStreamProvider inputStreamProvider) throws IOException {
         fileName=null;
@@ -72,9 +80,11 @@ public class AleaConfiguration {
     }
     
     /**
-     * Gets a configuration for one plugin on the given index.
+     * Gets the configuration for one plugin at the given index.
+     * 
      * @param pluginIndex index of the plugin
-     * @return map with configuration for one plugin
+     * 
+     * @return map with the plugin configuration
      */
     public Map<String, String> getPluginConfiguration(int pluginIndex) {
         Map<String, String> plugincfg = new HashMap<String, String>();
@@ -97,11 +107,13 @@ public class AleaConfiguration {
     }
     
     /**
-     * Return key for plugin in configuration file.
-     * @param index index of the plugin in plugin array
-     * @param pluginKey key of one plugin
-     * @param common if false it adds the index into the returned string
-     * @return key
+     * Returns the key for a plugin in the configuration file.
+     * 
+     * @param index the index of the plugin in the plugin array
+     * @param pluginKey the key of one plugin
+     * @param common if false then the index is added into the returned string
+     * 
+     * @return plugin key
      */
     public static String getPluginConfigurationKey(int index, String pluginKey, boolean common) {
         if (common)
@@ -123,8 +135,10 @@ public class AleaConfiguration {
 
     /**
      * Gets String value from properties.
-     * @param key the key to get the value
-     * @return the key as String 
+     * 
+     * @param key the configuration item key
+     * 
+     * @return the value as String 
      */
     public String getString(String key) {
         String str;
@@ -134,8 +148,10 @@ public class AleaConfiguration {
 
     /**
      * Gets int value from properties.
-     * @param key the key to get the value
-     * @return the key as int
+     * 
+     * @param key the configuration item key
+     * 
+     * @return the value as int
      */
     public int getInt(String key) {
         String value = props.getProperty(key);
@@ -150,8 +166,10 @@ public class AleaConfiguration {
 
     /**
      * Gets double value from properties.
-     * @param key the key to get the value
-     * @return the key as double
+     * 
+     * @param key the configuration item key
+     * 
+     * @return the value as double
      */
     public double getDouble(String key) {
         String value = props.getProperty(key);
@@ -166,8 +184,10 @@ public class AleaConfiguration {
     
     /**
      * Gets int array value from properties.
-     * @param key the key to get the value
-     * @return the key as array of ints
+     * 
+     * @param key the configuration item key
+     * 
+     * @return the value as array of ints
      */
     public int[] getIntArray(String key) {
         String value = props.getProperty(key);
@@ -185,8 +205,10 @@ public class AleaConfiguration {
     
     /**
      * Gets boolean value from properties.
-     * @param key the key to get the value
-     * @return the key as boolean
+     * 
+     * @param key the configuration item key
+     * 
+     * @return the value as boolean
      */
     public boolean getBoolean(String key) {
         String value = props.getProperty(key);
@@ -204,8 +226,10 @@ public class AleaConfiguration {
     
     /**
      * Gets String array value from properties.
-     * @param key the key to get the value
-     * @return the key as String array
+     * 
+     * @param key the configuration item key
+     * 
+     * @return the value as String array
      */
     public String[] getStringArray(String key) {
         String value = props.getProperty(key);
@@ -219,8 +243,10 @@ public class AleaConfiguration {
     
     /**
      * Gets boolean array value from properties.
-     * @param key the key to get the value
-     * @return the key as boolean array
+     * 
+     * @param key the configuration item key
+     * 
+     * @return the value as boolean array
      */
     public boolean[] getBooleanArray(String key) {
         String value = props.getProperty(key);
@@ -238,7 +264,8 @@ public class AleaConfiguration {
     }
     
     /**
-     * Get the collection of the keys from properties.
+     * Get the collection of the configuration item keys.
+     * 
      * @return collection of keys
      */
     public Enumeration<?> getKeys() {
@@ -248,6 +275,7 @@ public class AleaConfiguration {
     
     /**
      * Returns list of keys in the same order as they are written in the configuration file.
+     * 
      * @return list of keys
      */
     public List<String> getKeyList() throws IOException {
@@ -269,6 +297,7 @@ public class AleaConfiguration {
     
     /**
      * Saves the changes in the properties file.
+     * 
      * @throws IOException 
      */
     public void save() throws IOException {
@@ -281,19 +310,32 @@ public class AleaConfiguration {
         }
     }
     
+    /**
+     * Sets String value for the configuration item.
+     * 
+     * @param key the configuration item key
+     * @param value the value to be set
+     */
     public void setString(String key, String value) {
         props.setProperty(key, value);
     }
     
+    /**
+     * Delete a configuration item.
+     * 
+     * @param key the configuration item key
+     */
     public void deleteString(String key) {
         props.remove(key);
     }
     
     /**
-     * Checks the type of the value in configuration file.
-     * @param type type that should equals to the value
+     * Checks the type of the value in the configuration file.
+     * 
+     * @param type the required type
      * @param value value to be checked
-     * @return true if the type were equally
+     * 
+     * @return true iff the type check succeeded
      */
     public static boolean typeCheck(String type, String value) {
         if ("int".equals(type)) {

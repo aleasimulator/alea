@@ -1,8 +1,9 @@
 package xklusac.environment;
 
 /**
- * Class ConfigurationHtml is used as a supporting class for the index.jsp
- * Contains the constants with the blocks of HTML code.
+ * Class ConfigurationHtml is used as an auxiliary class for the index.jsp.
+ * It contains the constants with the blocks of HTML code.
+ * 
  * @author Gabriela Podolnikova
  */
 public class ConfigurationHtml {

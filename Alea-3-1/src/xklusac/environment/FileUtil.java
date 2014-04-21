@@ -7,14 +7,17 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 
 /**
- * Class FileUtil is used for working with paths.
+ * Class FileUtil is used for working with files and paths.
+ * 
  * @author Gabriela Podolnikova
  */
 public class FileUtil {
     
     /**
      * Returns the path to the directory where the desired results are located.
+     * 
      * @param path path to be changed
+     * 
      * @return the new path
      */
     public static String getPath(String path) {
@@ -33,10 +36,13 @@ public class FileUtil {
     }
     
     /**
-     * Makes the copy of the configuration file to the results folder. 
-     * @param sourceFile the original file place
-     * @param destFile the file destination
+     * Copies a file. 
+     * 
+     * @param sourceFile the source file
+     * @param destFile the destination file
+     * 
      * @throws IOException 
+     * if copying fails
      */
     public static void copyFile(File sourceFile, File destFile) throws IOException {
 	if (!sourceFile.exists()) {
