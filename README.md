@@ -1,3 +1,4 @@
+![Logo](https://raw.githubusercontent.com/aleasimulator/alea/master/AleaWebConfiguration/web/images/logo1.png)
 ##ALEA 3 GridSim based Grid Scheduling Simulator
 This work concentrates on the design of a system intended for study of advanced scheduling techniques for planning various types of jobs in Grid environment. The solution is able to deal with common problems of job scheduling in Grids like heterogeneity of jobs and resources, and dynamic runtime changes such as arrival of new jobs.
 
