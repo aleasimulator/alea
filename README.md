@@ -1,5 +1,5 @@
 ![Logo](https://raw.githubusercontent.com/aleasimulator/alea/master/AleaWebConfiguration/web/images/logo1.png)
-##ALEA 3 GridSim based Grid Scheduling Simulator
+###GridSim based Grid Scheduling Simulator
 This work concentrates on the design of a system intended for study of advanced scheduling techniques for planning various types of jobs in Grid environment. The solution is able to deal with common problems of job scheduling in Grids like heterogeneity of jobs and resources, and dynamic runtime changes such as arrival of new jobs.
 
 Alea Simulator is based on the latest [GridSim 5](http://www.cloudbus.org/gridsim/) simulation toolkit which we extended to provide a simulation environment that supports simulation of varying Grid scheduling problems. To demonstrate the features of the Alea environment, we implemented an experimental centralised Grid scheduler which uses advanced scheduling techniques for schedule generation. By now local search based algorithms and some policies were tested as well as "classical" queue-based algorithms such as FCFS or Easy Backfilling.
