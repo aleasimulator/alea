@@ -828,7 +828,7 @@ public class ResourceInfo {
         //if(gi.getID()>4000)
         //System.out.println(gi.getID()+": update on res: "+this.resource.getResourceName()+" Heap size = "+slots.size()+" CPUS = "+slots.getCPUcount());
         //slots.printCPUcount("start for "+gi.getID());
-        if (ExperimentSetup.useHeap) {
+        if (ExperimentSetup.use_heap) {
             int needed = gi.getNumPE();
             int found = 0;
             hole_size = 0;
@@ -1079,7 +1079,7 @@ public class ResourceInfo {
             // initialize the free slot array (must be done)
             predictFirstFreeSlots(current_time); //OK works
             BinaryHeap slots = null;
-            if (ExperimentSetup.useHeap) {
+            if (ExperimentSetup.use_heap) {
                 slots = createBinaryHeap();
             }
 
@@ -1231,7 +1231,7 @@ public class ResourceInfo {
         // initialize the free slot array (must be done)
         predictFirstFreeSlots(current_time); //OK works
         BinaryHeap slots = null;
-        if (ExperimentSetup.useHeap) {
+        if (ExperimentSetup.use_heap) {
             slots = createBinaryHeap();
         }
 

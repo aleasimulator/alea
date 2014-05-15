@@ -20,13 +20,6 @@ public interface Plugin {
      *            (keyword, value) tuples.
      */
     void init(Map<String, String> pluginConfiguration);
-    
-    /**
-     * Getter for plugin configuration.
-     * 
-     * @return map with plugin configuration
-     */
-    Map<String, String> getPluginConfiguration();
 
     /**
      * Cumulates data for the metric calculation.

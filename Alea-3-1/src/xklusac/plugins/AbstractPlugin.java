@@ -20,13 +20,13 @@ abstract class AbstractPlugin implements Plugin {
     public void init(Map<String, String> pluginConfiguration) {
         this.pluginConfiguration = pluginConfiguration;
     }
-    
+ 
     /**
-     * @see Plugin#getPluginConfiguration() 
+     * Provides the configuration of this plugin.
+     * 
+     * @return map of configuration items
      */
-    @Override
-    public Map<String, String> getPluginConfiguration() {
-        return Collections.unmodifiableMap(pluginConfiguration);
+    protected Map<String, String> getPluginConfiguration() {
+        return pluginConfiguration;
     }
-    
 }

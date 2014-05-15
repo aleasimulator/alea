@@ -83,11 +83,11 @@ public class ExperimentSetup {
     /**
      * set true to use avg. job length as an runtime estimate
      */
-    static boolean useAvgLength;
+    static boolean use_AvgLength;
     /**
      * set true to use last job runtime as a new runtime estimate
      */
-    static boolean useLastLength;
+    static boolean use_LastLength;
     /**
      * set true to use on-demand LS-based optimization
      */
@@ -104,7 +104,7 @@ public class ExperimentSetup {
      * defines whether heap is used to store schedule-data. Should be true, as
      * heap is faster than the default array.
      */
-    static boolean useHeap;
+    static boolean use_heap;
     /**
      * random number generator seed
      */
@@ -326,7 +326,7 @@ public class ExperimentSetup {
         
         visualize = aCfg.getBoolean("visualize");
         data = aCfg.getBoolean("data");
-        useHeap = aCfg.getBoolean("useHeap");
+        use_heap = aCfg.getBoolean("use_heap");
         sld_tresh = aCfg.getDouble("sld_tresh");
         
         algID = 0;
@@ -393,9 +393,9 @@ public class ExperimentSetup {
         // set true to use runtime estimates
         estimates = aCfg.getBoolean("estimates");
         // set true to refine estimates using job avg. length
-        useAvgLength = aCfg.getBoolean("useAvgLength");
+        use_AvgLength = aCfg.getBoolean("use_AvgLength");
         // set true to use last job length as a new runtime estimate
-        useLastLength = aCfg.getBoolean("useLastLength");
+        use_LastLength = aCfg.getBoolean("use_LastLength");
         // the minimal length (in seconds) of gap in schedule since when the "on demand" optimization is executed
         gap_length = aCfg.getInt("gap_length");
         // the weigh of fairness criterion
@@ -419,10 +419,10 @@ public class ExperimentSetup {
         } else {
             problem += "-Exact";
         }
-        if (useAvgLength) {
+        if (use_AvgLength) {
             problem += "-AvgL";
         }
-        if (useLastLength) {
+        if (use_LastLength) {
             problem += "-LastL";
         }
         if (useEventOpt) {

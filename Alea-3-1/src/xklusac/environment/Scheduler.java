@@ -876,7 +876,7 @@ public class Scheduler extends GridSim {
                                 optimize = true;
                             }
                         }
-                        if (!optimize && ExperimentSetup.useLastLength && gridlet_received.getExpectedFinishTime() < gridlet_received.getFinishTime() && gridlet_received.getFinishTime() >= 0) {
+                        if (!optimize && ExperimentSetup.use_LastLength && gridlet_received.getExpectedFinishTime() < gridlet_received.getFinishTime() && gridlet_received.getFinishTime() >= 0) {
                             double diff = gridlet_received.getFinishTime() - gridlet_received.getExpectedFinishTime();
                             // job finished later than expected - do optimization of schedule if the gap is large enough
                             updateResourceInfos(clock());

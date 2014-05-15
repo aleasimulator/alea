@@ -1,2 +1,5 @@
 /Alea-3-1/build/
 /Alea-3-1/dist/
+/AleaWebConfiguration/dist/
+AleaWebConfiguration/build/web/index.jsp
+AleaWebConfiguration/build/web/WEB-INF/configuration.properties

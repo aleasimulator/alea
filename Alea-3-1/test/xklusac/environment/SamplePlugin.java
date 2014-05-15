@@ -29,10 +29,5 @@ public class SamplePlugin implements Plugin {
     public Double calculate (ResultCollector rc, SchedulerData sd){
         return 0.2;
     }
-
-    @Override
-    public Map<String, String> getPluginConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
     
 }

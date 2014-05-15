@@ -88,8 +88,8 @@
                // adding configuration item
                if (param.startsWith(ConfigurationWeb.Parameters.ADD)) {
                    int index = Integer.parseInt(param.substring(4));
-                   String addedKey = parameterMap.get(ConfigurationWeb.Parameters.ADDED_KEY)[0];
-                   String addedValue = parameterMap.get(ConfigurationWeb.Parameters.ADDED_VALUE)[0];
+                   String addedKey = parameterMap.get(ConfigurationWeb.Parameters.ADDED_KEY)[index];
+                   String addedValue = parameterMap.get(ConfigurationWeb.Parameters.ADDED_VALUE)[index];
                    String addKey = AleaConfiguration.getPluginConfigurationKey(index, addedKey, false);
                    aCfg.setString(addKey, addedValue);
                    keyAdded = true;
@@ -245,7 +245,7 @@
           }
           %>
           <input name="submit" type="submit" value="<%=ConfigurationWeb.Values.OK%>"/>
-          <input name="submit" type="submit" value="Undo changes"/>
+          <input name="submit" type="submit" value="Reset"/>
           <input name="submit" type="submit" value="<%=ConfigurationWeb.Values.DEFAULTS%>"/>
   </form>
 </body>

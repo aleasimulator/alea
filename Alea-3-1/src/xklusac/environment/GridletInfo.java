@@ -489,10 +489,10 @@ public class GridletInfo {
 
     public double getJobRuntime(int peRating) {
         if (ExperimentSetup.estimates) {
-            if (ExperimentSetup.useAvgLength) {
+            if (ExperimentSetup.use_AvgLength) {
                 //System.out.println("avg length ===== "+Math.round(this.getAvg_length() / peRating)+" ? "+Math.round(this.getLast_length() / peRating));
                 return Math.min(jobLimit, Math.max(0.0, (this.getAvg_length() / peRating)));
-            } else if (ExperimentSetup.useLastLength) {
+            } else if (ExperimentSetup.use_LastLength) {
                 //System.out.println(this.getID()+" last length = "+Math.min(jobLimit, Math.max(0.0, (this.getLast_length() / peRating)))+" / job limit = "+jobLimit+" user = "+this.getUser());
                 return Math.min(jobLimit, Math.max(0.0, (ExperimentSetup.runtime_multiplicator * (this.getLast_length() / peRating))));
             }/* else if (ExperimentSetup.useUserPrecision) {
