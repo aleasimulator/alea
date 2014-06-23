@@ -22,7 +22,7 @@ public static final String TABLE_END = "</table>";
 public static final String TABLE_START_PLUGIN =
         "<table>" +
         "<tr>" +
-            "<th>Type</th>" +
+            "<th>Key</th>" +
             "<th>Value</th>" +
         "</tr>";
          

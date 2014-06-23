@@ -27,21 +27,8 @@
     </head>
 <body>
   <%  //code inside the service() method
-      AleaConfiguration aCfg = null;
+      AleaConfiguration aCfg = ConfigurationWeb.getAleaConfiguration(getServletContext());
       AleaConfiguration description = null;
-      String aleaHome = System.getenv("ALEA_HOME");
-      if (aleaHome!=null) {
-          try {
-            aCfg = new AleaConfiguration(aleaHome + File.separator + "configuration.properties");
-          } catch (IOException e) { 
-          } 
-      } else {        
-          try {
-             InputStreamProvider inputStreamProviderForConfiguration = new ServletInputStreamProvider("/WEB-INF/configuration.properties", getServletContext());
-             aCfg = new AleaConfiguration(inputStreamProviderForConfiguration);
-          } catch (Exception e) {              
-          }
-      }
       if (aCfg == null) {
       %>
       <p>Could not load configuration file!</p>
@@ -247,6 +234,11 @@
           <input name="submit" type="submit" value="<%=ConfigurationWeb.Values.OK%>"/>
           <input name="submit" type="submit" value="Reset"/>
           <input name="submit" type="submit" value="<%=ConfigurationWeb.Values.DEFAULTS%>"/>
+          <p><a href="download">Download Configuration File</a></p>
+  </form>
+  <form action="upload" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" />
+    <input type="submit" />
   </form>
 </body>
 </html>

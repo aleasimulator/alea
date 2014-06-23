@@ -27,6 +27,7 @@ import xklusac.plugins.PluginConfiguration;
  */
 public class AleaConfiguration {
 
+    public static final String DEFAULT_FILE_NAME = "configuration.properties";
     public static final String HEADER = "HEADER";
     public static final String PLUGINS = "plugins";
     public static final String PLUGIN = "plugin.";
@@ -42,7 +43,7 @@ public class AleaConfiguration {
      * if the configuration file cannot be loaded.
      */
     public AleaConfiguration() throws IOException {
-        this("configuration.properties");
+        this(DEFAULT_FILE_NAME);
     }
     
     /**

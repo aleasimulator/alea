@@ -282,9 +282,9 @@ public class ExperimentSetup {
      * 
      * @return the path to the appropriate directory at the specified level
      */
-    public static String getDir(int level) {
+    public static String getDir(DirectoryLevel level) {
         String directory = dir[0];
-        for (int i=1; i<level; i++) {
+        for (int i=1; i<level.ordinal(); i++) {
             directory += File.separator;
             directory += dir[i];
         }
@@ -505,7 +505,7 @@ public class ExperimentSetup {
             //creates new folder for each data set in the new setup folder
             String date = getDate();
             dir[1] = data_sets[set] + "_" + date;
-            File dataSetDirF = new File(ExperimentSetup.getDir(2));
+            File dataSetDirF = new File(ExperimentSetup.getDir(DirectoryLevel.DATA_SET));
             dataSetDirF.mkdir();
             //subDir = dir + File.separator + data_sets[set] + "_" + date;
             //File subDirF = new File(subDir);
@@ -685,8 +685,8 @@ public class ExperimentSetup {
                 }
                 
                 dir[2] = suff;
-                File algDirF = new File(ExperimentSetup.getDir(3));
-                System.out.println(getDir(3));
+                File algDirF = new File(ExperimentSetup.getDir(DirectoryLevel.ALGORITHM));
+                //System.out.println(getDir(DirectoryLevel.ALGORITHM));
                 algDirF.mkdir();
                 
                 result_collector.deleteSchedResults(suff);//originally in Scheduler constructor

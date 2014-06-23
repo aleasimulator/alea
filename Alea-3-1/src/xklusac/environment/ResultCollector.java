@@ -618,7 +618,7 @@ public class ResultCollector {
         String line = "";
         Input r = new Input();
         //pridan nazev slozky do puvodni cesty
-        BufferedReader br = r.openFile(new File(user_dir + File.separator + ExperimentSetup.getDir(3) + File.separator + "jobs(" + problem + "" + ExperimentSetup.algID + ").csv"));
+        BufferedReader br = r.openFile(new File(user_dir + File.separator + ExperimentSetup.getDir(DirectoryLevel.ALGORITHM) + File.separator + "jobs(" + problem + "" + ExperimentSetup.algID + ").csv"));
         Double[] wt = new Double[1442];
         Double[] rt = new Double[2882];
         Double[] sd = new Double[1002];

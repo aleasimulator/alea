@@ -27,9 +27,9 @@ public class FileUtil {
         String directory = path.substring(0,i);
         String newPath;
         if (fileName.startsWith("Results") || fileName.startsWith("RGraphs") || fileName.startsWith("SGraphs") || fileName.startsWith("WGraphs")) {
-            newPath = directory + File.separator + ExperimentSetup.getDir(1) + File.separator + fileName;
+            newPath = directory + File.separator + ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT) + File.separator + fileName;
         } else {
-            newPath = directory + File.separator + ExperimentSetup.getDir(3) + File.separator + fileName;
+            newPath = directory + File.separator + ExperimentSetup.getDir(DirectoryLevel.ALGORITHM) + File.separator + fileName;
         }
         //System.out.println(newPath);
         return newPath;
