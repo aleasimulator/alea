@@ -234,11 +234,14 @@
           <input name="submit" type="submit" value="<%=ConfigurationWeb.Values.OK%>"/>
           <input name="submit" type="submit" value="Reset"/>
           <input name="submit" type="submit" value="<%=ConfigurationWeb.Values.DEFAULTS%>"/>
-          <p><a href="download">Download Configuration File</a></p>
+          <h2>Download/upload configuration file</h2>
   </form>
+  <form action="download" method="get">
+    <input type="submit" value="Download Configuration File" class="dwnl"/>
+  </form>        
   <form action="upload" method="post" enctype="multipart/form-data">
     <input type="file" name="file" />
-    <input type="submit" />
+    <input type="submit" value="Upload configuration file" />
   </form>
 </body>
 </html>

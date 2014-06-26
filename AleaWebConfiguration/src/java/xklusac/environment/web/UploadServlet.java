@@ -11,7 +11,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Collection;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServlet;
@@ -21,8 +20,9 @@ import javax.servlet.http.Part;
 import xklusac.environment.ConfigurationWeb;
 
 /**
- *
- * @author Gabi
+ * Provides uploading of the configuration file to the web application.
+ * 
+ * @author Gabriela Podolnikova
  */
 @MultipartConfig
 public class UploadServlet extends HttpServlet {
@@ -43,15 +43,9 @@ public class UploadServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
         try {
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Alea Configuration Upload</title>");            
-            out.println("</head>");
-            out.println("<body>");
+            printStart(out);
             out.println("<h1>HTTP GET method not supported.</h1>");
-            out.println("</body>");
-            out.println("</html>");
+            printEnd(out);
         } finally {            
             out.close();
         }
@@ -78,18 +72,12 @@ public class UploadServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
         try {
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Alea Configuration Upload</title>");            
-            out.println("</head>");
-            out.println("<body>");
+            printStart(out);
             out.println("<h1>Configuration file was uploaded.</h1>");
             out.println("<form action=\".\" method=\"get\">");
             out.println("<input type=\"submit\" value=\"OK\"/>");
             out.println("</form>");
-            out.println("</body>");
-            out.println("</html>");
+            printEnd(out);
         } finally {            
             out.close();
         }
@@ -105,5 +93,18 @@ public class UploadServlet extends HttpServlet {
         return "Short description";
     }// </editor-fold>
     
-
+    private void printStart(PrintWriter out) {
+        out.println("<!DOCTYPE html>");
+        out.println("<html>");
+        out.println("<head>");
+        out.println("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/style.css\">");
+        out.println("<title>Alea Configuration Upload</title>");
+        out.println("</head>");
+        out.println("<body>");
+    }
+    
+    private void printEnd(PrintWriter out) {
+        out.println("</body>");
+        out.println("</html>");
+    }
 }

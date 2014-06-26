@@ -1,3 +1,8 @@
+a {
+   text-decoration: none;
+   font-size: 15px;
+}
+
 p {
     color:red;
     font-size:20px;
@@ -22,6 +27,11 @@ h1,h2,h3
 h3
 {
     margin-top: 30px;
+}
+
+h1
+{
+    margin-left: 67px;
 }
 
 tr:nth-child(even) 
@@ -54,6 +64,11 @@ input[type="submit"]
     padding: 5px 10px;
     cursor: pointer;
     border-radius: 8px;
+}
+
+input[class="dwnl"]
+{
+    margin-bottom: 15px;
 }
 
 th

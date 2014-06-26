@@ -17,7 +17,8 @@ import xklusac.environment.AleaConfiguration;
 import xklusac.environment.ConfigurationWeb;
 
 /**
- *
+ * Provides the download of the configuration file from web application.
+ * 
  * @author Gabriela Podolnikova
  */
 public class DownloadServlet extends HttpServlet {
