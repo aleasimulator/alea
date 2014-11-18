@@ -264,7 +264,6 @@ public class ResourceInfo {
         if (ExperimentSetup.use_queues) {
             int avail = ExperimentSetup.queues.get(gi.getQueue()).getAvailCPUs();
             if (avail < gi.getNumPE()) {
-                //System.out.println(gi.getID()+" queue "+gi.getQueue()+" limit exceeded, avail "+avail+" of "+ExperimentSetup.queues.get(gi.getQueue()).getLimit()+" req:"+gi.getNumPE());
                 return false;
             }
         }
@@ -295,7 +294,7 @@ public class ResourceInfo {
             machines = virt_machines;
         }
         int allocateNodes = numNodes;
-
+        //System.out.println(this.resource.getResourceName()+ " Machines: ");
         for (int i = 0; i < machines.size(); i++) {
             MachineWithRAM machine = (MachineWithRAM) machines.get(i);
             // cannot use such machine
@@ -324,12 +323,15 @@ public class ResourceInfo {
 
         //do only when packing
         if (ExperimentSetup.use_resource_spec_packing && numNodes > 1) {
+            //System.out.println(gi.getID() + " !!! START !!! of job packing. ppn=" + gi.getPpn() + " node=" + gi.getNumNodes());
+            // pocet uzlu je liche cislo a to neumim rozumne transformovat
+            if (numNodes % 2 != 0) {
             ppn = ppn * numNodes;
             ram = ram * numNodes;
             numNodes = 1;
             int cpu_per_m = this.resource.getNumPE() / this.resource.getNumMachines();
             if (cpu_per_m >= ppn && ram <= this.resource.getRamOnOneMachine()) {
-                System.out.println(gi.getID() + " Job packing tested: " + gi.getProperties() + " ppn=" + gi.getPpn() + " node=" + gi.getNumNodes());
+                //System.out.println(gi.getID() + " test of (lichy) job packing: " + gi.getProperties() + " ppn=" + ppn + " node=" + numNodes + " CPU-per-m: " + cpu_per_m);
 
                 machines = this.resource.getMachineList();
                 if (ExperimentSetup.use_anti_starvation == true) {
@@ -367,12 +369,65 @@ public class ResourceInfo {
                         gi.getGridlet().setPpn(ppn);
                         System.out.println(gi.getID() + " Job packing SUCCESS: " + gi.getProperties() + " ppn=" + gi.getPpn() + " node=" + gi.getNumNodes());
                         return true;
+                        }
+                    }
+
+                }
+                // pocet uzlu je sude cislo
+            } else {
+                while (numNodes > 1) {
+                    ppn = ppn * 2;
+                    ram = ram * 2;
+                    numNodes = numNodes / 2;
+
+                    int cpu_per_m = this.resource.getNumPE() / this.resource.getNumMachines();
+                    if (cpu_per_m >= ppn && ram <= this.resource.getRamOnOneMachine()) {
+                        //System.out.println(gi.getID() + " test of (sudy) job packing: " + gi.getProperties() + " ppn=" + ppn + " node=" + numNodes + " CPU-per-m: " + cpu_per_m);
+                        //System.out.println(gi.getID() + " Job packing tested: " + gi.getProperties() + " ppn=" + gi.getPpn() + " node=" + gi.getNumNodes());
+
+                        machines = this.resource.getMachineList();
+                        if (ExperimentSetup.use_anti_starvation == true) {
+                            machines = virt_machines;
+                        }
+                        allocateNodes = numNodes;
+
+                        for (int i = 0; i < machines.size(); i++) {
+                            MachineWithRAM machine = (MachineWithRAM) machines.get(i);
+                            // cannot use such machine
+                            if (machine.getFailed()) {
+                                continue;
+                            }
+                            // cannot use machine with job assigned if exclusive use required
+                            if (excl && machine.getNumFreePE() < machine.getNumPE()) {
+                                //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because prop=" + gi.getProperties()+ " and mach"+i+" has "+machine.getNumBusyPE()+" used CPUs");
+                                continue;
+                            }
+                            if (ExperimentSetup.use_anti_starvation == false) {
+                                if (machine.getNumFreePE() >= ppn && machine.getFreeRam() >= ram) {
+                                    allocateNodes--;
+                                }
+                            } else {
+                                if (machine.getNumFreeVirtualPE() >= ppn && machine.getFreeRam() >= ram) {
+                                    allocateNodes--;
+                                }
+                            }
+
+                            if (allocateNodes <= 0) {
+                                gi.setPpn(ppn);
+                                gi.setNumNodes(numNodes);
+                                gi.setRam(ram);
+                                gi.getGridlet().setRam(ram);
+                                gi.getGridlet().setNumNodes(numNodes);
+                                gi.getGridlet().setPpn(ppn);
+                                System.out.println(gi.getID() + " Job packing SUCCESS: " + gi.getProperties() + " ppn=" + gi.getPpn() + " node=" + gi.getNumNodes());
+                                return true;
+                            }
+                        }
                     }
                 }
-
             }
-
         }
+
 
         // all machines tested and not enough CPUs/RAM found to execute job now
         return false;
@@ -415,8 +470,6 @@ public class ResourceInfo {
             // rezervaci udelam na stroji, ktery bude nejdrive volny
             double earliest_start_time = Double.MAX_VALUE;
             MachineWithRAM earliest_machine = null;
-            // overhead = o
-            for (int o = 0; o < 4; o++) {
                 for (int i = 0; i < machines.size(); i++) {
                     MachineWithRAM machine = (MachineWithRAM) machines.get(i);
                     if (machine.getNumPE() >= ppn && machine.getRam() >= ram) {
@@ -434,7 +487,6 @@ public class ResourceInfo {
                     //System.out.println(gi.getID()+" Allocating nodes on "+this.resource.getResourceName()+" mach: "+earliest_machine.getMachineID());
                     earliest_machine.updateFirstFreeTimeAfterNodeJobAllocation(ppn, gi.getJobLimit());
                 }
-            }
         }
 
     }
@@ -495,6 +547,25 @@ public class ResourceInfo {
             virt_machines.add(virt_machine);
         }
     }
+    public double computeLocalPE(GridletInfo gi) {
+        long ram = gi.getRam();
+        int ppn = gi.getPpn();
+        int numNodes = gi.getNumNodes();
+        
+        MachineList machines = this.resource.getMachineList();
+        MachineWithRAM machine = (MachineWithRAM) machines.get(0);
+        double PEcpu = ppn/(machine.getNumPE()*1.0);
+        double PEram = ram/(machine.getRam()*1.0);
+        return (Math.max(PEcpu,PEram)*machine.getNumPE())*numNodes;
+    }
+    
+    public boolean executedHere(GridletInfo gi){
+        if(gi.getOsRequired().contains(this.resource.getResourceName())){
+            return true;
+        }else{
+            return false;
+        }
+    }
 
     public boolean canExecuteEver(GridletInfo gi) {
         // zakaz spousteni uloh na clusteru, co nevyhovuje nodespecu
@@ -506,7 +577,7 @@ public class ResourceInfo {
                 return false;
             }
             //pozitivni vlastnost
-            if (!req_nodes[r].contains("^") && req_nodes[r].contains("cl_") && !req_nodes[r].contains(this.resource.getResourceName())) {
+            if (!req_nodes[r].contains("^") && req_nodes[r].contains("cl_") && !req_nodes[r].contains(this.resource.getResourceName().substring(0, Math.min(this.resource.getResourceName().length(),5)))) {
                 //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because prop=" + gi.getProperties());
                 return false;
             }
@@ -1577,13 +1648,13 @@ public class ResourceInfo {
             for (int i = 0; i < resInExec.size(); i++) {
                 GridletInfo gi = resInExec.get(i);
                 int user_index = Scheduler.users.indexOf(new String(gi.getUser()));
-                r_tuwt[user_index] += Math.max(0.0, gi.getGridlet().getExecStartTime() - gi.getRelease_date());
+                r_tuwt[user_index] += Math.max(0.0, gi.getGridlet().getExecStartTime() - gi.getRelease_date());//*gi.getNumPE();
                 r_tuwt[user_index + size] += gi.getNumPE() * gi.getJobRuntime(peRating);
             }
             for (int i = 0; i < resSchedule.size(); i++) {
                 GridletInfo gi = resSchedule.get(i);
                 int user_index = Scheduler.users.indexOf(new String(gi.getUser()));
-                r_tuwt[user_index] += Math.max(0.0, gi.getExpectedStartTime() - gi.getRelease_date());
+                r_tuwt[user_index] += Math.max(0.0, gi.getExpectedStartTime() - gi.getRelease_date());//*gi.getNumPE();
                 r_tuwt[user_index + size] += gi.getNumPE() * gi.getJobRuntime(peRating);
             }
             stable_w = true;

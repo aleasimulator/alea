@@ -2,10 +2,11 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package xklusac.algorithms;
+package xklusac.algorithms.schedule_based.optimization;
 
 import gridsim.GridSim;
 import java.util.Date;
+import xklusac.algorithms.OptimizationAlgorithm;
 import xklusac.objective_functions.CommonObjectives;
 import xklusac.environment.ExperimentSetup;
 import xklusac.environment.GridletInfo;
@@ -14,13 +15,13 @@ import xklusac.environment.Scheduler;
 
 /**
  * Class RandomSearch<p>
- * This class implements RandomSearch optimization schedule-based algorithm.
+ * This class implements WeightedRandomSearch optimization schedule-based algorithm.
  * @author       Dalibor Klusacek
  */
 
-public class RandomSearch implements OptimizationAlgorithm {
+public class WeightedRandomSearch implements OptimizationAlgorithm {
 
-    public RandomSearch() {
+    public WeightedRandomSearch() {
     }
 
     /**
@@ -97,14 +98,20 @@ public class RandomSearch implements OptimizationAlgorithm {
                     double sd = Math.max(1.0, previous_sd);
                     double diff_sd = (previous_sd - current_sd) / sd;
 
-                    new_decision = (diff_fair * ExperimentSetup.fair_weight) + (diff_rt * 1.0) + (diff_wt * 1.0) + (diff_sd * 1.0);
+                    new_decision = (diff_fair * ExperimentSetup.fair_weight) + (diff_rt * 0.0) + (diff_wt * 0.0) + (diff_sd * 0.0);
+                    //new_decision = (diff_fair * ExperimentSetup.fair_weight);
 
                     if (new_decision <= 0.0) {
                         ri.removeGInfo(gi);
                         continue;
                     } else {
                         succ = true;
-                        //System.out.println("! New better position found for: "+gi.getID());
+                        System.out.print("curr fair "+Math.round(current_fair)+" | ");
+                        for(int u=0; u < ri.resSchedule.size(); u++){
+                            GridletInfo gri = ri.resSchedule.get(u);
+                            System.out.print(gri.getUser()+", ");
+                        }
+                        System.out.println();
                         break;
                     }
 
@@ -120,11 +127,13 @@ public class RandomSearch implements OptimizationAlgorithm {
                 long is_end = d_end.getTime();
                 if ((is_end - start) >= time_limit) {
                     Scheduler.updateResourceInfos(current_time);
+                    System.out.println("------------");
                     return;
                 }
             }
         }
         Scheduler.updateResourceInfos(current_time);
+        System.out.println("------------");
     }
 
     /** Randomly selects resource from list. */

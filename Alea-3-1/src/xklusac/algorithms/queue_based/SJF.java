@@ -2,11 +2,12 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package xklusac.algorithms;
+package xklusac.algorithms.queue_based;
 
 import java.util.Date;
 import gridsim.GridSim;
 import java.util.Collections;
+import xklusac.algorithms.SchedulingPolicy;
 import xklusac.environment.GridletInfo;
 import xklusac.environment.ResourceInfo;
 import xklusac.environment.Scheduler;
@@ -44,7 +45,7 @@ public class SJF implements SchedulingPolicy {
             for (int j = 0; j < Scheduler.resourceInfoList.size(); j++) {
                 ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(j);
 
-                if (Scheduler.isSuitable(ri, gi) && ri.getNumFreePE() >= gi.getNumPE()) {
+                if (Scheduler.isSuitable(ri, gi) && ri.canExecuteNow(gi)) {
 
                     r_cand = ri;
                     break;
@@ -58,10 +59,11 @@ public class SJF implements SchedulingPolicy {
                 gi.setResourceID(r_cand.resource.getResourceID());
                 scheduler.submitJob(gi.getGridlet(), r_cand.resource.getResourceID());
                 r_cand.is_ready = true;
-                scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, Scheduler.GridletWasSent, gi);                
+                //scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, Scheduler.GridletWasSent, gi);                
                 scheduled++;
                 r_cand = null;
                 i--;
+                return scheduled;
             } else {
                 return scheduled;
             }

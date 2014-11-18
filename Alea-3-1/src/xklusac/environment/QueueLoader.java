@@ -48,7 +48,7 @@ public class QueueLoader {
         Input r = new Input();
         String adresar = "";
         if (ExperimentSetup.meta) {
-            adresar = "/scratch/klusacek/" + ExperimentSetup.path;
+            adresar = System.getProperty("user.dir");
         } else {
             adresar = System.getProperty("user.dir");
         }

@@ -86,7 +86,7 @@ public class MWFLoader extends GridSim {
             double multiplier, int max_id, boolean estimates) throws Exception {
         super(name, baudRate);
         if (ExperimentSetup.meta) {
-            folder_prefix = "/scratch/klusacek/" + ExperimentSetup.path;
+            folder_prefix = System.getProperty("user.dir");
         } else {
             folder_prefix = System.getProperty("user.dir");
         }

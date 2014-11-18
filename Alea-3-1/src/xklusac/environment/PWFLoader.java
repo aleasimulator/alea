@@ -43,7 +43,7 @@ public class PWFLoader extends GridSim {
     public PWFLoader(String name, double baudRate, int total_jobs, String data_set, int maxPE, int minPErating, int maxPErating, int exp) throws Exception {
         super(name, baudRate);
         if (ExperimentSetup.meta) {
-            folder_prefix = "/scratch/klusacek/" + ExperimentSetup.path;
+            folder_prefix = System.getProperty("user.dir");
         } else {
             folder_prefix = System.getProperty("user.dir");
         }

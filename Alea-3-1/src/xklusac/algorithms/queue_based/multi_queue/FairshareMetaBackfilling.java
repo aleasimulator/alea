@@ -2,12 +2,13 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package xklusac.algorithms;
+package xklusac.algorithms.queue_based.multi_queue;
 
 import gridsim.GridSim;
 import java.util.Date;
 import java.util.Collections;
 import java.util.LinkedList;
+import xklusac.algorithms.SchedulingPolicy;
 import xklusac.environment.ExperimentSetup;
 import xklusac.environment.GridletInfo;
 import xklusac.environment.ResourceInfo;
@@ -19,11 +20,11 @@ import xklusac.extensions.WallclockComparator;
  *
  * @author Dalibor Klusacek
  */
-public class FairshareOptimizedMetaBackfilling implements SchedulingPolicy {
+public class FairshareMetaBackfilling implements SchedulingPolicy {
 
     private Scheduler scheduler;
 
-    public FairshareOptimizedMetaBackfilling(Scheduler scheduler) {
+    public FairshareMetaBackfilling(Scheduler scheduler) {
         this.scheduler = scheduler;
     }
 
@@ -31,8 +32,8 @@ public class FairshareOptimizedMetaBackfilling implements SchedulingPolicy {
     public void addNewJob(GridletInfo gi) {
         double runtime1 = new Date().getTime();
         int index = Scheduler.all_queues_names.indexOf(gi.getQueue());
-        if (index == -1) {
-            index = 0;
+        if(index == -1 || ExperimentSetup.by_queue == false){
+            index= 0;
         }
         LinkedList queue = Scheduler.all_queues.get(index);
         queue.addLast(gi);
@@ -92,7 +93,8 @@ public class FairshareOptimizedMetaBackfilling implements SchedulingPolicy {
                 } else {
                     //if (ExperimentSetup.use_anti_starvation && (GridSim.clock() - gi.getRelease_date()) > Math.min(gi.getJobLimit()/gi.getNumPE(), 3600*12.0)) {
                     //if (ExperimentSetup.use_anti_starvation && (GridSim.clock() - gi.getRelease_date()) > Math.min(gi.getJobLimit()/4.0, 3600*12.0)) {
-                    if (ExperimentSetup.use_anti_starvation) {
+                    //  && (GridSim.clock() - gi.getRelease_date()) > (60*30)
+                    if (ExperimentSetup.use_anti_starvation && !gi.getQueue().equals("backfill")) {
                         if (ExperimentSetup.use_queues) {
                             int avail = ExperimentSetup.queues.get(gi.getQueue()).getAvailCPUs();
                             // stradej pouze pokud fronta dovoluje
@@ -102,7 +104,7 @@ public class FairshareOptimizedMetaBackfilling implements SchedulingPolicy {
                                     ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(j);
 
                                     if (Scheduler.isSuitable(ri, gi)) {
-                                        ri.markOptimalSuitableNodes(gi);
+                                        ri.markSuitableNodes(gi);
                                         //System.out.println(gi.getID()+": stradam i fronty "+gi.getNumPE()+" CPU na "+ri.resource.getResourceName());
                                     }
                                 }
@@ -112,8 +114,8 @@ public class FairshareOptimizedMetaBackfilling implements SchedulingPolicy {
                             for (int j = 0; j < Scheduler.resourceInfoList.size(); j++) {
                                 ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(j);
                                 if (Scheduler.isSuitable(ri, gi)) {
-                                    //System.out.println(Math.round(GridSim.clock())+" | "+gi.getID()+": stradam "+gi.getNumPE()+" CPU na "+ri.resource.getResourceName()+ " Queue size = " + Scheduler.queue.size());
-                                    ri.markOptimalSuitableNodes(gi);
+                                    ri.markSuitableNodes(gi);
+                                    //System.out.println(gi.getID()+": stradam "+gi.getNumPE()+" CPU na "+ri.resource.getResourceName());
                                 }
                             }
                         }

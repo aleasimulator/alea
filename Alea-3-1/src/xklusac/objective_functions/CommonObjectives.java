@@ -51,7 +51,6 @@ public class CommonObjectives {
      */
     public static double predictFairness(double current_time) {
         double fairness = 0;
-        int jobs = 0;
         double[] nuwt = new double[Scheduler.users.size()];
         double[] tuwt = new double[Scheduler.users.size()];
         double[] tusa = new double[Scheduler.users.size()];
@@ -92,61 +91,9 @@ public class CommonObjectives {
             // to avoid decreasement of values when the power is computed we add 1.0
             fairness += Math.pow((1.0 + (nwt - nuwt[i])), 2.0);
         }
-        //System.out.println("current fairness = "+Math.round(fairness));
-        //System.out.println("current fairness = "+fairness);
         return Math.max(0.0, fairness);
     }
     
-    public static double predictFairness2(double current_time) {
-        double fairness = 0;
-        int jobs = 0;
-        double[] nuwt = new double[Scheduler.users.size()];
-        double[] tuwt = new double[Scheduler.users.size()];
-        double[] tusa = new double[Scheduler.users.size()];
-        double nwt = 0.0;
-
-        // load known values
-        for (int i = 0; i < Scheduler.users.size(); i++) {
-            nuwt[i] = 0.0;
-            tuwt[i] = Scheduler.total_uwt.get(i);
-            tusa[i] = Scheduler.users_CPUtime.get(i);
-            nuwt[i] = tuwt[i] / Math.max(1.0, tusa[i]);
-            System.out.println("*("+Scheduler.users.get(i)+")"+Math.round(nuwt[i]*10)/10.0);
-        }
-        int u_size = Scheduler.users.size();
-
-        for (int i = 0; i < Scheduler.resourceInfoList.size(); i++) {
-            ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(i);
-            ri.update(current_time);
-            // add predicted values
-            double[] tuwt2 = ri.updateFairness(tuwt, tusa);
-            //double[] tuwt2 = ri.update_tuwt(tuwt);
-            //double[] tusa2 = ri.update_tusa(tusa);
-
-            for (int u = 0; u < Scheduler.users.size(); u++) {
-                tuwt[u] += tuwt2[u];
-                tusa[u] += tuwt2[u + u_size];
-            }
-        }
-        // now tuwt and tusa stores both known and predicted values
-
-        // now proceed with fairness computation
-        for (int i = 0; i < Scheduler.users.size(); i++) {
-            nuwt[i] = tuwt[i] / Math.max(1.0, tusa[i]);
-            System.out.println("("+Scheduler.users.get(i)+")"+Math.round(nuwt[i]*10)/10.0);
-            nwt += nuwt[i];
-        }
-        nwt = nwt / (1.0 * Scheduler.users.size());
-
-        // calculate the sum of powers of average normalized wt - normalized user wt
-        for (int i = 0; i < Scheduler.users.size(); i++) {
-            // to avoid decreasement of values when the power is computed we add 1.0
-            fairness += Math.pow((1.0 + (nwt - nuwt[i])), 2.0);
-        }
-        System.out.println("prumer = "+Math.round(nwt*10)/10.0+" current fairness = "+Math.round(fairness));
-        return Math.max(0.0, fairness);
-    }
-
     /**
      * Calculates avg. wait time
      */
@@ -179,7 +126,10 @@ public class CommonObjectives {
         return Math.max(0.0, start);
     }
 
-    /** Returns expected weighted machine usage wrt. prepared schedule. Use for schedule-based algorithms only! */
+    /**
+     * Returns expected weighted machine usage wrt. prepared schedule. Use for
+     * schedule-based algorithms only!
+     */
     public static double predictWeightedMachineUsage(double current_time) {
         double usage = 0.0;
         double makespan = Double.MIN_VALUE;
@@ -197,8 +147,11 @@ public class CommonObjectives {
     }
 
     /**
-     * Calculate aproximation of how many jobs will meet their deadline. Use for schedule-based algorithms only!
-     * @param current_time current simulation time used to predict total tardiness of all jobs in this moment
+     * Calculate aproximation of how many jobs will meet their deadline. Use for
+     * schedule-based algorithms only!
+     *
+     * @param current_time current simulation time used to predict total
+     * tardiness of all jobs in this moment
      */
     public static int predictNumberOfJobsThatMeetDeadline(double current_time) {
         int nondelayed = 0;
@@ -211,8 +164,11 @@ public class CommonObjectives {
     }
 
     /**
-     * Calculate aproximation of how many jobs will not meet their deadline. Use for schedule-based algorithms only!
-     * @param current_time current simulation time used to predict total tardiness of all jobs in this moment
+     * Calculate aproximation of how many jobs will not meet their deadline. Use
+     * for schedule-based algorithms only!
+     *
+     * @param current_time current simulation time used to predict total
+     * tardiness of all jobs in this moment
      */
     public static int predictNumberOfDelayedJobs(double current_time) {
         int delayed = 0;
@@ -225,9 +181,13 @@ public class CommonObjectives {
     }
 
     /**
-     * Calculate aproximation of expected makespan. Use for schedule-based algorithms only!
-     * @param current_time current simulation time used to predict total tardiness of all jobs in this moment
+     * Calculate aproximation of expected makespan. Use for schedule-based
+     * algorithms only!
+     *
+     * @param current_time current simulation time used to predict total
+     * tardiness of all jobs in this moment
      */
+
     public static double predictMakespan(double current_time) {
         double makespan = Double.MIN_VALUE;
         for (int i = 0; i < Scheduler.resourceInfoList.size(); i++) {
@@ -254,7 +214,9 @@ public class CommonObjectives {
         return total_tardiness;
     }
 
-    /** Returns actual machine usage. May be used for all algorithms. */
+    /** 
+     * Returns actual machine usage. May be used for all algorithms. 
+     */
     public static double getActualUsage() {
         int busy = 0;
         double avail = 0;

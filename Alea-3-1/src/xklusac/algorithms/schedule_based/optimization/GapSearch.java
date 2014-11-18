@@ -2,10 +2,11 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package xklusac.algorithms;
+package xklusac.algorithms.schedule_based.optimization;
 
 import gridsim.GridSim;
 import java.util.Date;
+import xklusac.algorithms.OptimizationAlgorithm;
 import xklusac.objective_functions.CommonObjectives;
 import xklusac.environment.ExperimentSetup;
 import xklusac.environment.GridletInfo;

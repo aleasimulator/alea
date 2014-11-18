@@ -2,26 +2,28 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package xklusac.algorithms;
+package xklusac.algorithms.schedule_based;
 
 import java.util.Date;
 import gridsim.GridSim;
-import xklusac.objective_functions.CommonObjectives;
+import java.util.Collections;
+import xklusac.algorithms.SchedulingPolicy;
 import xklusac.environment.ExperimentSetup;
 import xklusac.environment.GridletInfo;
 import xklusac.environment.ResourceInfo;
 import xklusac.environment.Scheduler;
+import xklusac.extensions.WallclockComparator;
 
 /**
- * Class BestGap <p>
- * Contains implementation of schedule-based Best Gap policy which works similarly as Conservative Backfilling.
- * @author       Dalibor Klusacek
+ * Class CONS<p> Implements CONS (Conservative Backfilling).
+ *
+ * @author Dalibor Klusacek
  */
-public class BestGap implements SchedulingPolicy {
+public class FairshareCONS implements SchedulingPolicy {
 
     private Scheduler scheduler;
 
-    public BestGap(Scheduler scheduler) {
+    public FairshareCONS(Scheduler scheduler) {
         this.scheduler = scheduler;
     }
 
@@ -32,12 +34,7 @@ public class BestGap implements SchedulingPolicy {
         int gIndex = -1;
         double current_time = GridSim.clock();
         double runtime1 = new Date().getTime();
-
-
-        double previous_resp = CommonObjectives.predictAvgResponseTime(current_time) + 100000;
-        double previous_wait = CommonObjectives.predictAvgWaitTime(current_time) + 100000;
-        double previous_sd = CommonObjectives.predictAvgSlowdown(current_time) + 100000;
-        double previous_fair = CommonObjectives.predictFairness(current_time) + 100000;
+        double best_start_time = Double.MAX_VALUE;
         boolean accept = true;
         boolean ok = false;
         boolean okh = false;
@@ -71,29 +68,10 @@ public class BestGap implements SchedulingPolicy {
             if (evaluate) {
 
                 Scheduler.updateResourceInfos(current_time);
-                double new_decision = 0.0;
+                double start_time_new = gi.getExpectedStartTime();
 
-                double current_fair = CommonObjectives.predictFairness(current_time);
-                double fair = Math.max(0.0000000000001, previous_fair);
-                double diff_fair = (previous_fair - current_fair) / fair;
-
-                double current_resp = CommonObjectives.predictAvgResponseTime(current_time);
-                double rt = Math.max(0.0000000000001, previous_resp);
-                double diff_rt = (previous_resp - current_resp) / rt;
-
-                double current_wait = CommonObjectives.predictAvgWaitTime(current_time);
-                double wt = Math.max(0.0000000000001, previous_wait);
-                double diff_wt = (previous_wait - current_wait) / wt;
-
-                double current_sd = CommonObjectives.predictAvgSlowdown(current_time);
-                double sd = Math.max(1.0, previous_sd);
-                double diff_sd = (previous_sd - current_sd) / sd;
-
-
-                // decision taken upon slowdown, response time a wait time values
-                new_decision = (diff_fair * ExperimentSetup.fair_weight) + (diff_rt * 1.0) + (diff_wt * 1.0) + (diff_sd * 1.0);
-
-                if (new_decision <= 0.0 && accept == false) {
+                // test the new assignement
+                if (start_time_new >= best_start_time && accept == false) {
                     //bad move
                     ri.removeGInfo(gi);
                     ResourceInfo rPrev = (ResourceInfo) Scheduler.resourceInfoList.get(resIndex);
@@ -102,10 +80,7 @@ public class BestGap implements SchedulingPolicy {
                 } else {
                     // good move
                     accept = false;
-                    previous_sd = current_sd;
-                    previous_wait = current_wait;
-                    previous_resp = current_resp;
-                    previous_fair = current_fair;
+                    best_start_time = start_time_new;
                     resIndex = i;
                     gIndex = index;
                     gi.setResourceID(ri.resource.getResourceID());
@@ -119,23 +94,49 @@ public class BestGap implements SchedulingPolicy {
         ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(resIndex);
         // updates resource info's internal values (IMPORTANT! because of next use of this policy)
         ri.forceUpdate(GridSim.clock());
-        //System.out.println("New job has been received by BestGap");
+        //System.out.println("New job has been received by CONS");
 
     }
 
     @Override
     public int selectJob() {
-        //System.out.println("Selecting job by Best Gap...");
+
+        // reinsert jobs according to current fairshare
+        ResourceInfo ri = null;
+
+        if (ExperimentSetup.use_fairshare) {
+
+            // remove jobs, resort jobs via fairshare priority
+            for (int i = 0; i < Scheduler.resourceInfoList.size(); i++) {
+                ri = (ResourceInfo) Scheduler.resourceInfoList.get(i);
+                //System.out.println(i+": Starting fairshare update of schedule of " + ri.resSchedule.size() + " jobs.");
+                Scheduler.schedQueue2.addAll(ri.resSchedule);
+                ri.resSchedule.clear();
+                ri.stable = false;
+                ri.holes.clear();
+            }
+            Collections.sort(Scheduler.schedQueue2, new WallclockComparator());
+
+
+            // reinsert jobs using CONS
+            for (int i = 0; i < Scheduler.schedQueue2.size(); i++) {
+                //System.out.print(((GridletInfo) Scheduler.schedQueue2.get(i)).getUser()+"("+Math.round(((GridletInfo) Scheduler.schedQueue2.get(i)).getPriority())+"),");
+                addNewJob((GridletInfo) Scheduler.schedQueue2.get(i));
+            }
+            //System.out.println("---EOF");
+            Scheduler.schedQueue2.clear();
+
+        }
+        //System.out.println("Selecting job by CONS...");
         int scheduled = 0;
         for (int j = 0; j < Scheduler.resourceInfoList.size(); j++) {
-            ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(j);
+            ri = (ResourceInfo) Scheduler.resourceInfoList.get(j);
             if (ri.resSchedule.size() > 0) {
                 GridletInfo gi = (GridletInfo) ri.resSchedule.get(0);
-                int free = ri.getNumFreePE();
-                if (free >= gi.getNumPE()) {
+                if (ri.canExecuteNow(gi)) {
                     ri.removeFirstGI();
                     ri.addGInfoInExec(gi);
-                    //System.out.println(Math.round(GridSim.clock()) + ": send gi "+gi.getID()+" on "+GridSim.getEntityName(ri.resource.getResourceID())+" req/free = "+gi.getNumPE()+"/"+free);
+
 
                     // set the resource ID for this gridletInfo (this is the final scheduling decision)
                     gi.setResourceID(ri.resource.getResourceID());
@@ -144,8 +145,9 @@ public class BestGap implements SchedulingPolicy {
                     scheduler.submitJob(gi.getGridlet(), ri.resource.getResourceID());
 
                     ri.is_ready = true;
-                    scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, Scheduler.GridletWasSent, gi);
+                    //scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, Scheduler.GridletWasSent, gi);
                     scheduled++;
+                    return scheduled;
                 }
             }
         }

@@ -2,17 +2,20 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package xklusac.algorithms;
+package xklusac.algorithms.queue_based.multi_queue;
 
 import java.util.Date;
 import gridsim.GridSim;
 import java.util.LinkedList;
+import xklusac.algorithms.SchedulingPolicy;
+import xklusac.environment.ExperimentSetup;
 import xklusac.environment.GridletInfo;
 import xklusac.environment.ResourceInfo;
 import xklusac.environment.Scheduler;
 
 /**
- * Class FCFS<p> Implements FCFS algorithm.
+ * Class FCFS<p>
+ * Implements FCFS algorithm.
  *
  * @author Dalibor Klusacek
  */
@@ -28,10 +31,10 @@ public class FCFS implements SchedulingPolicy {
     public void addNewJob(GridletInfo gi) {
         double runtime1 = new Date().getTime();
         int index = Scheduler.all_queues_names.indexOf(gi.getQueue());
-        if(index == -1){
-            index= 0;
+        if (index == -1 || ExperimentSetup.by_queue == false) {
+            index = 0;
         }
-        
+
         LinkedList queue = Scheduler.all_queues.get(index);
         queue.addLast(gi);
         Scheduler.runtime += (new Date().getTime() - runtime1);

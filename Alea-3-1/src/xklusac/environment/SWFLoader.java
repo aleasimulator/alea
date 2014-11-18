@@ -18,9 +18,9 @@ import xklusac.extensions.*;
 import eduni.simjava.distributions.Sim_normal_obj;
 
 /**
- * Class SWFLoader<p> Loads jobs dynamically over time from the file. Then sends
- * these gridlets to the scheduler. SWF stands for Standard Workloads Format
- * (SWF).
+ * Class SWFLoader<p>
+ * Loads jobs dynamically over time from the file. Then sends these gridlets to
+ * the scheduler. SWF stands for Standard Workloads Format (SWF).
  *
  * @author Dalibor Klusacek
  */
@@ -89,7 +89,7 @@ public class SWFLoader extends GridSim {
         super(name, baudRate);
         System.out.println(name + ": openning all jobs from " + data_set);
         if (ExperimentSetup.meta) {
-            folder_prefix = "/scratch/klusacek/" + ExperimentSetup.path;
+            folder_prefix = System.getProperty("user.dir");
         } else {
             folder_prefix = System.getProperty("user.dir");
         }
@@ -163,7 +163,6 @@ public class SWFLoader extends GridSim {
         shutdownUserEntity();
         super.terminateIOEntities();
 
-
     }
 
     /**
@@ -174,7 +173,6 @@ public class SWFLoader extends GridSim {
         String line = "";
 
         //System.out.println("Read job "+j);
-
         if (j == 0) {
             while (true) {
                 try {
@@ -235,8 +233,6 @@ public class SWFLoader extends GridSim {
             return null;
         }
 
-
-
         // such job failed or was cancelled and no info about runtime or numCPU is available therefore we skip it
         if (values[3].equals("-1") || values[4].equals("-1")) {
             fail++;
@@ -261,7 +257,6 @@ public class SWFLoader extends GridSim {
 
         }
 
-
         long arrival = 0;
         // synchronize GridSim's arrivals with the UNIX epoch format as given in GWF
         if (start_time < 0) {
@@ -282,7 +277,6 @@ public class SWFLoader extends GridSim {
 
         // queue name
         String queue = values[14];
-
 
         // requested RAM = KB per node (not CPU)
         long ram = Long.parseLong(values[9]);
@@ -305,24 +299,20 @@ public class SWFLoader extends GridSim {
             ram = 0;
         }
 
-
         // skip such job
-        if (data_set.contains("zewura") || data_set.contains("wagapp") || data_set.contains("meta")) {
-            if (!queue.equals("short") && !queue.equals("long") && !queue.equals("normal") && !queue.equals("backfill") && !queue.equals("preemptible")) {
-                fail++;
-                return null;
-            }
-        }
-
+        /*if (data_set.contains("zewura") || data_set.contains("wagapp") || data_set.contains("meta")) {
+         if (!queue.equals("short") && !queue.equals("long") && !queue.equals("normal") && !queue.equals("backfill") && !queue.equals("preemptible")) {
+         fail++;
+         return null;
+         }
+         }
+         */
         //SKIP
         /*
          * if (id < 172262) { fail++; return null; }
          */
-
-
         // manually established - fix it according to your needs
         double deadline = arrival + Integer.parseInt(values[3]) * 2;
-
 
         // finally create gridlet
         //numCPU = 1;
@@ -369,79 +359,78 @@ public class SWFLoader extends GridSim {
 
         String user = values[11];
 
-
         //System.out.println(id + " requests " + ram + " KB RAM per " + numCPU + " CPUs, user: " + user + ", length: " + length + " estimatedLength: " + estimatedLength);
-
         int numNodes = -1;
         int ppn = -1;
-        String properties = values[20];
-
-        if (data_set.contains("wagap") || data_set.contains("meta")) {
-            String[] req_nodes = values[20].split(":");
+        String properties = "";
+        if (values.length > 19) {
             properties = values[20];
-            for (int r = 0; r < req_nodes.length; r++) {
-                if (req_nodes[r].contains("ppn=")) {
-                    String ppns = req_nodes[r].replace("ppn=", "");
-                    if (ppns.contains("#")) {
-                        int ind = ppns.indexOf("#");
-                        ppns = ppns.substring(0, ind);
-                    }
-                    // remove floating point values
-                    if (ppns.contains(".")) {
-                        int ind = ppns.indexOf('.');
-                        ppns = ppns.substring(0, ind);
-                    }
 
-                    // to do: 1:ppn=1+3:ppn=2 
-                    if (ppns.contains("+")) {
-                        break;
-                    }
-                    if (ppns.equals("1cl_zewura")) {
-                        ppn = 1;
-                    } else {
-                        ppn = Integer.parseInt(ppns);
+            if (data_set.contains("wagap") || data_set.contains("meta") || data_set.contains("fairshare")) {
+                String[] req_nodes = values[20].split(":");
+                properties = values[20];
+                for (int r = 0; r < req_nodes.length; r++) {
+                    if (req_nodes[r].contains("ppn=")) {
+                        String ppns = req_nodes[r].replace("ppn=", "");
+                        if (ppns.contains("#")) {
+                            int ind = ppns.indexOf("#");
+                            ppns = ppns.substring(0, ind);
+                        }
+                        // remove floating point values
+                        if (ppns.contains(".")) {
+                            int ind = ppns.indexOf('.');
+                            ppns = ppns.substring(0, ind);
+                        }
+
+                        // to do: 1:ppn=1+3:ppn=2 
+                        if (ppns.contains("+")) {
+                            break;
+                        }
+                        if (ppns.equals("1cl_zewura")) {
+                            ppn = 1;
+                        } else {
+                            ppn = Integer.parseInt(ppns);
+                        }
                     }
                 }
-            }
 
-            if (ppn != -1) {
-                // korekce chyby ve workloadu
+                if (ppn != -1) {
+                    // korekce chyby ve workloadu
+                    if (numCPU < ppn) {
+                        System.out.println(id + ": CPUs mismatch CPUs = " + numCPU + " nodespec = " + properties);
+                        numCPU = ppn;
+                    }
+                    numNodes = numCPU / ppn;
+                } else {
+                    numNodes = 1;
+                    ppn = numCPU;
+                }
+                //System.out.println(id+" | "+values[20]+" nodes="+numNodes+" ppn="+ppn);
+            } else if (data_set.contains("zewura")) {
+                numNodes = 1;
+                ppn = numCPU;
+            } else if (data_set.contains("hpc2n")) {
+                ppn = 2;
                 if (numCPU < ppn) {
-                    System.out.println(id + ": CPUs mismatch CPUs = " + numCPU + " nodespec = " + properties);
-                    numCPU = ppn;
+                    ppn = numCPU;
+                    numNodes = 1;
+                } else if (numCPU % 2 == 1) {
+                    ppn = 1;
+                    numNodes = numCPU;
+                } else {
+                    Long nn = Math.round(Math.ceil(numCPU / ppn));
+                    numNodes = nn.intValue();
                 }
-                numNodes = numCPU / ppn;
-            } else {
-                numNodes = 1;
-                ppn = numCPU;
+                if (ppn * numNodes != numCPU) {
+                    System.out.println(id + ": numNodes value is wrong, CPUs = " + numCPU + " ppn = " + ppn);
+                }
             }
-            //System.out.println(id+" | "+values[20]+" nodes="+numNodes+" ppn="+ppn);
-        } else if (data_set.contains("zewura")) {
-            numNodes = 1;
-            ppn = numCPU;
-        } else if (data_set.contains("hpc2n")) {
-            ppn = 2;
-            if (numCPU < ppn) {
-                ppn = numCPU;
-                numNodes = 1;
-            } else if (numCPU % 2 == 1) {
-                ppn = 1;
-                numNodes = numCPU;
-            } else {
-                Long nn = Math.round(Math.ceil(numCPU / ppn));
-                numNodes = nn.intValue();
-            }
+
             if (ppn * numNodes != numCPU) {
-                System.out.println(id + ": numNodes value is wrong, CPUs = " + numCPU + " ppn = " + ppn);
+                System.out.println(id + ": CPUs mismatch CPUs = " + numCPU + " ppn = " + ppn + " nodes = " + numNodes);
+                numCPU = ppn * numNodes;
             }
         }
-
-        if (ppn * numNodes != numCPU) {
-            System.out.println(id + ": CPUs mismatch CPUs = " + numCPU + " ppn = " + ppn + " nodes = " + numNodes);
-            numCPU = ppn * numNodes;
-        }
-
-        //System.out.println(id+" | "+values[20]+" | nodes="+numNodes+" ppn="+ppn);
 
         // obsolete and useless
         double perc = norm.sample();
@@ -450,13 +439,42 @@ public class SWFLoader extends GridSim {
         length = Math.max(1, Math.round(length / ExperimentSetup.runtime_minimizer));
         estimatedLength = Math.max(1, Math.round(estimatedLength / ExperimentSetup.runtime_minimizer));
 
+        if (data_set.contains("wagap")) {
+            if (ppn > 8) {
+                properties += ":^cl_zigur";
+            }
+            if (ppn > 12) {
+                properties += ":^cl_zegox";
+            }
+            if (ppn > 16) {
+                properties += ":^cl_zapat";
+            }
+        }
+        
+        if (queue.equals("backfill") && data_set.contains("meta")) {
+            properties += ":^cl_manwe:^cl_mandos:^cl_skirit:^cl_ramdal:^cl_haldir:^cl_gram";
+        }
+
+        if (queue.equals("mikroskop") || queue.equals("quark")) {
+            properties += ":cl_quark";
+        }
+
+        if (queue.contains("ncbr")) {
+            properties += ":cl_perian";
+        }
+        
+        if(!Scheduler.all_queues_names.contains(queue) && ExperimentSetup.use_queues){
+            fail++;
+            System.out.println("Unknown queue "+queue+" - skipping job "+id);
+            return null;
+        }
+
 
         ComplexGridlet gl = new ComplexGridlet(id, user, job_limit, new Double(length), estimatedLength, 10, 10,
                 "Linux", "Risc arch.", arrival, deadline, 1, numCPU, 0.0, queue, properties, perc, ram, numNodes, ppn);
 
         // and set user id to the Scheduler entity - otherwise it would be returned to the JobLoader when completed.
         //System.out.println(id+" job has limit = "+(job_limit/3600.0)+" queue = "+queue);
-
         gl.setUserID(super.getEntityId("Alea_3.0_scheduler"));
         return gl;
     }

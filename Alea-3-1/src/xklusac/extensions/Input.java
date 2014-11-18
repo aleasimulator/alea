@@ -1,7 +1,6 @@
 package xklusac.extensions;
 import java.io.*;
 import java.util.*;
-import xklusac.environment.FileUtil;
 /**
  * Class Input<p>
  * This class reads data from specified file.
@@ -16,9 +15,6 @@ public class Input {
      * Opens file "f".
      */
     public BufferedReader openFile(File f) {
-        /*String s = f.getPath();
-        String path = FileUtil.getPath(s);
-        f = new File(path);*/
         BufferedReader br = null;
         try{
             FileInputStream fr = new FileInputStream(f.getAbsoluteFile());

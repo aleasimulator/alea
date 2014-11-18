@@ -68,7 +68,7 @@ public class MachineLoader {
         Input r = new Input();
         String adresar = "";
         if (ExperimentSetup.meta) {
-            adresar = "/scratch/klusacek/" + ExperimentSetup.path;
+            adresar = System.getProperty("user.dir");
         } else {
             adresar = System.getProperty("user.dir");
         }
@@ -241,7 +241,7 @@ public class MachineLoader {
         String adresar = "";
 
         if (ExperimentSetup.meta) {
-            adresar = "/scratch/klusacek/" + ExperimentSetup.path;
+            adresar = System.getProperty("user.dir");
         } else {
             adresar = System.getProperty("user.dir");
         }
@@ -463,7 +463,7 @@ public class MachineLoader {
         Input r = new Input();
         String dir = "";
         if (ExperimentSetup.meta) {
-            dir = "/scratch/klusacek/" + ExperimentSetup.path;
+            dir = System.getProperty("user.dir");
         } else {
             dir = System.getProperty("user.dir");
         }

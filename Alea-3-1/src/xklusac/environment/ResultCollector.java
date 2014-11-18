@@ -11,12 +11,17 @@ package xklusac.environment;
 import gridsim.*;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import xklusac.extensions.Input;
 import xklusac.extensions.Output;
 import xklusac.plugins.Plugin;
+import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class ResultCollector<p> This class stores results into csv file(s) and
@@ -27,10 +32,13 @@ import xklusac.plugins.Plugin;
 public class ResultCollector {
 
     int tot = 0;
-    public List results;
+    public LinkedList results;
     public String data_set;
     Output out = new Output();
     String problem = "";
+    String output_name = "";
+    PrintWriter pw = null;
+    PrintWriter pw2 = null;
     double TSA = 0.0;
     double SAJ = 0.0;
     double SDJ = 0.0;
@@ -109,12 +117,14 @@ public class ResultCollector {
     /**
      * Creates a new instance of ResultCollector
      */
-    public ResultCollector(List results, String prob) {
-        if (ExperimentSetup.meta) {
+    public ResultCollector(LinkedList results, String prob) {
+        user_dir = System.getProperty("user.dir");
+
+        /*if (ExperimentSetup.meta) {
             user_dir = "/scratch/klusacek/" + ExperimentSetup.path;
         } else {
             user_dir = System.getProperty("user.dir");
-        }
+        }*/
 
         this.results = results;
         this.problem = prob;
@@ -297,7 +307,6 @@ public class ResultCollector {
 
 
             out.writeString(user_dir + "/Users" + prob + ".csv", fair);
-            //out.writeString(user_dir + "/jobs" + prob + ".csv", jobs);
             out.writeString(user_dir + "/Results(" + problem + ").csv", suff + "\t"
                     + Math.round(submitted * 100.0) / (experiment_count * 100.0) + "\t"
                     + Math.round(completed_jobs * 100.0) / (experiment_count * 100.0) + "\t"
@@ -372,8 +381,14 @@ public class ResultCollector {
             } else {
                 prob += "_stradani";
             }
-            //out.deleteResults(user_dir + "/jobs" + prob + ".csv");
-            out.writeString(user_dir + "/jobs" + prob + ".csv", "giID \t arrival \t wait \t runtime \t CPUs \t RAM \t userID \t queue");
+            this.output_name = user_dir + "/jobs" + prob + ".csv";
+            out.deleteResults(output_name);
+   
+            this.pw = new PrintWriter(new FileWriter(output_name, true));
+            this.pw2 = new PrintWriter(new FileWriter(FileUtil.getPath(user_dir + "/jobs(" + problem + "" + ExperimentSetup.algID + ").csv"), true));
+
+            out.writeStringWriter(pw, "giID \t arrival \t wait \t runtime \t CPUs \t RAM \t userID \t queue");
+
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -465,7 +480,7 @@ public class ResultCollector {
 
         try {
             // giID - wait - runtime - userID - numPE - ram - arrival - queue
-            out.writeString(user_dir + "/jobs(" + problem + "" + ExperimentSetup.algID + ").csv", gridlet_received.getGridletID() + "\t" + Math.max(0.0, (response - cpu_time))
+                        out.writeStringWriterErr(pw2, gridlet_received.getGridletID() + "\t" + Math.max(0.0, (response - cpu_time))
                     + "\t" + cpu_time + "\t" + gi.getUser() + "\t" + gi.getNumPE() + "\t" + gi.getRam() + "\t" + gi.getRelease_date() + "\t" + gi.getQueue());
             String prob = "_";
             prob += ExperimentSetup.algID + "_" + ExperimentSetup.name;
@@ -486,7 +501,9 @@ public class ResultCollector {
                     + "\t" + Math.round(cpu_time * 10) / 10.0 + "\t" + gi.getNumPE() + "\t" + gi.getRam() + "\t" + gi.getUser() + "\t" + gi.getQueue();
 
 
-            out.writeString(user_dir + "/jobs" + prob + ".csv", line.replace(".", ","));
+            //out.writeStringWriter(user_dir + "/jobs" + prob + ".csv", line.replace(".", ","));
+
+            out.writeStringWriter(pw, line.replace(".", ","));
 
 
         } catch (IOException ex) {
@@ -596,6 +613,12 @@ public class ResultCollector {
         this.awsd = 0.0;
         this.sa_total = 0.0;
 
+        try {
+            out.closeWriter(pw);
+            out.closeWriter(pw2);
+        } catch (IOException ex) {
+            Logger.getLogger(ResultCollector.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
         ExperimentSetup.users.clear();
         ExperimentSetup.queues.clear();
@@ -617,8 +640,20 @@ public class ResultCollector {
     private void generateCDFJobsStatistics(String suff, double job_count) {
         String line = "";
         Input r = new Input();
+        
+        try {
+            out.closeWriter(pw2);
+            out.closeWriter(pw);
+        } catch (IOException ex) {
+            Logger.getLogger(ResultCollector.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
         //pridan nazev slozky do puvodni cesty
-        BufferedReader br = r.openFile(new File(user_dir + File.separator + ExperimentSetup.getDir(DirectoryLevel.ALGORITHM) + File.separator + "jobs(" + problem + "" + ExperimentSetup.algID + ").csv"));
+        String fileName = user_dir + File.separator + ExperimentSetup.getDir(DirectoryLevel.ALGORITHM) + File.separator + "jobs(" + problem + "" + ExperimentSetup.algID + ").csv";
+        System.out.println("Nazev souboru:" + fileName);
+        File file = new File(fileName);
+        System.out.println("Existuje soubor:" + file.exists());
+        BufferedReader br = r.openFile(file);
         Double[] wt = new Double[1442];
         Double[] rt = new Double[2882];
         Double[] sd = new Double[1002];
@@ -636,6 +671,7 @@ public class ResultCollector {
                 break;
             } else {
                 String values[] = line.split("\t");
+                //System.out.print(values[0] + ", ");
                 double wait = Double.parseDouble(values[1]);
                 double sld = Math.max(1.0, (Math.max(0.0, (wait + Double.parseDouble(values[2]))) / Math.max(1.0, Double.parseDouble(values[2]))));
                 double resp = Math.max(0.0, (wait + Double.parseDouble(values[2])));
@@ -678,6 +714,7 @@ public class ResultCollector {
                 u.updateJobs(1.0);
                 u.updateSlowdown(sld);
                 u.updateWait(wait);
+                //System.out.print("|"+values[4]+"|");
                 u.updateRuntime(Double.parseDouble(values[2]) * Integer.parseInt(values[4]));
             }
         }

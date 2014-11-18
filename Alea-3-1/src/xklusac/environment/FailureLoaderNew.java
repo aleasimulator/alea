@@ -42,7 +42,7 @@ public class FailureLoaderNew extends GridSim {
     public FailureLoaderNew(String name, double baudRate, String data_set, LinkedList clusterNames, LinkedList machineNames, int version) throws Exception {
         super(name, baudRate);
         if (ExperimentSetup.meta) {
-            folder_prefix = "/scratch/klusacek/" + ExperimentSetup.path;
+            folder_prefix = System.getProperty("user.dir");
         } else {
             folder_prefix = System.getProperty("user.dir");
         }

@@ -1,4 +1,22 @@
 package xklusac.environment;
+import xklusac.algorithms.schedule_based.BestGap;
+import xklusac.algorithms.schedule_based.BF_CONS_Fair;
+import xklusac.algorithms.schedule_based.optimization.GapSearch;
+import xklusac.algorithms.schedule_based.optimization.TabuSearch;
+import xklusac.algorithms.schedule_based.optimization.RandomSearch;
+import xklusac.algorithms.schedule_based.optimization.WeightedRandomSearch;
+import xklusac.algorithms.schedule_based.CONS;
+import xklusac.algorithms.schedule_based.FairshareCONS;
+import xklusac.algorithms.queue_based.multi_queue.EASY_Backfilling;
+import xklusac.algorithms.queue_based.multi_queue.AggressiveBackfilling;
+import xklusac.algorithms.queue_based.multi_queue.FairshareMetaBackfilling;
+import xklusac.algorithms.queue_based.PBS_PRO;
+import xklusac.algorithms.queue_based.multi_queue.FairshareFCFS;
+import xklusac.algorithms.queue_based.multi_queue.FairshareOptimizedMetaBackfilling;
+import xklusac.algorithms.queue_based.EDF;
+import xklusac.algorithms.queue_based.multi_queue.Fairshare_EASY_Backfilling;
+import xklusac.algorithms.queue_based.SJF;
+import xklusac.algorithms.queue_based.multi_queue.FCFS;
 
 import eduni.simjava.Sim_system;
 import java.io.IOException;
@@ -273,6 +291,14 @@ public class ExperimentSetup {
     
     //private static String subDir;
     
+    /**
+     * if several different queues in the system should are defined, this variable
+     * defines whether they will be used separately (queue-by-queue in a defined priority
+     * order) or they will only be used to guard queue-limits.
+     */
+    public static boolean by_queue;
+
+    
     private static String[] dir = new String[3];
     
     /**
@@ -359,6 +385,7 @@ public class ExperimentSetup {
         use_resource_spec_packing = aCfg.getBoolean("use_resource_spec_packing");
         // set true to use different queues
         use_queues = aCfg.getBoolean("use_queues");
+        by_queue = aCfg.getBoolean("by_queue");
         
         
         // if required - start the graphical output using -v parameter
@@ -454,7 +481,9 @@ public class ExperimentSetup {
 
         String user_dir = "";
         if (ExperimentSetup.meta) {
-            user_dir = "/scratch/klusacek/" + path;
+            
+            user_dir = System.getProperty("user.dir");
+            //user_dir = "/scratch/klusacek/" + path;
         } else {
             user_dir = System.getProperty("user.dir");
         }
@@ -467,7 +496,8 @@ public class ExperimentSetup {
 
         // creates Result Collector
         ResultCollector result_collector = new ResultCollector(results, problem);
-        
+        System.out.println("Working directory: " + System.getProperty("user.dir"));
+
         // creates file/folder for one setup
         dir[0] = getDate();
         File runDirF = new File(dir[0]);
@@ -519,10 +549,12 @@ public class ExperimentSetup {
 
             // selects algorithm
             // write down the IDs of algorithm that you want to use (FCFS = 0, EDF = 1, EASY = 2, AgresiveBF = 3, CONS compression = 4, PBS PRO = 5, SJF = 6, FairShareFCFS = 7, 
-            // FairShareMetaBackfilling = 8, FairShareCONS = 9, BestGap = 10, BestGap+RandomSearch = 11, 18 = CONS+Tabu Search, 19 = CONS + Gap Search, 20 = CONS + RandomSearch, CONS no compression = 21,
+            // (FCFS = 0, EDF = 1, EASY = 2, AgresiveBF = 3, CONS compression = 4, PBS PRO = 5, SJF = 6, FairShareFCFS = 7, 
+            // FairShareMetaBackfilling = 8, FairShareCONS = 9, BestGap = 10, BestGap+RandomSearch = 11, FairShareOptimizedMetaBackfilling = 12
+            // 18 = CONS+Tabu Search, 19 = CONS + Gap Search, 20 = CONS + RandomSearch, CONS no compression = 21,
 
             boolean stradej[] = aCfg.getBooleanArray("stradej");
-            boolean packuj[] = aCfg.getBooleanArray("packuj");
+            boolean do_pack[] = aCfg.getBooleanArray("do_pack");
             int skipuj[] = aCfg.getIntArray("skipuj");
             int algorithms[] = aCfg.getIntArray("algorithms");
 
@@ -530,7 +562,7 @@ public class ExperimentSetup {
             for (int sel_alg = 0; sel_alg < algorithms.length; sel_alg++) {
 
                 use_anti_starvation = stradej[sel_alg];
-                use_resource_spec_packing = packuj[sel_alg];
+                use_resource_spec_packing = do_pack[sel_alg];
                 skip = skipuj[set];
 
                 // reset values from previous iterations
@@ -561,6 +593,7 @@ public class ExperimentSetup {
                     String[] exclude_from_processing = {""};
                     String report_name = null;
                     GridSim.init(entities, calendar, trace_flag, exclude_from_file, exclude_from_processing, report_name);
+                    int rnd = new Random().nextInt();
                     scheduler = new Scheduler(scheduler_name, baudRate, entities, results, alg, data_sets[set], total_gridlet[set], suff, windows, result_collector, sel_alg);
                 } catch (Exception ex) {
                     Logger.getLogger(ExperimentSetup.class.getName()).log(Level.SEVERE, null, ex);
@@ -589,22 +622,24 @@ public class ExperimentSetup {
                 }
                 if (alg == 4) {
                     policy = new CONS(scheduler);
+                    // Conservative backfilling (no RAM support)
                     use_compresion = true;
                     suff = "CONS+compression";
                 }
-                // do not use PBS-PRO on other than "metacentrum.mwf" data - not enough information is available.
+                
                 if (alg == 5) {
                     policy = new PBS_PRO(scheduler);
+                    // do not use PBS-PRO on other than "metacentrum.mwf" data - not enough information is available.
                     suff = "PBS-PRO";
                 }
                 if (alg == 6) {
                     policy = new SJF(scheduler);
-                    // Backfilling without a reservation
+                    // Shortest Job First policy
                     suff = "SJF";
                 }
                 if (alg == 7) {
                     policy = new FairshareFCFS(scheduler);
-                    // Backfilling without a reservation
+                    // Fairshare ordered FCFS
                     suff = "FairShareFCFS";
                 }
                 if (alg == 8) {
@@ -621,7 +656,7 @@ public class ExperimentSetup {
                 if (alg == 12) {
                     policy = new FairshareOptimizedMetaBackfilling(scheduler);
                     // Backfilling without a reservation
-                    suff = "FairShareOptimizedMetaBackfilling(o4)";
+                    suff = "FairShareOptimizedMetaBackfilling";
                     if (use_anti_starvation) {
                         suff += "-str";
                     }
@@ -631,12 +666,14 @@ public class ExperimentSetup {
                 }
                 if (alg == 9) {
                     policy = new FairshareCONS(scheduler);
+                    // Conservative backfilling with fairshare (no RAM support)
                     use_compresion = true;
                     suff = "FairShareCONS+compr.";
                 }
 
                 if (alg == 10) {
                     policy = new BestGap(scheduler);
+                    // Best-Gap backfill-like policy (no RAM support)
                     suff = "BestGap";
                 }
                 if (alg == 11) {
@@ -662,6 +699,7 @@ public class ExperimentSetup {
 
                 if (alg == 19) {
                     suff = "CONS+GS(" + multiplicator + ")";
+                    use_compresion = false;
                     policy = new CONS(scheduler);
                     opt_alg = new GapSearch();
 
@@ -671,7 +709,8 @@ public class ExperimentSetup {
                     }
                 }
                 if (alg == 20) {
-                    suff = "CONS+RandSearch(" + multiplicator + ")";
+                    suff = "CONS+RS(" + multiplicator + ")";
+                    use_compresion = false;
                     policy = new CONS(scheduler);
                     opt_alg = new RandomSearch();
                     if (useEventOpt) {
@@ -679,10 +718,58 @@ public class ExperimentSetup {
                         suff += "-EventOptRS";
                     }
                 }
+
+                if (alg == 201 || alg == 202 || alg == 203) {
+                    suff = "CONS+RS(" + multiplicator + ")";
+                    use_compresion = false;
+                    policy = new CONS(scheduler);
+                    opt_alg = new RandomSearch();
+                    if (useEventOpt) {
+                        fix_alg = new RandomSearch();
+                        suff += "-EventOptRS";
+                    }
+                }
+                if (alg == 204 || alg == 205 || alg == 206) {
+                    suff = "CONS+RS(" + multiplicator + ")";
+                    use_compresion = false;
+                    policy = new CONS(scheduler);
+                    opt_alg = new RandomSearch();
+                    if (useEventOpt) {
+                        fix_alg = new GapSearch();
+                        suff += "-EventOptGS";
+                    }
+                }
+                if (alg == 207 || alg == 208 || alg == 209) {
+                    suff = "CONS+WRS(" + multiplicator + ")";
+                    use_compresion = false;
+                    policy = new CONS(scheduler);
+                    opt_alg = new WeightedRandomSearch();
+                    if (useEventOpt) {
+                        fix_alg = new WeightedRandomSearch();
+                        suff += "-EventOptWRS";
+                    }
+                }
+
+                
                 if (alg == 21) {
                     suff = "CONS-no-compress";
                     policy = new CONS(scheduler);
                 }
+                
+                if (alg == 22) {
+                    policy = new Fairshare_EASY_Backfilling(scheduler);
+                    // fixed version of EASY Backfilling
+                    suff = "EASY-Fair";
+                }
+                if (alg == 23) {
+                    policy = new BF_CONS_Fair(scheduler);
+                    // faster version of FairshareCONS (queue is not reshuffled every time)
+                    // cannot be used when periodic fairshare update is enabled
+                    // this update would break the detection of fairshare changes in BF_CONS_Fair
+                    use_compresion = true;
+                    suff = "CONS-Fair-compr.";
+                }
+
                 
                 dir[2] = suff;
                 File algDirF = new File(ExperimentSetup.getDir(DirectoryLevel.ALGORITHM));
@@ -769,8 +856,7 @@ public class ExperimentSetup {
                     result_collector.reset();
                     results.clear();
                     System.out.println("Max. estim has been used = " + max_estim + " backfilled jobs = " + backfilled);
-                    System.gc();
-                    
+                    System.gc();                    
                 }
             }
         }

@@ -526,7 +526,7 @@ public class Scheduler extends GridSim {
             int total_gridlet, String suff, LinkedList windows, ResultCollector rc, int rnd) throws Exception {
         super(name, baudRate);
         if (ExperimentSetup.meta) {
-            folder_prefix = "/scratch/klusacek/" + ExperimentSetup.path;
+            folder_prefix = System.getProperty("user.dir");
         } else {
             folder_prefix = System.getProperty("user.dir");
         }
@@ -569,7 +569,9 @@ public class Scheduler extends GridSim {
         date1 = new Date().getTime();
 
         this.rc = rc;
-        //rc.deleteSchedResults(suff); // moved to ExperimentSetup
+        
+        //moved to ExperimentSetup
+        //rc.deleteSchedResults(suff);
 
         // fill in the list of properties (Meta only - there are 39 properties: p1,p2,..,p39 )
         for (int i = 1; i < 40; i++) {
@@ -705,7 +707,7 @@ public class Scheduler extends GridSim {
         //super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, 123987);
 
         // periodic decrease of old fairshare weights
-        super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, 454545);
+        //super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, 454545);
 
         // periodic update of fairshare weights according to currently running jobs
         double fairdelay = 100 - GridSim.clock();
@@ -724,7 +726,7 @@ public class Scheduler extends GridSim {
                 continue;
             }
             if (ev.get_tag() == 545454 && ExperimentSetup.use_fairshare) {
-                //System.out.println("Now waiting = " + getQueueSize() + ", simtime = " + Math.round(clock()) + ", running = " + getRunningJobs() + " jobs. Performing fairshare update... FREE = " + getFreeCPUs());
+                //System.out.println("Now waiting = " + getQueueSize() + ", simtime = " + Math.round(clock()) + ", running = " + getRunningJobs() + " jobs. Performing fairshare update... ");
                 updateFairShare();
                 super.sim_schedule(this.getEntityId(this.getEntityName()), (300.0), 545454);
                 continue;
@@ -939,7 +941,7 @@ public class Scheduler extends GridSim {
                 updateLengthStatistics(gridlet_received, cpu_time);
 
                 if (received % 100 == 0) {
-                    if (algorithm >= 9 || algorithm == 4) {
+                    if ((algorithm >= 9 && algorithm != 12) || algorithm == 4) {
                         System.out.println("<<< " + received + " so far completed, in schedule = " + getScheduleSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs free CPUs = " + getFreeCPUs());
                     } else {
                         System.out.println("<<< " + received + " so far completed, in queue = " + getQueueSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs free CPUs = " + getFreeCPUs());
@@ -1058,7 +1060,7 @@ public class Scheduler extends GridSim {
 
                 // write on screen info so that the simulation progress can be seen
                 if (in_job_counter % 100 == 0) {
-                    if (algorithm >= 9 || algorithm == 4) {
+                    if ((algorithm >= 9 && algorithm != 12) || algorithm == 4) {
                         System.out.println(">>> " + in_job_counter + " so far arrived, in schedule = " + getScheduleSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + "jobs,  FREE CPUs = " + getFreeCPUs());
                     } else {
                         String dated = new java.text.SimpleDateFormat("dd-MM-yyyy").format(new java.util.Date(Math.round(clock()) * 1000));
@@ -1106,10 +1108,10 @@ public class Scheduler extends GridSim {
             System.out.println("---------------------------- End Of Simulation - CALLING RESULT COLLECTOR ------------------------------------");
             System.out.println("---------------------------- Event optimization performed = " + event_opt + " times. -------------------------");
             System.out.println("---------------------------- Cancelled due miss. property = " + bad + " jobs. -------------------------");
-            
-            // NEW: created object SchedulerData
-            SchedulerData sd =  new SchedulerData(av_PEs, wav_PEs, failure_time, wfailure_time, clock, runtime, classic_load, max_load, submitted);
-            rc.computeResults(sd);
+            //rc.computeResults(av_PEs, wav_PEs, failure_time, wfailure_time, clock, runtime, classic_load, max_load, submitted);
+        // NEW: created object SchedulerData
+        SchedulerData sd =  new SchedulerData(av_PEs, wav_PEs, failure_time, wfailure_time, clock, runtime, classic_load, max_load, submitted);
+        rc.computeResults(sd);
         }
         // shut down I/O ports, turn off this entity
         shutdownUserEntity();
@@ -1551,14 +1553,15 @@ public class Scheduler extends GridSim {
         double final_prevram = final_total_uram.get(user_index);
 
 
-        double ram = (gridlet_received.getNumNodes() * gridlet_received.getRam()) / ExperimentSetup.avail_RAM;
-        double cpu = gridlet_received.getNumPE() / ExperimentSetup.avail_CPUs;
-        old_max += Math.max(cpu, ram) * cpu_time;
-        old_sqrt += (1.0 - Math.sqrt((Math.abs(1.0 - ram) * Math.abs(1.0 - cpu)))) * cpu_time;
+        double relative_RAM = (gridlet_received.getNumNodes() * gridlet_received.getRam()) / ExperimentSetup.avail_RAM;
+        double relative_CPUs = gridlet_received.getNumPE() / ExperimentSetup.avail_CPUs;
+        old_max += Math.max(relative_CPUs, relative_RAM) * cpu_time;
+        old_sqrt += (1.0 - Math.sqrt((Math.abs(1.0 - relative_RAM) * Math.abs(1.0 - relative_CPUs)))) * cpu_time;
 
 
-        old_time += cpu_time * cpu;
-        //old_time += cpu_time * gridlet_received.getNumPE();
+        //old_time += cpu_time * relative_CPUs;
+        old_time += cpu_time * gridlet_received.getNumPE();
+
 
 
         final_old_time += cpu_time * gridlet_received.getNumPE();
@@ -1568,9 +1571,9 @@ public class Scheduler extends GridSim {
         double ram_per_cpu_per_node = ram_per_node / gridlet_received.getNumPE();
 
 
-        old_mult += (cpu_time * cpu) * (Math.max(0.0, gridlet_received.getNumNodes() * ram_per_cpu_per_node));
-        prevwt += Math.max(0.0, gridlet_received.getExecStartTime() - gridlet_received.getArrival_time());
-        final_prevwt += Math.max(0.0, gridlet_received.getExecStartTime() - gridlet_received.getArrival_time());
+        old_mult += (cpu_time * relative_CPUs) * (Math.max(0.0, gridlet_received.getNumNodes() * ram_per_cpu_per_node));
+        prevwt += Math.max(0.0, gridlet_received.getExecStartTime() - gridlet_received.getArrival_time());//*gridlet_received.getNumPE();
+        final_prevwt += Math.max(0.0, gridlet_received.getExecStartTime() - gridlet_received.getArrival_time());//*gridlet_received.getNumPE();;
         prevram += Math.max(0.0, gridlet_received.getNumNodes() * gridlet_received.getRam());
         final_prevram += Math.max(0.0, gridlet_received.getNumNodes() * gridlet_received.getRam());
         //System.out.println(gridlet_received.getGridletID()+" adding vwt ="+Math.round(gridlet_received.getExecStartTime() - gridlet_received.getArrival_time())+ " total="+ Math.round(prevwt));
@@ -1818,7 +1821,7 @@ public class Scheduler extends GridSim {
      * detected. typically used by Conservative backfilling.
      */
     private void compressSchedule(int resid) {
-        if (!ExperimentSetup.use_fairshare) {
+        if (!ExperimentSetup.use_fairshare || ExperimentSetup.algID == 4) {
             ResourceInfo ri = null;
             double runtime1 = new Date().getTime();
 
@@ -1866,7 +1869,7 @@ public class Scheduler extends GridSim {
      * @param gl job submitted
      * @param resID resource where the job has been submitted
      */
-    public void logJobSubmit(ComplexGridlet gl, int resID) {
+    /*public void logJobSubmit(ComplexGridlet gl, int resID) {
 
         try {
             ResourceInfo ri = null;
@@ -1884,7 +1887,7 @@ public class Scheduler extends GridSim {
             ex.printStackTrace();
         }
 
-    }
+    }*/
 
     /**
      * This method periodically collects results used for grpah generation.

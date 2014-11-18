@@ -2,11 +2,12 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package xklusac.algorithms;
+package xklusac.algorithms.schedule_based;
 
 import java.util.Date;
 import gridsim.GridSim;
 import java.util.Collections;
+import xklusac.algorithms.SchedulingPolicy;
 import xklusac.environment.ExperimentSetup;
 import xklusac.environment.GridletInfo;
 import xklusac.environment.ResourceInfo;
@@ -14,20 +15,53 @@ import xklusac.environment.Scheduler;
 import xklusac.extensions.WallclockComparator;
 
 /**
- * Class CONS<p> Implements CONS (Conservative Backfilling).
+ * Class CONS<p>
+ * Implements CONS (Conservative Backfilling).
  *
  * @author Dalibor Klusacek
  */
-public class FairshareCONS implements SchedulingPolicy {
+public class BF_CONS_Fair implements SchedulingPolicy {
+
+    double priority_of_previous_job = -11;
 
     private Scheduler scheduler;
 
-    public FairshareCONS(Scheduler scheduler) {
+    public BF_CONS_Fair(Scheduler scheduler) {
         this.scheduler = scheduler;
     }
 
     @Override
     public void addNewJob(GridletInfo gi) {
+    // pozor toto funguje jen pokud se nemeni dynamicky priority za behu
+        if (priority_of_previous_job == -11 || priority_of_previous_job == gi.getPriority()) {
+            priority_of_previous_job = gi.getPriority();
+            addJobToSchedule(gi);            
+        } else {
+            priority_of_previous_job = gi.getPriority();
+            ResourceInfo ri = null;
+            // remove jobs, resort jobs via fairshare priority
+            for (int i = 0; i < Scheduler.resourceInfoList.size(); i++) {
+                ri = (ResourceInfo) Scheduler.resourceInfoList.get(i);
+                //System.out.println(i+": Starting fairshare update of schedule of " + ri.resSchedule.size() + " jobs.");
+                Scheduler.schedQueue2.addAll(ri.resSchedule);
+                ri.resSchedule.clear();
+                ri.stable = false;
+                ri.holes.clear();
+            }
+            Collections.sort(Scheduler.schedQueue2, new WallclockComparator());
+
+            // reinsert jobs using CONS
+            for (int i = 0; i < Scheduler.schedQueue2.size(); i++) {
+                //System.out.print(((GridletInfo) Scheduler.schedQueue2.get(i)).getUser()+"("+Math.round(((GridletInfo) Scheduler.schedQueue2.get(i)).getPriority())+"),");
+                addJobToSchedule((GridletInfo) Scheduler.schedQueue2.get(i));
+            }
+            //System.out.println("---EOF");
+            Scheduler.schedQueue2.clear();
+            addJobToSchedule(gi); 
+        }
+    }
+
+    public void addJobToSchedule(GridletInfo gi) {
         int index = 0;
         int resIndex = -2;
         int gIndex = -1;
@@ -99,33 +133,11 @@ public class FairshareCONS implements SchedulingPolicy {
 
     @Override
     public int selectJob() {
+        // pozor toto funguje jen pokud se nemeni dynamicky priority za behu
 
         // reinsert jobs according to current fairshare
         ResourceInfo ri = null;
 
-        if (ExperimentSetup.use_fairshare) {
-
-            // remove jobs, resort jobs via fairshare priority
-            for (int i = 0; i < Scheduler.resourceInfoList.size(); i++) {
-                ri = (ResourceInfo) Scheduler.resourceInfoList.get(i);
-                //System.out.println(i+": Starting fairshare update of schedule of " + ri.resSchedule.size() + " jobs.");
-                Scheduler.schedQueue2.addAll(ri.resSchedule);
-                ri.resSchedule.clear();
-                ri.stable = false;
-                ri.holes.clear();
-            }
-            Collections.sort(Scheduler.schedQueue2, new WallclockComparator());
-
-
-            // reinsert jobs using CONS
-            for (int i = 0; i < Scheduler.schedQueue2.size(); i++) {
-                //System.out.print(((GridletInfo) Scheduler.schedQueue2.get(i)).getUser()+"("+Math.round(((GridletInfo) Scheduler.schedQueue2.get(i)).getPriority())+"),");
-                addNewJob((GridletInfo) Scheduler.schedQueue2.get(i));
-            }
-            //System.out.println("---EOF");
-            Scheduler.schedQueue2.clear();
-
-        }
         //System.out.println("Selecting job by CONS...");
         int scheduled = 0;
         for (int j = 0; j < Scheduler.resourceInfoList.size(); j++) {
@@ -135,7 +147,6 @@ public class FairshareCONS implements SchedulingPolicy {
                 if (ri.canExecuteNow(gi)) {
                     ri.removeFirstGI();
                     ri.addGInfoInExec(gi);
-
 
                     // set the resource ID for this gridletInfo (this is the final scheduling decision)
                     gi.setResourceID(ri.resource.getResourceID());
