@@ -21,7 +21,7 @@ public class FileUtil {
      * @return the new path
      */
     public static String getPath(String path) {
-        System.out.println("Vstup do getPath:" + path);
+        //System.out.println("Vstup do getPath:" + path);
         path = path.replace("\\", "/");
         int i = path.lastIndexOf("/");
         String fileName = path.substring(i+1);
@@ -32,7 +32,7 @@ public class FileUtil {
         } else {
             newPath = directory + File.separator + ExperimentSetup.getDir(DirectoryLevel.ALGORITHM) + File.separator + fileName;
         }
-        System.out.println("Vystup:" + newPath);
+        //System.out.println("Vystup:" + newPath);
         
         return newPath;
     }

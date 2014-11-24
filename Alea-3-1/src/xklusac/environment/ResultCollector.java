@@ -384,7 +384,9 @@ public class ResultCollector {
             this.output_name = user_dir + "/jobs" + prob + ".csv";
             out.deleteResults(output_name);
    
-            this.pw = new PrintWriter(new FileWriter(output_name, true));
+            this.pw = new PrintWriter(new FileWriter(FileUtil.getPath(output_name)), true);
+            
+            //this.pw = new PrintWriter(new FileWriter(output_name, true));
             this.pw2 = new PrintWriter(new FileWriter(FileUtil.getPath(user_dir + "/jobs(" + problem + "" + ExperimentSetup.algID + ").csv"), true));
 
             out.writeStringWriter(pw, "giID \t arrival \t wait \t runtime \t CPUs \t RAM \t userID \t queue");
@@ -650,9 +652,9 @@ public class ResultCollector {
         
         //pridan nazev slozky do puvodni cesty
         String fileName = user_dir + File.separator + ExperimentSetup.getDir(DirectoryLevel.ALGORITHM) + File.separator + "jobs(" + problem + "" + ExperimentSetup.algID + ").csv";
-        System.out.println("Nazev souboru:" + fileName);
+        //System.out.println("Nazev souboru:" + fileName);
         File file = new File(fileName);
-        System.out.println("Existuje soubor:" + file.exists());
+        //System.out.println("Existuje soubor:" + file.exists());
         BufferedReader br = r.openFile(file);
         Double[] wt = new Double[1442];
         Double[] rt = new Double[2882];
