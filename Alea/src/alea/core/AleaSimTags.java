@@ -48,7 +48,7 @@ public class AleaSimTags {
      public static final int EVENT_OPTIMIZE = TAG_BASE+902;
      /** Tag for interal scheduler wake event */
      public static final int EVENT_SCHEDULE = TAG_BASE+903;
-     
+     /** Tag depicting the start of a machine failure */
      public static final int FAILURE_START = TAG_BASE+501;
      public static final int FAILURE_FINISHED = TAG_BASE+502;
      public static final int FAILURE_RESTART = TAG_BASE+503;
