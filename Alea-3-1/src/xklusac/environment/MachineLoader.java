@@ -53,8 +53,10 @@ public class MachineLoader {
             createMETAGridResources(bandwidth, cost, set);
         } else if (set.contains("pwf")) {
             createPisaGridResources(bandwidth, cost, set);
+        } else if (set.contains("ai")) {
+            createGridResources(bandwidth, cost, set);
         } else {
-            System.out.println("Wrong machine workload format or file extension (gwf.machines, swf.machines, mwf.machines, pwf.machines)");
+            System.out.println("Wrong machine workload format or file extension (gwf.machines, swf.machines, mwf.machines, pwf.machines, ai.machines)");
         }
 
     }

@@ -1,12 +1,12 @@
 package xklusac.environment;
 
+import alea.core.AleaSimTags;
 import eduni.simjava.Sim_event;
 import gridsim.*;
 import java.io.IOException;
 import java.util.*;
 import xklusac.objective_functions.CommonObjectives;
 import xklusac.extensions.*;
-import xklusac.extensions.Queue;
 
 /**
  * Class Scheduler<p> This class represents the Scheduler. It takes the
@@ -59,9 +59,6 @@ public class Scheduler extends GridSim {
     /**
      * Tag signaling that gridlet/job was sent
      */
-    public static int GridletWasSent = 111223344;
-    public static int GridletStarted = 511223344;
-    public static int ScheduleJobsNow = 1119055678;
     private static LinkedList schedQueue = new LinkedList();
     public static LinkedList schedQueue2 = new LinkedList();
     /**
@@ -247,11 +244,6 @@ public class Scheduler extends GridSim {
      * auxiliary variable
      */
     private int received;
-    /**
-     * auxiliary variable
-     */
-    private static int SendGridletInfo = 999;
-    private static int PeriodicOptimization = 111551;
     /**
      * auxiliary variable
      */
@@ -688,30 +680,30 @@ public class Scheduler extends GridSim {
 
                 // start periodical logging of results and visualization
                 if (visualize) {
-                    super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, 11155);
+                    super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.SCHEDULER_COLLECT);
                 }
                 // start periodical optimization of schedule
-                super.sim_schedule(this.getEntityId(this.getEntityName()), 300.0, PeriodicOptimization);
+                super.sim_schedule(GridSim.getEntityId(this.getEntityName()), 300.0, AleaSimTags.EVENT_OPTIMIZE);
                 break; // break when we have the resource-related information
 
             }
         } //end while
         // start the FailureLoader
         if (failures) {
-            super.sim_schedule(this.getEntityId(data_set + "_FailureLoader"), 0.0, GridSimTags.JUNK_PKT);
+            super.sim_schedule(this.getEntityId(data_set + "_FailureLoader"), 0.0, AleaSimTags.EVENT_WAKE);
         }
         // start the JobLoader
-        super.sim_schedule(this.getEntityId(data_set + "_JobLoader"), 5.0, GridSimTags.JUNK_PKT);
+        super.sim_schedule(this.getEntityId(data_set + "_JobLoader"), 5.0, AleaSimTags.EVENT_WAKE);
 
         // start periodic print of queue data
-        //super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, 123987);
+        //super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.LOG_SCHEDULER);
 
         // periodic decrease of old fairshare weights
-        //super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, 454545);
+        //super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.FAIRSHARE_WEIGHT_DECAY);
 
         // periodic update of fairshare weights according to currently running jobs
         double fairdelay = 100 - GridSim.clock();
-        super.sim_schedule(this.getEntityId(this.getEntityName()), fairdelay, 545454);
+        super.sim_schedule(this.getEntityId(this.getEntityName()), fairdelay, AleaSimTags.FAIRSHARE_UPDATE);
 
         // Accept events until the simulation is finished
         while (!end_of_submission || received < in_job_counter) {
@@ -719,33 +711,33 @@ public class Scheduler extends GridSim {
             Sim_event ev = new Sim_event();
             sim_get_next(ev);
 
-            if (ev.get_tag() == 454545 && ExperimentSetup.use_fairshare) {
+            if (ev.get_tag() == AleaSimTags.FAIRSHARE_WEIGHT_DECAY && ExperimentSetup.use_fairshare) {
                 System.out.println("Now waiting = " + getQueueSize() + ", simtime = " + Math.round(clock()) + ", running = " + getRunningJobs() + " jobs. Performing fairshare decrease...");
                 decreaseFairShare();
-                super.sim_schedule(this.getEntityId(this.getEntityName()), (72 * 3600.0), 454545);
+                super.sim_schedule(this.getEntityId(this.getEntityName()), (72 * 3600.0), AleaSimTags.FAIRSHARE_WEIGHT_DECAY);
                 continue;
             }
-            if (ev.get_tag() == 545454 && ExperimentSetup.use_fairshare) {
+            if (ev.get_tag() == AleaSimTags.FAIRSHARE_UPDATE && ExperimentSetup.use_fairshare) {
                 //System.out.println("Now waiting = " + getQueueSize() + ", simtime = " + Math.round(clock()) + ", running = " + getRunningJobs() + " jobs. Performing fairshare update... ");
                 updateFairShare();
-                super.sim_schedule(this.getEntityId(this.getEntityName()), (300.0), 545454);
+                super.sim_schedule(this.getEntityId(this.getEntityName()), (300.0), AleaSimTags.FAIRSHARE_UPDATE);
                 continue;
             }
 
-            if (ev.get_tag() == 123987) {
+            if (ev.get_tag() == AleaSimTags.LOG_SCHEDULER) {
                 String idd = "";
                 if (queue.size() > 0) {
                     idd += queue.getLast().getID();
                 }
                 //System.out.println(">>> " + in_job_counter + " so far arrived, in queue = " + getQueueSize() + " jobs, at time = " + Math.round(clock())+" running = "+getRunningJobs()+" FREE = "+getFreeCPUs()+" last jobID = "+idd);
                 System.out.println(in_job_counter + " arrived, waiting = " + getScheduleSize() + " simtime = " + Math.round(clock()) + " running = " + getRunningJobs() + " FREE = " + getFreeCPUs() + " last jobID = " + last_job_id);
-                super.sim_schedule(this.getEntityId(this.getEntityName()), (3 * 3600.0), 123987);
+                super.sim_schedule(this.getEntityId(this.getEntityName()), (3 * 3600.0), AleaSimTags.LOG_SCHEDULER);
                 continue;
             }
 
 
             // if periodic optimization is used, select proper algorithm according to 'algorithm' parameter
-            if (ev.get_tag() == PeriodicOptimization) {
+            if (ev.get_tag() == AleaSimTags.EVENT_OPTIMIZE) {
                 if (ExperimentSetup.opt_alg != null) {
                     // select number of iteration of TS
                     int iteration = this.getScheduleSize() * 2;
@@ -756,14 +748,14 @@ public class Scheduler extends GridSim {
                     clock2 = dd2.getTime();
                     clock += clock2 - clock1;
                     // send periodical event that will arrive in 300s, i.e., in 5 minutes
-                    super.sim_schedule(this.getEntityId(this.getEntityName()), 300.0, PeriodicOptimization);
+                    super.sim_schedule(this.getEntityId(this.getEntityName()), 300.0, AleaSimTags.EVENT_OPTIMIZE);
                 }
-                super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, ScheduleJobsNow);
+                super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
                 continue;
             }
 
             // on-demand optimization when early job completion is detected
-            if (ev.get_tag() == 987654321 && ExperimentSetup.fix_alg != null) {
+            if (ev.get_tag() == AleaSimTags.SCHEDULER_OPTIMIZE_ONDEMAND && ExperimentSetup.fix_alg != null) {
                 // select number of iteration of LS
                 int iteration = this.getScheduleSize() * 2;
                 Date dd = new Date();
@@ -772,11 +764,11 @@ public class Scheduler extends GridSim {
                 Date dd2 = new Date();
                 clock2 = dd2.getTime();
                 clock += clock2 - clock1;
-                super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, ScheduleJobsNow);
+                super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
                 continue;
             }
             // JobLoader sended all gridlets
-            if (ev.get_tag() == 612345) {
+            if (ev.get_tag() == AleaSimTags.SUBMISION_DONE) {
                 end_of_submission = true;
                 this.submitted = (Integer) ev.get_data();
                 System.out.println("End of submission... " + in_job_counter + " arrived, > received " + received + " subm = " + submitted);
@@ -784,15 +776,15 @@ public class Scheduler extends GridSim {
             }
 
             // periodical result collection - will be replaced by simple ResultCollector calling.
-            if (ev.get_tag() == 11155) {
+            if (ev.get_tag() == AleaSimTags.SCHEDULER_COLLECT) {
                 collectPeriodicalResults();
                 // send periodical event that will arrive in 3600s, i.e., in one hour
-                super.sim_schedule(this.getEntityId(this.getEntityName()), 3600.0, 11155);
+                super.sim_schedule(this.getEntityId(this.getEntityName()), 3600.0, AleaSimTags.SCHEDULER_COLLECT);
                 continue;
             }
 
             // ack from policy delivered
-            if (ev.get_tag() == GridletStarted) {
+            if (ev.get_tag() == AleaSimTags.GRIDLET_STARTED) {
                 Gridlet gl = (Gridlet) ev.get_data();
 
                 waiting_size--;
@@ -807,7 +799,7 @@ public class Scheduler extends GridSim {
             }
 
             // Gridlet was sent, do another scheduling round if possible
-            if (ev.get_tag() == GridletWasSent) {
+            if (ev.get_tag() == AleaSimTags.GRIDLET_SENT) {
 
                 GridletInfo gi = (GridletInfo) ev.get_data();
 
@@ -821,7 +813,7 @@ public class Scheduler extends GridSim {
                 }
                 continue;
             }
-            if (ev.get_tag() == ScheduleJobsNow) {
+            if (ev.get_tag() == AleaSimTags.EVENT_SCHEDULE) {
 
                 // do another scheduling round
                 if (prev_scheduled == 0) {
@@ -830,7 +822,7 @@ public class Scheduler extends GridSim {
                 continue;
             }
             // Failure appeared
-            if (ev.get_tag() == 5555) {
+            if (ev.get_tag() == AleaSimTags.FAILURE_START) {
                 String data = (String) ev.get_data();
                 String[] d = data.split("x");
                 int resId = Integer.parseInt(d[0]);
@@ -840,7 +832,7 @@ public class Scheduler extends GridSim {
                 continue;
             }
             // Restart appeared
-            if (ev.get_tag() == 5555511) {
+            if (ev.get_tag() == AleaSimTags.FAILURE_RESTART) {
                 int resId = (Integer) ev.get_data();
                 updateResourceInfoAfterFailureOrRestart(resId);
                 System.out.println(Math.round(clock()) + ": Restart of: " + super.getEntityName(resId) + ", running " + printRunningPEsOnResource(resId) + " CPUs,  resID = " + resId);
@@ -967,7 +959,7 @@ public class Scheduler extends GridSim {
                 if (optimize && ExperimentSetup.fix_alg != null && getScheduleSize() > 0 && ExperimentSetup.useEventOpt) {
                     // use LS
                     event_opt++;
-                    super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, 987654321);
+                    super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.SCHEDULER_OPTIMIZE_ONDEMAND);
                     // use Random Search
                     //super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, 987654322);
 
@@ -983,7 +975,7 @@ public class Scheduler extends GridSim {
                      * scheduleGridlets(); Date dd2 = new Date(); clock2 =
                      * dd2.getTime(); clock += clock2 - clock1;
                      */
-                    super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, ScheduleJobsNow);
+                    super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
                 }
 
                 // null gridlet to allow garbage collection
@@ -992,7 +984,7 @@ public class Scheduler extends GridSim {
 
             }
             // New gridlet arrived
-            if (ev.get_tag() == SendGridletInfo) {
+            if (ev.get_tag() == AleaSimTags.GRIDLET_INFO) {
                 ComplexGridlet gl = (ComplexGridlet) ev.get_data();
                 GridletInfo gi = new GridletInfo(gl);
                 last_job_id = gi.getID();
@@ -1077,7 +1069,7 @@ public class Scheduler extends GridSim {
 
                 // try to schedule according to prepared queue/schedule
                 if (prev_scheduled == 0) {
-                    super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, ScheduleJobsNow);
+                    super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
                     //scheduleGridlets();
                 }
                 continue; // with other incoming event
@@ -1276,7 +1268,7 @@ public class Scheduler extends GridSim {
 
         // if resource restarts/fails then start a new scheduling round, otherwise the simulation may hang forever
         if (schedQueue.size() == 0 && prev_scheduled == 0) {
-            super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, ScheduleJobsNow);
+            super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
             //scheduleGridlets();
         }
 
@@ -1285,7 +1277,7 @@ public class Scheduler extends GridSim {
             removeGridletInfo(((GridletInfo) schedQueue.get(i)));
             ComplexGridlet gl = ((GridletInfo) schedQueue.get(i)).getGridlet();
             gl.setRepeated(true);
-            super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, SendGridletInfo, gl);
+            super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.GRIDLET_INFO, gl);
         }
 
         schedQueue.clear();

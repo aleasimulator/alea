@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import xklusac.extensions.*;
+import alea.core.AleaSimTags;
 
 /**
  * Class FailureLoader<p>
@@ -25,10 +26,6 @@ public class FailureLoaderNew extends GridSim {
     String folder_prefix = "";
     /** buffered reader */
     BufferedReader br = null;
-    /** message tag */
-    private static int ResFailureTag = 8888;
-    private static int MachFailureTag = 9999;
-    /** number of PEs in the "biggest" resource */
     /** data set name */
     String data_set = "";
     String line;
@@ -105,7 +102,7 @@ public class FailureLoaderNew extends GridSim {
             Sim_event ev = new Sim_event();
             sim_get_next(ev);
 
-            if (ev.get_tag() == GridSimTags.JUNK_PKT) {
+            if (ev.get_tag() == AleaSimTags.EVENT_WAKE) {
 
                 try {
                     line = br.readLine();
@@ -129,7 +126,7 @@ public class FailureLoaderNew extends GridSim {
                     double time = new Double(Integer.parseInt(values[0]) - start_epoch);
                     double duration = Integer.parseInt(values[2]);
                     if (duration < 60) {
-                        super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, GridSimTags.JUNK_PKT);
+                        super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_WAKE);
                         continue;
                     }
                     String name = values[1];
@@ -152,9 +149,9 @@ public class FailureLoaderNew extends GridSim {
                     subm_fails += ids.length;
 
                     //System.out.println(Math.round(clock()+delay)+": sending F: " + name +" machines:["+printIds(ids)+"], dur:"+duration);
-                    super.sim_schedule(this.getEntityId(name), delay, MachFailureTag, failure);
+                    super.sim_schedule(this.getEntityId(name), delay, AleaSimTags.FAILURE_MACHINE, failure);
                     //System.out.println(values[0]+" "+values[1]+" "+values[2]+" "+values[3]+" t="+Math.round(clock()+delay));
-                    super.sim_schedule(this.getEntityId(this.getEntityName()), delay, GridSimTags.JUNK_PKT);
+                    super.sim_schedule(this.getEntityId(this.getEntityName()), delay, AleaSimTags.EVENT_WAKE);
 
                 // resource failure
                 } else {
@@ -165,8 +162,8 @@ public class FailureLoaderNew extends GridSim {
                     double delay = Math.max(0.0, (time - super.clock()));
                     // some time is needed to transfer this job to the scheduler, i.e., delay should be delay = delay - transfer_time. Fix this in the future.
                     //System.out.println("Sending machine failure: " + values[0] + ", " + name + ", with delay = " + Math.round(delay / 3600));
-                    super.sim_schedule(this.getEntityId(name), delay, ResFailureTag, duration);
-                    super.sim_schedule(this.getEntityId(this.getEntityName()), delay, GridSimTags.JUNK_PKT);
+                    super.sim_schedule(this.getEntityId(name), delay, AleaSimTags.FAILURE_INFO, duration);
+                    super.sim_schedule(this.getEntityId(this.getEntityName()), delay, AleaSimTags.EVENT_WAKE);
                 }
             } else if (ev.get_tag() == GridSimTags.END_OF_SIMULATION) {
                 ok = false;

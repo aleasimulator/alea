@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import xklusac.extensions.*;
+import alea.core.AleaSimTags;
 
 /**
  * Class PWFLoader<p>
@@ -24,8 +25,6 @@ public class PWFLoader extends GridSim {
     int total_jobs = 0;
     /** start time (for UNIX epoch converting) */
     int start_time = 0;
-    /** message tag */
-    private static int SendGridletInfo = 999;
     /** number of PEs in the "biggest" resource */
     int maxPE = 1;
     /** minimal PE rating of the slowest resource */
@@ -80,12 +79,12 @@ public class PWFLoader extends GridSim {
             Sim_event ev = new Sim_event();
             sim_get_next(ev);
 
-            if (ev.get_tag() == GridSimTags.JUNK_PKT) {
+            if (ev.get_tag() == AleaSimTags.EVENT_WAKE) {
 
                 ComplexGridlet gl = readGridlet(current_gl);
                 current_gl++;
                 if (gl == null && current_gl < total_jobs) {
-                    super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, GridSimTags.JUNK_PKT);
+                    super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_WAKE);
                     continue;
                 } else if (gl == null && current_gl >= total_jobs) {
                     continue;
@@ -94,19 +93,19 @@ public class PWFLoader extends GridSim {
                 // to synchronize job arrival wrt. the data set.
                 double delay = Math.max(0.0, (gl.getArrival_time() - super.clock()));
                 // some time is needed to transfer this job to the scheduler, i.e., delay should be delay = delay - transfer_time. Fix this in the future.
-                super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), delay, SendGridletInfo, gl);
+                super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), delay, AleaSimTags.GRIDLET_INFO, gl);
 
                 delay = Math.max(0.0, (gl.getArrival_time() - super.clock()));
                 if (current_gl < total_jobs) {
                     // use delay - next job will be loaded after the simulation time is equal to the previous job arrival.
-                    super.sim_schedule(this.getEntityId(this.getEntityName()), delay, GridSimTags.JUNK_PKT);
+                    super.sim_schedule(this.getEntityId(this.getEntityName()), delay, AleaSimTags.EVENT_WAKE);
                 }
 
                 continue;
             }
         }
 
-        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), 0.0, 612345, null);
+        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.SUBMISION_DONE, null);
         Sim_event ev = new Sim_event();
         sim_get_next(ev);
 

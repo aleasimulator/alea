@@ -14,6 +14,7 @@ import xklusac.environment.GridletInfo;
 import xklusac.environment.ResourceInfo;
 import xklusac.environment.Scheduler;
 import xklusac.extensions.WallclockComparator;
+import alea.core.AleaSimTags;
 
 /**
  * Class SJF<p> Implements SJF (Shortest Job First) algorithm.
@@ -80,7 +81,7 @@ public class FairshareOptimizedMetaBackfilling implements SchedulingPolicy {
                     //System.out.println(gi.getID()+" start in queue "+gi.getQueue()+", avail:"+ExperimentSetup.queues.get(gi.getQueue()).getAvailCPUs()+" of "+ExperimentSetup.queues.get(gi.getQueue()).getLimit()+" req:"+gi.getNumPE());
                     scheduler.submitJob(gi.getGridlet(), r_cand.resource.getResourceID());
                     r_cand.is_ready = true;
-                    //scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, Scheduler.GridletWasSent, gi);                
+                    //scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.GRIDLET_SENT, gi);
                     scheduled++;
                     //System.out.println(gi.getID()+": submit on "+r_cand.resource.getResourceName());
                     r_cand = null;

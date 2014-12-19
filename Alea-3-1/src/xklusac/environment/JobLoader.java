@@ -59,8 +59,10 @@ public class JobLoader {
                 MWFLoader meta_loader = new MWFLoader(name, baudRate, total_jobs, data_set, maxPE, minPErating, maxPErating, multiplier,totPEs, estimates);
             }else if(set.contains("pwf")){
                 PWFLoader pisa_loader = new PWFLoader(name, baudRate, total_jobs, data_set, maxPE, minPErating, maxPErating, exp);
+            }else if (set.contains("ai")){
+                DynamicLoader dyn_loader = new DynamicLoader(name, baudRate, total_jobs, data_set, maxPE, minPErating, maxPErating);
             }else{
-                System.out.println("Wrong workload format or file extension (gwf,swf,mwf,pwf)");
+                System.out.println("Wrong workload format or file extension (gwf,swf,mwf,pwf,ai)");
             }
         } catch (Exception ex) {
             ex.printStackTrace();

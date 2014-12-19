@@ -4,6 +4,7 @@
  */
 package xklusac.algorithms.queue_based.multi_queue;
 
+import alea.core.AleaSimTags;
 import java.util.Date;
 import gridsim.GridSim;
 import java.util.LinkedList;
@@ -77,7 +78,7 @@ public class AggressiveBackfilling implements SchedulingPolicy {
                     }
                     scheduler.submitJob(gi.getGridlet(), r_cand.resource.getResourceID());
                     r_cand.is_ready = true;
-                    //scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, Scheduler.GridletWasSent, gi);
+                    //scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.GRIDLET_SENT, gi);
                     scheduled++;
                 // we removed a job from position i so the next job is now on i
                     // we have to decrease the counter otherwise we would skip a job due to i++ in for loop
