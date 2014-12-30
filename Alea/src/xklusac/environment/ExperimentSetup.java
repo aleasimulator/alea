@@ -557,7 +557,7 @@ public class ExperimentSetup {
             boolean do_pack[] = aCfg.getBooleanArray("do_pack");
             int skipuj[] = aCfg.getIntArray("skipuj");
             int algorithms[] = aCfg.getIntArray("algorithms");
-
+         
             // select which algorithms from the algorithms[] list will be used.
             for (int sel_alg = 0; sel_alg < algorithms.length; sel_alg++) {
 

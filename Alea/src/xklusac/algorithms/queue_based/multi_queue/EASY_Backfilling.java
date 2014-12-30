@@ -7,11 +7,15 @@ package xklusac.algorithms.queue_based.multi_queue;
 import gridsim.GridSim;
 import gridsim.GridSimTags;
 import gridsim.Gridlet;
+import gridsim.MachineList;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 import xklusac.algorithms.SchedulingPolicy;
 import xklusac.environment.ExperimentSetup;
 import xklusac.environment.GridletInfo;
+import xklusac.environment.MachineWithRAM;
 import xklusac.environment.ResourceInfo;
 import xklusac.environment.Scheduler;
 
@@ -24,6 +28,7 @@ import xklusac.environment.Scheduler;
 public class EASY_Backfilling implements SchedulingPolicy {
 
     private Scheduler scheduler;
+    private ResourceInfo reservedResource;
 
     public EASY_Backfilling(Scheduler scheduler) {
         this.scheduler = scheduler;
@@ -111,6 +116,7 @@ public class EASY_Backfilling implements SchedulingPolicy {
                 GridletInfo grsv = (GridletInfo) Scheduler.queue.get(0);
                 // reserved machine (i.e. Earliest Available)
                 ResourceInfo rsv_res = findReservedResource(grsv);
+                reservedResource = rsv_res;
 
                 // try backfilling on all gridlets in queue except for head (grsv)
                 for (int j = 1; j < Scheduler.queue.size(); j++) {
@@ -119,7 +125,7 @@ public class EASY_Backfilling implements SchedulingPolicy {
                      continue; // such gridlet will never succeed (not true if requirements used)
                      TODO
                      }*/
-                    ResourceInfo ri = findResourceBF(gi, grsv, rsv_res);
+                    ResourceInfo ri = findResourceBF(gi);
                     if (ri != null) {
                         Scheduler.queue.remove(j);
                         ri.addGInfoInExec(gi);
@@ -146,21 +152,21 @@ public class EASY_Backfilling implements SchedulingPolicy {
     /**
      * auxiliary method needed for easy/edf backfilling
      */
-    private ResourceInfo findResourceBF(GridletInfo gi, GridletInfo grsv, ResourceInfo rsv_res) {
+    private ResourceInfo findResourceBF(GridletInfo gi) {
         ResourceInfo r_cand = null;
         int r_cand_speed = 0;
         for (int j = 0; j < Scheduler.resourceInfoList.size(); j++) {
             ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(j);
-            if (Scheduler.isSuitable(ri, gi) && ri.canExecuteNow(gi) && ri.resource.getResourceID() != rsv_res.resource.getResourceID()) {
+            if (Scheduler.isSuitable(ri, gi) && ri.canExecuteNow(gi) && ri.resource.getResourceID() != reservedResource.resource.getResourceID()) {
                 int speed = ri.peRating;
                 if (speed >= r_cand_speed) {
                     r_cand = ri;
                     r_cand_speed = speed;
                 }
 
-            } else if (Scheduler.isSuitable(ri, gi) && ri.canExecuteNow(gi) && ri.resource.getResourceID() == rsv_res.resource.getResourceID()) {
-                double eft = GridSim.clock() + gi.getJobRuntime(ri.peRating);
-                if ((eft < rsv_res.est) || rsv_res.usablePEs >= gi.getNumPE()) {
+            } else if (Scheduler.isSuitable(ri, gi) && ri.canExecuteNow(gi) && ri.resource.getResourceID() == reservedResource.resource.getResourceID()) {
+                boolean collidate = collidateWithReservation(gi, ri);
+                if (collidate == false) {
                     int speed = ri.peRating;
                     if (speed > r_cand_speed) {
                         r_cand = ri;
@@ -180,16 +186,8 @@ public class EASY_Backfilling implements SchedulingPolicy {
         ResourceInfo found = null;
         for (int j = 0; j < Scheduler.resourceInfoList.size(); j++) {
             ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(j);
-            if (ri.getNumRunningPE() >= grsv.getNumPE()) {
+            if (Scheduler.isSuitable(ri, grsv)) {
                 double ri_est = ri.getEarliestStartTime(grsv, GridSim.clock());
-                // select minimal EST
-                if (ri_est <= est) {
-                    est = ri_est;
-                    found = ri;
-                }
-
-            } else if (ri.resource.getNumPE() >= grsv.getNumPE()) {
-                double ri_est = Double.MAX_VALUE - 10.0;
                 // select minimal EST
                 if (ri_est <= est) {
                     est = ri_est;
@@ -197,9 +195,53 @@ public class EASY_Backfilling implements SchedulingPolicy {
                 }
             } else {
                 continue; // this is not suitable cluster
-
             }
         }
         return found;
+    }  
+    
+    /**
+     * Auxiliary method for easy backfilling.
+     * Check if given gridlet can be started without colliding reserved gridlet
+     */
+    private boolean collidateWithReservation(GridletInfo gi, ResourceInfo ri) {
+        double eft = GridSim.clock() + gi.getJobRuntime(reservedResource.peRating);
+        if (ExperimentSetup.use_RAM == false) {
+            if ((eft < reservedResource.est) || reservedResource.usablePEs >= gi.getNumPE()) {
+                return false;
+            }
+
+        } else {     
+            int allocateNodes = gi.getNumNodes();
+            //test if gridlet can be finished earlier than start of reservation
+            if (eft < reservedResource.est) {
+                return false;
+            }
+            
+            //else test if gridlet can be started without postponing reservation
+            MachineList machines = ri.resource.getMachineList();
+            MachineList estimatedMachines = ri.getEstMachines();
+            for (int i = 0; i < machines.size(); i++) {
+                MachineWithRAM machine = (MachineWithRAM) machines.get(i);
+                // cannot use such machine
+                if (machine.getFailed()) {
+                    continue;
+                }
+                if (machine.getNumFreePE() >= gi.getPpn() && machine.getFreeRam() >= gi.getRam()) {
+                    //if this machine is used by reservation, test if there is space for backfilled gridlet
+                    if(ri.getReservedMachineIDs().contains(machine.getMachineID())){
+                        MachineWithRAM resMachine = (MachineWithRAM) estimatedMachines.getMachine(machine.getMachineID());
+                        if (resMachine.getNumFreePE() < gi.getPpn() || resMachine.getFreeRam() < gi.getRam()){
+                            continue;
+                        }
+                    }
+                    allocateNodes--;
+                }
+                if (allocateNodes <= 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

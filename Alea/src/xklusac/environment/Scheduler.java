@@ -1513,7 +1513,54 @@ public class Scheduler extends GridSim {
         return false;
 
     }
+    
+    /**
+     * This static method tests if given Gridlet can be started on given machines.
+     * 
+     * @param machines list
+     * @param gridlet to execute
+     * @return 
+     */
+    public static boolean canExecute(MachineList machines, GridletInfo gi) {
+        if (ExperimentSetup.use_RAM == false) {
+            if (machines.getNumFreePE() >= gi.getNumPE()) {
+                return true;
+            } else {
+                return false;
+            }
+        }
 
+        long ram = gi.getRam();
+        int ppn = gi.getPpn();
+        int numNodes = gi.getNumNodes();
+        
+        // Not a MetaCentrum-like node and CPU specification
+        if (ppn < 0 && numNodes < 0) {
+            throw new IllegalStateException("Not a MetaCentrum-like node and CPU specification");
+        }
+
+        int allocateNodes = numNodes;
+
+        for (int i = 0; i < machines.size(); i++) {
+            MachineWithRAM machine = (MachineWithRAM) machines.get(i);
+            // cannot use such machine
+            if (machine.getFailed()) {
+                continue;
+            }
+            
+            if (machine.getNumFreePE() >= ppn && machine.getFreeRam() >= ram) {
+                allocateNodes--;
+            }
+            if (allocateNodes <= 0) {
+                return true;
+            }
+        }
+
+        // all machines tested and not enough CPUs/RAM found to execute job now
+        return false;
+
+    }
+    
     /**
      * Returns the number of waiting jobs in queue(s)
      */
