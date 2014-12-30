@@ -50,17 +50,24 @@ public class AleaSimTags {
      public static final int EVENT_SCHEDULE = TAG_BASE+903;
      /** Tag depicting the start of a machine failure */
      public static final int FAILURE_START = TAG_BASE+501;
+     /** end of machine failure = internal event in resource policy */
      public static final int FAILURE_FINISHED = TAG_BASE+502;
+     /** end of machine failure = machine restart */
      public static final int FAILURE_RESTART = TAG_BASE+503;
+     /** internal event in resource policy = end of machine failure*/
      public static final int FAILURE_INFO = TAG_BASE+504;
+     /** internal event in resource policy - start of a machine failure */
      public static final int FAILURE_MACHINE = TAG_BASE+505;
+     /** internal event in resource policy - restart of previously failed machine */
      public static final int FAILURE_RESTART2 = TAG_BASE+506;
-     
+     /** periodic print of queue-related data (sim time, number of jobs, free CPUs...) */
      public static final int LOG_SCHEDULER = TAG_BASE+801;
-     
+     /** applz decay algorithm periodically */
      public static final int FAIRSHARE_WEIGHT_DECAY = TAG_BASE+701;
+     /** update fairshare usage information periodically */
      public static final int FAIRSHARE_UPDATE = TAG_BASE+702;
-     
+     /** optimize schedule with local search on-demand */
      public static final int SCHEDULER_OPTIMIZE_ONDEMAND = TAG_BASE+601;
+     /** periodic collection of scheduling data - used for visualization */
      public static final int SCHEDULER_COLLECT = TAG_BASE+602;
 }
