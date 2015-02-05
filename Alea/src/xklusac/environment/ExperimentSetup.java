@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.util.*;
 import gridsim.*;
 import java.io.File;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -299,7 +302,7 @@ public class ExperimentSetup {
     public static boolean by_queue;
 
     
-    private static String[] dir = new String[3];
+    private static String[] dir = new String[4];
     
     /**
      * Creates the path for storing simulation results.
@@ -338,6 +341,25 @@ public class ExperimentSetup {
      * (machine count, job parameters, data sets).
      */
     public static void main(String[] args) {
+        String user_dir = System.getProperty("user.dir");
+        File activatedFile = new File("activated");
+        if (!activatedFile.exists()) {
+            try {
+                URL aleaHomePage = new URL("http://www.fi.muni.cz/~xklusac/alea/index.html");
+                HttpURLConnection conn = (HttpURLConnection) aleaHomePage.openConnection();
+                InputStream is = conn.getInputStream();
+                java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
+                String str = s.hasNext() ? s.next() : "";
+                if (!str.contains("ALEA 3")) {
+                    throw new Exception("Could not open expected site content.");
+                }
+                // OK, connection established
+                activatedFile.mkdir();
+            } catch (Exception e) {
+                // Will try next time
+                e.printStackTrace();
+            }
+        }
         try {
             aCfg = new AleaConfiguration();
         } catch (IOException e) { 
@@ -405,6 +427,22 @@ public class ExperimentSetup {
         String data_sets[] = aCfg.getStringArray("data_sets");
         // number of gridlets in data set
         int total_gridlet[] = aCfg.getIntArray("total_gridlet");
+        
+        
+        /*String user_dir = "";
+        if (ExperimentSetup.meta) {
+            
+            user_dir = System.getProperty("user.dir");
+            //user_dir = "/scratch/klusacek/" + path;
+        } else {
+            user_dir = System.getProperty("user.dir");
+        }*/
+        /*try {
+            Output out = new Output();
+            out.deleteResults(user_dir + "/jobs(" + problem + "" + ExperimentSetup.algID + ").csv");
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }*/
 
         // stores references to animation windows
         LinkedList<Visualizator> windows = new LinkedList();
@@ -479,37 +517,37 @@ public class ExperimentSetup {
             problem += date;
         }
 
-        String user_dir = "";
-        if (ExperimentSetup.meta) {
-            
-            user_dir = System.getProperty("user.dir");
-            //user_dir = "/scratch/klusacek/" + path;
-        } else {
-            user_dir = System.getProperty("user.dir");
-        }
-        /*try {
-            Output out = new Output();
-            out.deleteResults(user_dir + "/jobs(" + problem + "" + ExperimentSetup.algID + ").csv");
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }*/
-
         // creates Result Collector
         ResultCollector result_collector = new ResultCollector(results, problem);
         System.out.println("Working directory: " + System.getProperty("user.dir"));
+        
+        //folder for all results
+        dir[0]="results";
+        File resultsFile = new File(ExperimentSetup.getDir(DirectoryLevel.RESULT_ROOT));
+        if (!resultsFile.exists()) {
+            resultsFile.mkdir();
+        }
 
         // creates file/folder for one setup
-        dir[0] = getDate();
-        File runDirF = new File(dir[0]);
+        dir[1] = getDate();
+        File runDirF = new File(ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT));
         runDirF.mkdir();
+        
+        System.out.println("result root: " + runDirF.getPath());
         
         //copies the configuration file to the new folder
         File configurationF = aCfg.getFile();
-        File destinationF = new File(dir[0] + File.separator + aCfg.getFileName());
+        File destinationF = new File(ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT) + File.separator + aCfg.getFileName());
+        //File destinationF = new File(dir[0] + File.separator + aCfg.getFileName());
         try {
             FileUtil.copyFile(configurationF, destinationF);
         } catch (IOException ex) {
             Logger.getLogger(ExperimentSetup.class.getName()).log(Level.WARNING, null, ex);
+        }
+        if (visualize) {
+            //create folder graphs in experiment root directory
+            File graphs = new File(user_dir + File.separator + ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT) + File.separator + "graphs");
+            graphs.mkdir();
         }
         
         String[] pluginsString = aCfg.getStringArray("plugins");
@@ -534,7 +572,7 @@ public class ExperimentSetup {
         for (int set = 0; set < data_sets.length; set++) {
             //creates new folder for each data set in the new setup folder
             String date = getDate();
-            dir[1] = data_sets[set] + "_" + date;
+            dir[2] = data_sets[set] + "_" + date;
             File dataSetDirF = new File(ExperimentSetup.getDir(DirectoryLevel.DATA_SET));
             dataSetDirF.mkdir();
             //subDir = dir + File.separator + data_sets[set] + "_" + date;
@@ -557,7 +595,7 @@ public class ExperimentSetup {
             boolean do_pack[] = aCfg.getBooleanArray("do_pack");
             int skipuj[] = aCfg.getIntArray("skipuj");
             int algorithms[] = aCfg.getIntArray("algorithms");
-         
+
             // select which algorithms from the algorithms[] list will be used.
             for (int sel_alg = 0; sel_alg < algorithms.length; sel_alg++) {
 
@@ -771,9 +809,8 @@ public class ExperimentSetup {
                 }
 
                 
-                dir[2] = suff;
+                dir[3] = (sel_alg+1) + "-" + suff;
                 File algDirF = new File(ExperimentSetup.getDir(DirectoryLevel.ALGORITHM));
-                //System.out.println(getDir(DirectoryLevel.ALGORITHM));
                 algDirF.mkdir();
                 
                 result_collector.deleteSchedResults(suff);//originally in Scheduler constructor

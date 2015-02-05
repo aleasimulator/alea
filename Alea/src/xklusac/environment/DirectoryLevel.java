@@ -8,6 +8,6 @@ package xklusac.environment;
  *
  * @author Gabriela Podolnikova
  */
-enum DirectoryLevel {
-    ALEA_ROOT, EXPERIMENT_ROOT, DATA_SET, ALGORITHM 
+public enum DirectoryLevel {
+    ALEA_ROOT, RESULT_ROOT, EXPERIMENT_ROOT, DATA_SET, ALGORITHM 
 }

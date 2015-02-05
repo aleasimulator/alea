@@ -51,6 +51,7 @@ public class FileUtil {
 		return;
 	}
 	if (!destFile.exists()) {
+            //System.out.println("Cesta pro kopirovani:" + destFile.getPath());
 		destFile.createNewFile();
 	}
 	FileChannel source = null;

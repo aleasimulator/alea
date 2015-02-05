@@ -1,5 +1,8 @@
 package xklusac.environment;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Class ConfigurationDescription is used for work with the description file for the web application.
  * 
@@ -10,6 +13,7 @@ public class ConfigurationDescription {
     private final String type;
     private final String shortDescription;
     private final String additionalInf;
+    private final String alg;
     
     /**
      * Splits the value of the description item.
@@ -20,14 +24,16 @@ public class ConfigurationDescription {
      * @param descriptionValue the String that will be split
      */
     public ConfigurationDescription (String descriptionValue) {
+        descriptionValue = descriptionValue.replace("||", "| |");
         String[] parts = descriptionValue.split("\\|");
         type = parts[0];
         shortDescription = parts[1];
-        String addInf = "";
-        if (parts.length >= 3) {
-            addInf = parts[2];
+        additionalInf = parts[2];
+        String algorithm = "";
+        if (parts.length >= 4) {
+            algorithm = parts[3];
         }
-        additionalInf = addInf;
+        alg = algorithm;
     }
     
     /**
@@ -49,6 +55,20 @@ public class ConfigurationDescription {
      */
     public String getAdditionalInf() {
         return additionalInf;
+    }
+
+    /**
+     * @return the alg
+     */
+    public List<Integer> getAlg() {
+        List<Integer> algorithms = new ArrayList<>();
+        if (!alg.isEmpty()) {
+            String[] algParts = alg.split(",");
+            for (String part : algParts) {
+                algorithms.add(Integer.parseInt(part));
+            }
+        }
+        return algorithms;
     }
     
 }

@@ -135,6 +135,20 @@
                       tableOpen = true;
                   } else {
                       ConfigurationDescription configDesc = new ConfigurationDescription(desc);
+                      List<Integer> applicableAlgs = configDesc.getAlg();
+                      if (!applicableAlgs.isEmpty()) {
+                              int[] selectedAlgs = aCfg.getIntArray("algorithms");
+                              boolean match = false;
+                              for (int sel : selectedAlgs) {
+                                  if (applicableAlgs.contains(sel)) {
+                                      match = true;
+                                      break;
+                                  }
+                              }
+                              if (!match) {
+                                  continue;
+                              }
+                      }
                       String value = aCfg.getString(key);
                       String type = configDesc.getType();
                       boolean typeOk = AleaConfiguration.typeCheck(type, value);
@@ -146,6 +160,7 @@
                           inputParam = " wrongFormat";
                           typeWasWrong = true;
                       }
+                      
                   
        %>
        <tr>
@@ -156,6 +171,12 @@
 
        </tr>
 <%
+                      if (key.equals("algorithms")) {
+                        out.write(ConfigurationHtml.TABLE_END);
+                        %>
+                            <input name="submit" type="submit" value="<%=ConfigurationWeb.Values.OK%>"/>
+                        <%
+                      }
                   }
           }
           String[] plugins = aCfg.getStringArray(AleaConfiguration.PLUGINS);
