@@ -732,6 +732,7 @@ public class Scheduler extends GridSim {
                 //System.out.println(">>> " + in_job_counter + " so far arrived, in queue = " + getQueueSize() + " jobs, at time = " + Math.round(clock())+" running = "+getRunningJobs()+" FREE = "+getFreeCPUs()+" last jobID = "+idd);
                 System.out.println(in_job_counter + " arrived, waiting = " + getScheduleSize() + " simtime = " + Math.round(clock()) + " running = " + getRunningJobs() + " FREE = " + getFreeCPUs() + " last jobID = " + last_job_id);
                 super.sim_schedule(this.getEntityId(this.getEntityName()), (3 * 3600.0), AleaSimTags.LOG_SCHEDULER);
+                super.sim_schedule(this.getEntityId(this.getEntityName()), (60), AleaSimTags.LOG_SCHEDULER);
                 continue;
             }
 
@@ -768,7 +769,7 @@ public class Scheduler extends GridSim {
                 continue;
             }
             // JobLoader sended all gridlets
-            if (ev.get_tag() == AleaSimTags.SUBMISION_DONE) {
+            if (ev.get_tag() == AleaSimTags.SUBMISSION_DONE) {
                 end_of_submission = true;
                 this.submitted = (Integer) ev.get_data();
                 System.out.println("End of submission... " + in_job_counter + " arrived, > received " + received + " subm = " + submitted);

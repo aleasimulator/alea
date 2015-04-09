@@ -61,7 +61,7 @@ public class ComplexGridlet extends Gridlet{
             double arrival_time, double due_date, int priority, int numPE, double estMach, String queue, String properties, double percentage,long ram,int numNodes, int ppn) {
         // call Gridlet constructor
         super(gridletID, gridletLength, gridletFileSize, gridletOutputSize);
-        this.setOpSystemRequired(oSrequired);        
+        this.setOpSystemRequired(oSrequired);
         this.setArchRequired(archRequired);
         this.setArrival_time(arrival_time);
         this.setRelease_date(arrival_time);
