@@ -6,12 +6,10 @@ package xklusac.algorithms.schedule_based;
 
 import java.util.Date;
 import gridsim.GridSim;
-import java.util.Collections;
 import xklusac.algorithms.SchedulingPolicy;
 import xklusac.environment.GridletInfo;
 import xklusac.environment.ResourceInfo;
 import xklusac.environment.Scheduler;
-import xklusac.extensions.StartComparator;
 
 /**
  * Class CONS<p>
@@ -96,9 +94,6 @@ public class CONS implements SchedulingPolicy {
         // updates resource info's internal values (IMPORTANT! because of next use of this policy)
         ri.forceUpdate(GridSim.clock());
         //System.out.println("New job has been received by CONS");
-        
-        if(ri.resScheduleSorted.contains(gi) == false) ri.resScheduleSorted.add(gi);
-        Collections.sort(ri.resScheduleSorted, new StartComparator());
 
     }
 
@@ -108,12 +103,10 @@ public class CONS implements SchedulingPolicy {
         int scheduled = 0;
         for (int j = 0; j < Scheduler.resourceInfoList.size(); j++) {
             ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(j);
-            ri.updateScheduleList();
-            if (ri.resScheduleSorted.size() > 0) {
-                GridletInfo gi = (GridletInfo) ri.resScheduleSorted.get(0);
+            if (ri.resSchedule.size() > 0) {
+                GridletInfo gi = (GridletInfo) ri.resSchedule.get(0);
                 if (ri.canExecuteNow(gi)) {
-                    ri.removeFirstGISorted();
-                    ri.resSchedule.remove(gi);
+                    ri.removeFirstGI();
                     ri.addGInfoInExec(gi);
                     
 
