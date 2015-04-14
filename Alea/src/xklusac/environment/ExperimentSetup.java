@@ -184,6 +184,10 @@ public class ExperimentSetup {
      */
     static String name;
     /**
+     * 
+     */
+    static int firstArrival = -1;
+    /**
      * the weight of fairness criterion in objective function
      */
     public static int fair_weight;
@@ -400,7 +404,7 @@ public class ExperimentSetup {
         avail_CPUs = 0.0;
         
         skip = aCfg.getInt("skip");
-        
+            
         backfilled = 0;
         
         use_anti_starvation = aCfg.getBoolean("use_anti_starvation");
@@ -594,6 +598,7 @@ public class ExperimentSetup {
             boolean stradej[] = aCfg.getBooleanArray("stradej");
             boolean do_pack[] = aCfg.getBooleanArray("do_pack");
             int skipuj[] = aCfg.getIntArray("skipuj");
+            int timeskip[] = aCfg.getIntArray("first_arrival");
             int algorithms[] = aCfg.getIntArray("algorithms");
 
             // select which algorithms from the algorithms[] list will be used.
@@ -602,6 +607,7 @@ public class ExperimentSetup {
                 use_anti_starvation = stradej[sel_alg];
                 use_resource_spec_packing = do_pack[sel_alg];
                 skip = skipuj[set];
+                firstArrival = timeskip[set];
 
                 // reset values from previous iterations
                 use_compresion = false;

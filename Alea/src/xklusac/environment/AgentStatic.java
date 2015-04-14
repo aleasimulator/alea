@@ -137,50 +137,57 @@ public class AgentStatic extends GridSim {
      */
     public void body() {
         super.gridSimHold(10.0);    // hold by 10 second
+        
+        ComplexGridlet waiting_job = null;
+        int MAX_ARRIVAL_DISTANCE = 60*60;
 
-        while (true) {
-
-            Sim_event ev = new Sim_event();
-            sim_get_next(ev);
-
-            if (ev.get_tag() == AleaSimTags.EVENT_WAKE) {
-
-                /*
-                if (current_gl >= 10)
-                {
-                    super.sim_schedule(GridSim.getEntityId(p_parent), 60, AleaSimTags.AGENT_DONE,current_gl);
-                    return;
-                }*/
-
-                // read a new job
-                ComplexGridlet gl = readGridlet(current_gl);
+        Sim_event ev = new Sim_event();
+        sim_get_next(ev);
+        
+        if (ev.get_tag() != AleaSimTags.EVENT_WAKE) {
+            System.out.println("Stray event received " + super.clock());
+            return;
+        }
+        
+        while (true) {  
+            // if we currently have no waiting job (to be sent to scheduler, we need to read one
+            if (waiting_job == null) {
+                // read job from file
+                waiting_job = readGridlet(current_gl);
+                current_gl++;
 
                 // if there are no more records in the file, signal agent completion
-                current_gl++;
-                if (gl == null) {
+                if (waiting_job == null) {
                     super.sim_schedule(GridSim.getEntityId(p_parent), 60, AleaSimTags.AGENT_DONE,current_gl);
-                    System.out.println("Finishing after " + current_gl + " jobs.");
-                    System.out.println(super.clock());
+                    System.out.println("Agent \"" + this.getEntityName() + "\" finishing after submiting" + (current_gl-1) + " jobs at \"" + GridSim.clock() + "\".");
                     break;
                 }
-
-                // calculate the delay we can safely wait
-
-                // to synchronize job arrival wrt. the data set.
-                double delay = Math.max(0.0, (gl.getArrival_time() - super.clock()));
-                // some time is needed to transfer this job to the scheduler, i.e., delay should be delay = delay - transfer_time. Fix this in the future.
-                //System.out.println("Sending: "+gl.getGridletID());
-                last_delay = delay;
-
-                // send information to scheduler
-                super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), delay, AleaSimTags.GRIDLET_INFO, gl);
-                // wake up at the same time as the job arrives
-                super.sim_schedule(this.getEntityId(this.getEntityName()), delay, AleaSimTags.EVENT_WAKE);
-
-                continue;
             }
 
+            // At this point we must have a job, either from this or previous cycle.
+            // Check if it is more than 60 minutes in future, if yes, then sleep for 60 minutes.
+
+            // if the job is more than 60 minutes in future, wait
+            if (GridSim.clock() < waiting_job.getArrival_time() &&
+                waiting_job.getArrival_time() - GridSim.clock() > MAX_ARRIVAL_DISTANCE) {
+                super.gridSimHold(MAX_ARRIVAL_DISTANCE);
+                // sleep for 1 hour
+                // super.sim_schedule(AgentStatic.getEntityId(this.getEntityName()), MAX_ARRIVAL_DISTANCE, AleaSimTags.EVENT_WAKE);
+            }
+            // otherwise, it's time to submit
+            else {
+                double delay = Math.max(0.0, (waiting_job.getArrival_time() - GridSim.clock()));
+                // job information event for scheduler
+                super.sim_schedule(AgentStatic.getEntityId("Alea_3.0_scheduler"), delay, AleaSimTags.GRIDLET_INFO, waiting_job);
+                // wakeup event for myself
+                super.gridSimHold(delay);
+                //super.sim_schedule(AgentStatic.getEntityId(this.getEntityName()), delay, AleaSimTags.EVENT_WAKE);
+
+                waiting_job = null;
+            }
         }
+        
+        super.terminateIOEntities();
     }
 
     /**
@@ -282,7 +289,13 @@ public class AgentStatic extends GridSim {
         // synchronize GridSim's arrivals with the UNIX epoch format as given in GWF
         if (start_time < 0) {
             //System.out.println("prvni: "+j+" start at:"+values[1]+" line="+line);
-            start_time = Integer.parseInt(values[1]);
+            if (ExperimentSetup.firstArrival != 0) {
+                // follow the configuration
+                start_time = ExperimentSetup.firstArrival;
+            } else {
+                // relative to the first job
+                start_time = Integer.parseInt(values[1]);
+            }
             arrival = 0;
 
         } else {

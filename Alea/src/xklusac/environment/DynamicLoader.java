@@ -26,7 +26,6 @@ import eduni.simjava.Sim_event;
 import gridsim.*;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.util.Random;
 import xklusac.extensions.*;
 import eduni.simjava.distributions.Sim_normal_obj;
