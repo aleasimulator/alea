@@ -5,9 +5,11 @@
 
 /Alea/build/
 /Alea/dist/
+/Alea/results/
 AleaWebConfiguration/nbproject/build-impl.xml
 AleaWebConfiguration/nbproject/genfiles.properties
 AleaWebConfiguration/nbproject/private/private.properties
 AleaWebConfiguration/nbproject/project.properties
 AleaWebConfiguration/nbproject/project.xml
 Alea/nbproject/private/private.properties
+Alea/configuration.properties
