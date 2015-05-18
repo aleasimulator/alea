@@ -265,7 +265,7 @@ public class ExperimentSetup {
     /**
      * defines how many jobs should be skipped in the data set
      */
-    public static int skip;
+    public static int skipJob;
     /**
      * counter measuring the number of backfilled jobs
      */
@@ -279,12 +279,12 @@ public class ExperimentSetup {
      * defines whether an anti-starvation technique based on resource
      * pre-allocation should be used
      */
-    public static boolean use_anti_starvation;
+    public static boolean anti_starvation;
     /**
      * defines whether jobs's resource specification can be adjusted to increase
      * througput. (So called nodespec packing option as seen in PBS Pro, etc.)
      */
-    public static boolean use_resource_spec_packing;
+    public static boolean resource_spec_packing;
     /**
      * defines whether several different queues in the system should be used.
      * Such queues must be specified in a seperate file, along with job and
@@ -345,12 +345,12 @@ public class ExperimentSetup {
         File activatedFile = new File("activated");
         if (!activatedFile.exists()) {
             try {
-                URL aleaHomePage = new URL("http://www.fi.muni.cz/~xklusac/alea/index.html");
+                URL aleaHomePage = new URL("http://www.fi.muni.cz/~xpodoln/alea/index.php?key=xxx");
                 HttpURLConnection conn = (HttpURLConnection) aleaHomePage.openConnection();
                 InputStream is = conn.getInputStream();
                 java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
                 String str = s.hasNext() ? s.next() : "";
-                if (!str.contains("ALEA 3")) {
+                if (!str.contains("hits")) {
                     throw new Exception("Could not open expected site content.");
                 }
                 // OK, connection established
@@ -381,7 +381,6 @@ public class ExperimentSetup {
         prevAlgID = -1;
         name = "";
         
-        use_compresion = aCfg.getBoolean("use_compresion");
         use_tsafrir = aCfg.getBoolean("use_tsafrir");
         use_speeds = aCfg.getBoolean("use_speeds");
         arrival_rate_multiplier = aCfg.getDouble("arrival_rate_multiplier");
@@ -399,12 +398,8 @@ public class ExperimentSetup {
         avail_RAM = 0.0;
         avail_CPUs = 0.0;
         
-        skip = aCfg.getInt("skip");
-        
         backfilled = 0;
-        
-        use_anti_starvation = aCfg.getBoolean("use_anti_starvation");
-        use_resource_spec_packing = aCfg.getBoolean("use_resource_spec_packing");
+
         // set true to use different queues
         use_queues = aCfg.getBoolean("use_queues");
         by_queue = aCfg.getBoolean("by_queue");
@@ -463,10 +458,8 @@ public class ExperimentSetup {
         use_LastLength = aCfg.getBoolean("use_LastLength");
         // the minimal length (in seconds) of gap in schedule since when the "on demand" optimization is executed
         gap_length = aCfg.getInt("gap_length");
-        // the weigh of fairness criterion
-        fair_weight = aCfg.getInt("fair_weight");
         // the weight of the fairness criteria in objective function
-        int fairw[] = aCfg.getIntArray("fairw");
+        int weight_of_fairness[] = aCfg.getIntArray("weight_of_fairness");
 
         //defines the name format of output files
         String problem = "Result";
@@ -580,7 +573,7 @@ public class ExperimentSetup {
             //subDirF.mkdir();
             
             String prob = problem;
-            fair_weight = fairw[set];
+            fair_weight = weight_of_fairness[set];
             max_estim = 0;
             result_collector.generateHeader(data_sets[set] + "_" + prob, pluginHeaders);
             prevAlgID = -1;
@@ -591,17 +584,17 @@ public class ExperimentSetup {
             // FairShareMetaBackfilling = 8, FairShareCONS = 9, BestGap = 10, BestGap+RandomSearch = 11, FairShareOptimizedMetaBackfilling = 12
             // 18 = CONS+Tabu Search, 19 = CONS + Gap Search, 20 = CONS + RandomSearch, CONS no compression = 21,
 
-            boolean stradej[] = aCfg.getBooleanArray("stradej");
-            boolean do_pack[] = aCfg.getBooleanArray("do_pack");
-            int skipuj[] = aCfg.getIntArray("skipuj");
+            boolean use_anti_starvation[] = aCfg.getBooleanArray("use_anti_starvation");
+            boolean use_resource_spec_packing[] = aCfg.getBooleanArray("use_resource_spec_packing");
+            int skip[] = aCfg.getIntArray("skip");
             int algorithms[] = aCfg.getIntArray("algorithms");
 
             // select which algorithms from the algorithms[] list will be used.
             for (int sel_alg = 0; sel_alg < algorithms.length; sel_alg++) {
 
-                use_anti_starvation = stradej[sel_alg];
-                use_resource_spec_packing = do_pack[sel_alg];
-                skip = skipuj[set];
+                anti_starvation = use_anti_starvation[sel_alg];
+                resource_spec_packing = use_resource_spec_packing[sel_alg];
+                skipJob = skip[set];
 
                 // reset values from previous iterations
                 use_compresion = false;
@@ -640,7 +633,7 @@ public class ExperimentSetup {
                 if (alg == 0) {
                     policy = new FCFS(scheduler);
                     suff = "FCFS";
-                    if (use_resource_spec_packing) {
+                    if (resource_spec_packing) {
                         suff += "-pack";
                     }
                 }
@@ -684,10 +677,10 @@ public class ExperimentSetup {
                     policy = new FairshareMetaBackfilling(scheduler);
                     // Backfilling without a reservation
                     suff = "FairShareMetaBackfilling";
-                    if (use_anti_starvation) {
+                    if (anti_starvation) {
                         suff += "-str";
                     }
-                    if (use_resource_spec_packing) {
+                    if (resource_spec_packing) {
                         suff += "-pack";
                     }
                 }
@@ -695,10 +688,10 @@ public class ExperimentSetup {
                     policy = new FairshareOptimizedMetaBackfilling(scheduler);
                     // Backfilling without a reservation
                     suff = "FairShareOptimizedMetaBackfilling";
-                    if (use_anti_starvation) {
+                    if (anti_starvation) {
                         suff += "-str";
                     }
-                    if (use_resource_spec_packing) {
+                    if (resource_spec_packing) {
                         suff += "-pack";
                     }
                 }

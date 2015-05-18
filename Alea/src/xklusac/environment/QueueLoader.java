@@ -46,12 +46,7 @@ public class QueueLoader {
         // read data-set from file
         LinkedList lines = new LinkedList();
         Input r = new Input();
-        String adresar = "";
-        if (ExperimentSetup.meta) {
-            adresar = System.getProperty("user.dir");
-        } else {
-            adresar = System.getProperty("user.dir");
-        }
+        String adresar = System.getProperty("user.dir");
         //System.out.println("Adresar = "+adresar);
         if (ExperimentSetup.data) {
             String[] path = adresar.split("/");

@@ -31,7 +31,7 @@ public class AleaConfiguration {
     public static final String HEADER = "HEADER";
     public static final String PLUGINS = "plugins";
     public static final String PLUGIN = "plugin.";
-    private final Properties props = new Properties();
+    private /*static*/ final Properties props = new Properties();
     private final String fileName;
     private final InputStreamProvider inputStreamProvider;
     

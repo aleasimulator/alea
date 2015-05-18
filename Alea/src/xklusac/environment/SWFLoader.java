@@ -173,7 +173,7 @@ public class SWFLoader extends GridSim {
         if (j == 0) {
             while (true) {
                 try {
-                    for (int s = 0; s < ExperimentSetup.skip; s++) {
+                    for (int s = 0; s < ExperimentSetup.skipJob; s++) {
                         line = br.readLine();
                     }
                     values = line.split("\t");
@@ -285,7 +285,7 @@ public class SWFLoader extends GridSim {
                 ram = Long.parseLong(values[9]);
             }
         } else {
-            if (data_set.contains("zewura") || data_set.contains("wagap") || data_set.contains("meta")) {
+            if (values.length>18) {
                 ram = Math.round(ram / 1024.0);
                 queue = values[19];
             }

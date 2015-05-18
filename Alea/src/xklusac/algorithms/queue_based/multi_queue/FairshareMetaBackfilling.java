@@ -94,7 +94,7 @@ public class FairshareMetaBackfilling implements SchedulingPolicy {
                     //if (ExperimentSetup.use_anti_starvation && (GridSim.clock() - gi.getRelease_date()) > Math.min(gi.getJobLimit()/gi.getNumPE(), 3600*12.0)) {
                     //if (ExperimentSetup.use_anti_starvation && (GridSim.clock() - gi.getRelease_date()) > Math.min(gi.getJobLimit()/4.0, 3600*12.0)) {
                     //  && (GridSim.clock() - gi.getRelease_date()) > (60*30)
-                    if (ExperimentSetup.use_anti_starvation && !gi.getQueue().equals("backfill")) {
+                    if (ExperimentSetup.anti_starvation && !gi.getQueue().equals("backfill")) {
                         if (ExperimentSetup.use_queues) {
                             int avail = ExperimentSetup.queues.get(gi.getQueue()).getAvailCPUs();
                             // stradej pouze pokud fronta dovoluje

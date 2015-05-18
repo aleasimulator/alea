@@ -4,6 +4,8 @@
     Author     : Gabriela Podolnikova
 --%>
 
+<%@page import="java.util.ArrayList"%>
+<%@page import="java.util.Arrays"%>
 <%@page import="xklusac.environment.ServletInputStreamProvider"%>
 <%@page import="xklusac.environment.InputStreamProvider"%>
 <%@page import="java.io.File"%>
@@ -18,13 +20,17 @@
 <%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8" %>
 <%@ page import="xklusac.environment.AleaConfiguration" %>
 <%@ page import="java.io.IOException" %>
-
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
 
 <html>
     <head>
-        <link rel="stylesheet" type="text/css" href="css/style.css">
+        <link rel="stylesheet" type="text/css" href="./css/style.css">
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta http-equiv="Pragma" content="no-cache" />
+        <meta http-equiv="Expires" content="0" />
     </head>
+    
 <body>
   <%  //code inside the service() method
       AleaConfiguration aCfg = ConfigurationWeb.getAleaConfiguration(getServletContext());
@@ -119,8 +125,14 @@
       <img src="images/logo1.png" alt="Alea" class="logo">
       <%
           List<String> keys = description.getKeyList();
+          String[] algorithmsArray =  null;
           boolean typeWasWrong = false;
+          boolean match = false;
+          boolean lengthWasWrong = false;
           boolean tableOpen = false;
+          boolean useRam = false;
+          int numOfAlgSelected = 0;
+          int numOfDataSetsSelected = 0;
           for (String key : keys) {
               if (key.startsWith(AleaConfiguration.PLUGIN)) {
                   continue;
@@ -138,11 +150,10 @@
                       List<Integer> applicableAlgs = configDesc.getAlg();
                       if (!applicableAlgs.isEmpty()) {
                               int[] selectedAlgs = aCfg.getIntArray("algorithms");
-                              boolean match = false;
+                              match = false;
                               for (int sel : selectedAlgs) {
-                                  if (applicableAlgs.contains(sel)) {
+                                  if (!applicableAlgs.contains(sel)) {
                                       match = true;
-                                      break;
                                   }
                               }
                               if (!match) {
@@ -160,25 +171,132 @@
                           inputParam = " wrongFormat";
                           typeWasWrong = true;
                       }
-                      
+                      //checking if the lenght of arrays are OK 
+                      if (key.equals("algorithms")) {
+                          int algs[] = aCfg.getIntArray(key);
+                          numOfAlgSelected = algs.length;
+                          System.out.println("addInf = " + addInf);
+                          
+                          algorithmsArray = addInf.split(",");
+                          System.out.println("algorithmsArray = " + Arrays.asList(algorithmsArray));
+                      }
+                      if (key.equals("data_sets")) {
+                          String dataSets[] = aCfg.getStringArray(key);
+                          numOfDataSetsSelected = dataSets.length;
+                      }
+                      if (key.equals("total_gridlet") || key.equals("skip") || key.equals("weight_of_fairness")){
+                          if (aCfg.getIntArray(key).length != numOfDataSetsSelected) {
+                              inputParam = " wrongFormat";
+                              lengthWasWrong = true;
+                          }
+                      }
+                      if (key.equals("use_resource_spec_packing") || key.equals("use_anti_starvation")) {
+                          if (aCfg.getBooleanArray(key).length != numOfAlgSelected) {
+                              inputParam = " wrongFormat";
+                              lengthWasWrong = true;
+                          }
+                      }
+                      if (key.equals("sum_multiplications")) {
+                          if (aCfg.getString(keys.get(keys.indexOf("use_fairshare"))).equals("false") || aCfg.getString(keys.get(keys.indexOf("use_fairshare_RAM"))).equals("false")) {
+                              match = true;
+                          }
+                      }
+                      if (key.equals("use_resource_spec_packing")) {
+                          String ram = keys.get(keys.indexOf("use_RAM"));
+                          if (aCfg.getString(ram).equals("false")) {
+                              useRam = true;
+                          }
+                      }
                   
        %>
        <tr>
            <td><%=shortDesc%></td>
            <td><%=type%></td>
-           <td><textarea name="<%=param%>"  class="val<%=inputParam%>" form="usrform"><%=value%></textarea></td>
-           <td><%=addInf%></td>
-
+           <%
+           if (type.equals("boolean")) {
+           %>
+           <td><select name="<%=param%>" form="usrform">
+                   <%
+                   if (value.equals("true")) {
+                   %>
+               <option value="true"><%=value%></option>
+               <%
+                   value = "false";
+               %>
+               <option value="false"><%=value%></option>
+               <% 
+                   } else if (value.equals("false")) {
+                       %>
+                       <option value="false"><%=value%></option>
+                       <%
+                       value = "true";
+                       %>
+                        <option value="false"><%=value%></option>
+                       <% 
+                   }
+               %>
+               </select></td>
+           <%
+           } else {
+           %>
+           <td><textarea name="<%=param%>"  class="val<%=inputParam%>" form="usrform"><%=value%></textarea></td>           
+           <%
+           }
+           if ((useRam && match) || (useRam && lengthWasWrong) || (useRam && match && lengthWasWrong)) {
+               %>
+                <td><font color="red"> Only effective when an per-node job specification is used. Job's RAM requirements should be set to true.</font></td>
+              <%
+               useRam = false;
+           }
+           if (match && lengthWasWrong) {
+               %>
+                <td><%=addInf%><font color="red"> Pay attention to the selected algorithms! Wrong length of arrays!</font></td>
+              <%
+              match = false;
+              lengthWasWrong = false;
+           } else if (match) {
+               %>
+                <td><%=addInf%><font color="red"> Pay attention to the selected algorithms!</font></td>
+              <%
+              match = false;
+           }else if (lengthWasWrong) {
+               %>
+                 <td><%=addInf%><font color="red">Wrong length of arrays!</font></td>
+              <%
+              lengthWasWrong = false;
+           } else if (useRam){
+               %>
+               <td><%=addInf%><font color="red"> Only effective when an per-node job specification is used. Job's RAM requirements should be set to true.</font></td>
+               <%
+               useRam = false;
+           } else if (key.equals("algorithms")) {
+               %>
+               <td>
+                   <%pageContext.setAttribute("aa", algorithmsArray);%>
+                    <c:forEach items="${aa}" var ="alg">
+                    <ul style="list-style-type:disc">
+                        <li><c:out value="${alg}"/></li>
+                    </ul>
+                </c:forEach>
+               </td>
+               <%
+           }
+           else {
+              %>
+               <td><%=addInf%></td>
+              <%
+           }
+           %>
        </tr>
-<%
-                      if (key.equals("algorithms")) {
-                        out.write(ConfigurationHtml.TABLE_END);
-                        %>
-                            <input name="submit" type="submit" value="<%=ConfigurationWeb.Values.OK%>"/>
-                        <%
-                      }
-                  }
-          }
+        <%
+           if (key.equals("algorithms")) {
+                 out.write(ConfigurationHtml.TABLE_END);
+                    %>
+                       <input name="submit" type="submit" value="<%=ConfigurationWeb.Values.OK%>"/>
+                    <%
+            }
+         }
+       }
           String[] plugins = aCfg.getStringArray(AleaConfiguration.PLUGINS);
           
           for (int i=0; i<plugins.length; i++) {
@@ -246,11 +364,11 @@
           
           
           out.write(ConfigurationHtml.TABLE_END);
-          if (typeWasWrong) {
-              %>
-              <p>Wrong format!</p>
-              <%
-          }
+           if (typeWasWrong) {
+                %>
+                <p>Wrong format!</p>
+                <%
+              }
           %>
           <input name="submit" type="submit" value="<%=ConfigurationWeb.Values.OK%>"/>
           <input name="submit" type="submit" value="Reset"/>

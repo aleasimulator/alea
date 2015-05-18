@@ -311,7 +311,7 @@ public class ResourceInfo {
         if (ppn < 0 && numNodes < 0) {
         }
         MachineList machines = this.resource.getMachineList();
-        if (ExperimentSetup.use_anti_starvation == true) {
+        if (ExperimentSetup.anti_starvation == true) {
             machines = virt_machines;
         }
         int allocateNodes = numNodes;
@@ -327,7 +327,7 @@ public class ResourceInfo {
                 //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because prop=" + gi.getProperties()+ " and mach"+i+" has "+machine.getNumBusyPE()+" used CPUs");
                 continue;
             }
-            if (ExperimentSetup.use_anti_starvation == false) {
+            if (ExperimentSetup.anti_starvation == false) {
                 if (machine.getNumFreePE() >= ppn && machine.getFreeRam() >= ram) {
                     allocateNodes--;
                 }
@@ -343,7 +343,7 @@ public class ResourceInfo {
         }
 
         //do only when packing
-        if (ExperimentSetup.use_resource_spec_packing && numNodes > 1) {
+        if (ExperimentSetup.resource_spec_packing && numNodes > 1) {
             //System.out.println(gi.getID() + " !!! START !!! of job packing. ppn=" + gi.getPpn() + " node=" + gi.getNumNodes());
             // pocet uzlu je liche cislo a to neumim rozumne transformovat
             if (numNodes % 2 != 0) {
@@ -355,7 +355,7 @@ public class ResourceInfo {
                     //System.out.println(gi.getID() + " test of (lichy) job packing: " + gi.getProperties() + " ppn=" + ppn + " node=" + numNodes + " CPU-per-m: " + cpu_per_m);
 
                     machines = this.resource.getMachineList();
-                    if (ExperimentSetup.use_anti_starvation == true) {
+                    if (ExperimentSetup.anti_starvation == true) {
                         machines = virt_machines;
                     }
                     allocateNodes = numNodes;
@@ -371,7 +371,7 @@ public class ResourceInfo {
                             //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because prop=" + gi.getProperties()+ " and mach"+i+" has "+machine.getNumBusyPE()+" used CPUs");
                             continue;
                         }
-                        if (ExperimentSetup.use_anti_starvation == false) {
+                        if (ExperimentSetup.anti_starvation == false) {
                             if (machine.getNumFreePE() >= ppn && machine.getFreeRam() >= ram) {
                                 allocateNodes--;
                             }
@@ -407,7 +407,7 @@ public class ResourceInfo {
                         //System.out.println(gi.getID() + " Job packing tested: " + gi.getProperties() + " ppn=" + gi.getPpn() + " node=" + gi.getNumNodes());
 
                         machines = this.resource.getMachineList();
-                        if (ExperimentSetup.use_anti_starvation == true) {
+                        if (ExperimentSetup.anti_starvation == true) {
                             machines = virt_machines;
                         }
                         allocateNodes = numNodes;
@@ -423,7 +423,7 @@ public class ResourceInfo {
                                 //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because prop=" + gi.getProperties()+ " and mach"+i+" has "+machine.getNumBusyPE()+" used CPUs");
                                 continue;
                             }
-                            if (ExperimentSetup.use_anti_starvation == false) {
+                            if (ExperimentSetup.anti_starvation == false) {
                                 if (machine.getNumFreePE() >= ppn && machine.getFreeRam() >= ram) {
                                     allocateNodes--;
                                 }

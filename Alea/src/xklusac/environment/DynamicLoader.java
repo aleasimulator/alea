@@ -175,7 +175,7 @@ public class DynamicLoader extends GridSim {
         if (j == 0) {
             while (true) {
                 try {
-                    for (int s = 0; s < ExperimentSetup.skip; s++) {
+                    for (int s = 0; s < ExperimentSetup.skipJob; s++) {
                         line = br.readLine();
                     }
                     values = line.split("\t");

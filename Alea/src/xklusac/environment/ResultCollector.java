@@ -376,7 +376,7 @@ public class ResultCollector {
             if (!ExperimentSetup.estimates) {
                 prob += "_exact";
             }
-            if (!ExperimentSetup.use_anti_starvation) {
+            if (!ExperimentSetup.anti_starvation) {
                 prob += "_bez";
             } else {
                 prob += "_stradani";
@@ -493,7 +493,7 @@ public class ResultCollector {
             if (!ExperimentSetup.estimates) {
                 prob += "_exact";
             }
-            if (!ExperimentSetup.use_anti_starvation) {
+            if (!ExperimentSetup.anti_starvation) {
                 prob += "_bez";
             } else {
                 prob += "_stradani";

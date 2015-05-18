@@ -48,8 +48,12 @@ input.val
     padding: 3px 5px;
 }
 
-input.wrongFormat {
+.wrongformat {
     color:red;
+}
+
+td.wrongformat {
+    font-color:red;
 }
 
 form
