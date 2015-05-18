@@ -105,7 +105,7 @@ public class PWFLoader extends GridSim {
             }
         }
 
-        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.SUBMISION_DONE, null);
+        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.SUBMISSION_DONE, null);
         Sim_event ev = new Sim_event();
         sim_get_next(ev);
 

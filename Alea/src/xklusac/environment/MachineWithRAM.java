@@ -46,34 +46,6 @@ public class MachineWithRAM extends Machine {
     }
 
     /**
-     * Static method for creating copy of given MachineWithRAM class.
-     *
-     * @param MachineWithRAM object to clone
-     * @return copy of given MachineWithRAM class
-     */
-    public static MachineWithRAM copyMachine(MachineWithRAM clone) {
-        PEList peList = new PEList();
-        for (int i = 0; i < clone.getPEList().size(); i++) {
-            PE pe = new PE(clone.getPEList().get(i).getID(), clone.getPEList().get(i).getMIPSRating());
-            pe.setStatus(clone.getPEList().get(i).getStatus());
-            peList.add(pe);
-        }
-
-        MachineWithRAM machine = new MachineWithRAM(clone.getMachineID(), peList, clone.getRam());
-        machine.setUsedRam(clone.getUsedRam());
-        
-        /*machine.setNumFreeVirtualPE(clone.getNumFreeVirtualPE());
-        double[] cloneFirstTime = clone.getFirstFreeTimeArray();
-        double[] newFirstTimeArray = new double[cloneFirstTime.length];
-        for(int i = 0; i < cloneFirstTime.length; i++){
-            newFirstTimeArray[i] = cloneFirstTime[i];
-        }
-        machine.setFirstFreeTimeArray(newFirstTimeArray);*/
-        
-        return machine;
-    }
-
-    /**
      * @return the ram
      */
     public long getRam() {
@@ -113,36 +85,6 @@ public class MachineWithRAM extends Machine {
      */
     public double getPercUsedRam() {
         return Math.max(0, (((this.getUsedRam() * 1.0) / this.getRam())) * 100);
-    }
-
-    /**
-     * This method sets given count of PEs to status FREE.
-     *
-     * @param count of PEs
-     */
-    public void setFreePEs(int peSum) {
-        PEList pes = super.getPEList();
-        for (int i = 0; i < pes.size(); i++) {
-            if (peSum > 0 && pes.get(i).getStatus() == false) {
-                pes.get(i).setStatusFree();
-                peSum--;
-            }
-        }
-    }
-
-    /**
-     * This method sets given count of PEs to status BUSY.
-     *
-     * @param count of PEs
-     */
-    public void setBusyPEs(int peSum) {
-        PEList pes = super.getPEList();
-        for (int i = 0; i < pes.size(); i++) {
-            if (peSum > 0 && pes.get(i).getStatus() == true) {
-                pes.get(i).setStatusBusy();
-                peSum--;
-            }
-        }
     }
 
     /**
@@ -208,11 +150,11 @@ public class MachineWithRAM extends Machine {
                 firstFreeTime[i] = est;
             }
         }
-
+        
         /*for (int i = 0; i < firstFreeTime.length; i++) {
-         System.out.print(Math.round(firstFreeTime[i])+",");
-         }
-         System.out.println("| Max updated...:");*/
+            System.out.print(Math.round(firstFreeTime[i])+",");
+        }
+        System.out.println("| Max updated...:");*/
     }
 
     public double getEarliestStartTimeForNodeJob(int ppn) {
@@ -225,12 +167,13 @@ public class MachineWithRAM extends Machine {
 
 
         /*System.out.print(Math.round(GridSim.clock()) + " | machine " + this.getMachineID() + " |");
-         for (int i = 0; i < est_times.length;
-         i++) {
-         System.out.print(Math.round(est_times[i]) + ",");
-         }
-         System.out.println("| EST = " + Math.round(est_times[ppn - 1]) + " for PPN          = " + ppn);
-         */
+        for (int i = 0; i < est_times.length;
+                i++) {
+            System.out.print(Math.round(est_times[i]) + ",");
+        }
+        System.out.println("| EST = " + Math.round(est_times[ppn - 1]) + " for PPN          = " + ppn);
+        */
+
         return est_times[ppn - 1];
     }
 } // end class

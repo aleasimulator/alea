@@ -6,14 +6,12 @@ package xklusac.algorithms.schedule_based;
 
 import java.util.Date;
 import gridsim.GridSim;
-import java.util.Collections;
 import xklusac.algorithms.SchedulingPolicy;
 import xklusac.objective_functions.CommonObjectives;
 import xklusac.environment.ExperimentSetup;
 import xklusac.environment.GridletInfo;
 import xklusac.environment.ResourceInfo;
 import xklusac.environment.Scheduler;
-import xklusac.extensions.StartComparator;
 
 /**
  * Class BestGap <p>
@@ -122,9 +120,6 @@ public class BestGap implements SchedulingPolicy {
         ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(resIndex);
         // updates resource info's internal values (IMPORTANT! because of next use of this policy)
         ri.forceUpdate(GridSim.clock());
-        
-        if(ri.resScheduleSorted.contains(gi) == false) ri.resScheduleSorted.add(gi);
-        Collections.sort(ri.resScheduleSorted, new StartComparator());
         //System.out.println("New job has been received by BestGap");
 
     }
@@ -135,12 +130,10 @@ public class BestGap implements SchedulingPolicy {
         int scheduled = 0;
         for (int j = 0; j < Scheduler.resourceInfoList.size(); j++) {
             ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(j);
-            ri.updateScheduleList();
-            if (ri.resScheduleSorted.size() > 0) {
-                GridletInfo gi = (GridletInfo) ri.resScheduleSorted.get(0);
+            if (ri.resSchedule.size() > 0) {
+                GridletInfo gi = (GridletInfo) ri.resSchedule.get(0);
                 if (ri.canExecuteNow(gi)) {
-                    ri.removeFirstGISorted();
-                    ri.resSchedule.remove(gi);
+                    ri.removeFirstGI();
                     ri.addGInfoInExec(gi);
                     //System.out.println(Math.round(GridSim.clock()) + ": send gi "+gi.getID()+" on "+GridSim.getEntityName(ri.resource.getResourceID())+" req/free = "+gi.getNumPE()+"/"+free);
 

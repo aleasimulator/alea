@@ -1,13 +1,26 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+Copyright (c) 2014 Šimon Tóth
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 package xklusac.environment;
 
-/**
- *
- * @author Dalibor
- */
 import alea.core.AleaSimTags;
 import eduni.simjava.Sim_event;
 import gridsim.*;
@@ -19,13 +32,14 @@ import xklusac.extensions.*;
 import eduni.simjava.distributions.Sim_normal_obj;
 
 /**
- * Class SWFLoader<p>
- * Loads jobs dynamically over time from the file. Then sends these gridlets to
- * the scheduler. SWF stands for Standard Workloads Format (SWF).
+ * Class AgentStatic<p>
+ * Loads jobs dynamically over time from a static workload trace. Then sends
+ * these gridlets to the scheduler. Workload strace is expected in SWF.
+ * SWF stands for Standard Workloads Format (SWF).
  *
  * @author Dalibor Klusacek
  */
-public class SWFLoader extends GridSim {
+public class AgentStatic extends GridSim {
 
     /**
      * input
@@ -78,13 +92,17 @@ public class SWFLoader extends GridSim {
     long prevram = -1;
     long prev_job_limit = -1;
     int count = 1;
+    
+    String p_parent;
 
     /**
      * Creates a new instance of JobLoader
      */
-    public SWFLoader(String name, double baudRate, int total_jobs, String data_set, int maxPE, int minPErating, int maxPErating) throws Exception {
+    public AgentStatic(String name, String loader_name, double baudRate, int total_jobs, String data_set, int maxPE, int minPErating, int maxPErating) throws Exception {
         super(name, baudRate);
-        System.out.println(name + ": openning all jobs from " + data_set);
+
+        p_parent = loader_name;
+
         if (ExperimentSetup.meta) {
             folder_prefix = System.getProperty("user.dir");
         } else {
@@ -101,7 +119,9 @@ public class SWFLoader extends GridSim {
             }
             //System.out.println("Adresar = "+adresar);
         }
-        br = r.openFile(new File(folder_prefix + "/data-set/" + data_set));
+
+        System.out.println(name + ": openning all jobs from \"" + folder_prefix + "/data-set/" + data_set + "_"+name + "\"");
+        br = r.openFile(new File(folder_prefix + "/data-set/" + data_set + "_"+name));
         this.total_jobs = total_jobs;
         this.maxPE = maxPE;
         this.minPErating = minPErating;
@@ -117,49 +137,57 @@ public class SWFLoader extends GridSim {
      */
     public void body() {
         super.gridSimHold(10.0);    // hold by 10 second
+        
+        ComplexGridlet waiting_job = null;
+        int MAX_ARRIVAL_DISTANCE = 60*60;
 
-        while (current_gl < total_jobs) {
-
-            Sim_event ev = new Sim_event();
-            sim_get_next(ev);
-
-            if (ev.get_tag() == AleaSimTags.EVENT_WAKE) {
-
-                ComplexGridlet gl = readGridlet(current_gl);
-                current_gl++;
-                if (gl == null && current_gl < total_jobs) {
-                    super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_WAKE);
-                    continue;
-                } else if (gl == null && current_gl >= total_jobs) {
-                    continue;
-                }
-                // to synchronize job arrival wrt. the data set.
-                double delay = Math.max(0.0, (gl.getArrival_time() - super.clock()));
-                // some time is needed to transfer this job to the scheduler, i.e., delay should be delay = delay - transfer_time. Fix this in the future.
-                //System.out.println("Sending: "+gl.getGridletID());
-                last_delay = delay;
-                super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), delay, AleaSimTags.GRIDLET_INFO, gl);
-
-                delay = Math.max(0.0, (gl.getArrival_time() - super.clock()));
-                if (current_gl < total_jobs) {
-                    // use delay - next job will be loaded after the simulation time is equal to the previous job arrival.
-                    super.sim_schedule(this.getEntityId(this.getEntityName()), delay, AleaSimTags.EVENT_WAKE);
-                }
-
-                continue;
-            }
-        }
-        System.out.println("Shuting down - last gridlet = " + current_gl + " of " + total_jobs);
-        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), Math.round(last_delay + 2), AleaSimTags.SUBMISSION_DONE, new Integer(current_gl));
         Sim_event ev = new Sim_event();
         sim_get_next(ev);
-
-        if (ev.get_tag() == GridSimTags.END_OF_SIMULATION) {
-            System.out.println("Shuting down the " + data_set + "_PWALoader... with: " + fail + " failed or skipped jobs");
+        
+        if (ev.get_tag() != AleaSimTags.EVENT_WAKE) {
+            System.out.println("Stray event received " + super.clock());
+            return;
         }
-        shutdownUserEntity();
-        super.terminateIOEntities();
+        
+        while (true) {  
+            // if we currently have no waiting job (to be sent to scheduler, we need to read one
+            if (waiting_job == null) {
+                // read job from file
+                waiting_job = readGridlet(current_gl);
+                current_gl++;
 
+                // if there are no more records in the file, signal agent completion
+                if (waiting_job == null) {
+                    super.sim_schedule(GridSim.getEntityId(p_parent), 60, AleaSimTags.AGENT_DONE,current_gl);
+                    System.out.println("Agent \"" + this.getEntityName() + "\" finishing after submiting" + (current_gl-1) + " jobs at \"" + GridSim.clock() + "\".");
+                    break;
+                }
+            }
+
+            // At this point we must have a job, either from this or previous cycle.
+            // Check if it is more than 60 minutes in future, if yes, then sleep for 60 minutes.
+
+            // if the job is more than 60 minutes in future, wait
+            if (GridSim.clock() < waiting_job.getArrival_time() &&
+                waiting_job.getArrival_time() - GridSim.clock() > MAX_ARRIVAL_DISTANCE) {
+                super.gridSimHold(MAX_ARRIVAL_DISTANCE);
+                // sleep for 1 hour
+                // super.sim_schedule(AgentStatic.getEntityId(this.getEntityName()), MAX_ARRIVAL_DISTANCE, AleaSimTags.EVENT_WAKE);
+            }
+            // otherwise, it's time to submit
+            else {
+                double delay = Math.max(0.0, (waiting_job.getArrival_time() - GridSim.clock()));
+                // job information event for scheduler
+                super.sim_schedule(AgentStatic.getEntityId("Alea_3.0_scheduler"), delay, AleaSimTags.GRIDLET_INFO, waiting_job);
+                // wakeup event for myself
+                super.gridSimHold(delay);
+                //super.sim_schedule(AgentStatic.getEntityId(this.getEntityName()), delay, AleaSimTags.EVENT_WAKE);
+
+                waiting_job = null;
+            }
+        }
+        
+        super.terminateIOEntities();
     }
 
     /**
@@ -202,6 +230,9 @@ public class SWFLoader extends GridSim {
         } else {
             try {
                 line = br.readLine();
+                if (line == null)
+                    return null;
+
                 //System.out.println(">"+line+"<");
                 if (line.charAt(0) == ' ') {
                     line = line.substring(1);
@@ -250,15 +281,21 @@ public class SWFLoader extends GridSim {
         // we do not allow more PEs for one job than there is on the "biggest" machine.
         // Co-allocation is only supported over one cluster (GridResource) by now.
         if (numCPU > maxPE) {
+            //System.out.println("Limiting numCPU to maxPE numCPU: \"" + numCPU + "\", maxPE: \"" + maxPE + "\"");
             numCPU = maxPE;
-
         }
 
         long arrival = 0;
         // synchronize GridSim's arrivals with the UNIX epoch format as given in GWF
         if (start_time < 0) {
             //System.out.println("prvni: "+j+" start at:"+values[1]+" line="+line);
-            start_time = Integer.parseInt(values[1]);
+            if (ExperimentSetup.firstArrival != 0) {
+                // follow the configuration
+                start_time = ExperimentSetup.firstArrival;
+            } else {
+                // relative to the first job
+                start_time = Integer.parseInt(values[1]);
+            }
             arrival = 0;
 
         } else {
@@ -286,7 +323,6 @@ public class SWFLoader extends GridSim {
             }
         } else {
             if (data_set.contains("zewura") || data_set.contains("wagap") || data_set.contains("meta") || data_set.contains("ncbr")) {
-
                 ram = Math.round(ram / 1024.0);
                 queue = values[19];
             }
@@ -380,7 +416,7 @@ public class SWFLoader extends GridSim {
                             ppns = ppns.substring(0, ind);
                         }
 
-                        // to do: 1:ppn=1+3:ppn=2 
+                        // to do: 1:ppn=1+3:ppn=2
                         if (ppns.contains("+")) {
                             break;
                         }
@@ -395,7 +431,7 @@ public class SWFLoader extends GridSim {
                 if (ppn != -1) {
                     // korekce chyby ve workloadu
                     if (numCPU < ppn) {
-                        System.out.println(id + ": CPUs mismatch CPUs = " + numCPU + " nodespec = " + properties);
+                        //System.out.println(id + ": CPUs mismatch CPUs = " + numCPU + " ppn = " + ppn + " nodespec = " + properties);
                         numCPU = ppn;
                     }
                     numNodes = numCPU / ppn;

@@ -107,7 +107,7 @@ public class GWFLoader extends GridSim {
             }
         }
 
-        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), earliest_end_time, AleaSimTags.SUBMISION_DONE, new Integer(submitted));
+        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), earliest_end_time, AleaSimTags.SUBMISSION_DONE, new Integer(submitted));
         Sim_event ev = new Sim_event();
         sim_get_next(ev);
 
