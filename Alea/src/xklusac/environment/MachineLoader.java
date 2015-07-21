@@ -81,7 +81,7 @@ public class MachineLoader {
                 path = adresar.split("\\\\");
             }
             adresar = "";
-            for (int i = 0; i < path.length - 1; i++) {
+            for (int i = 0; i < path.length - 2; i++) {
                 adresar += path[i] + "/";
             }
             //System.out.println("Adresar = "+adresar);
