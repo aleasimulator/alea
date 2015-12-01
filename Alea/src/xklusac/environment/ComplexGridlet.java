@@ -1,32 +1,56 @@
 package xklusac.environment;
+
 import gridsim.*;
 import java.util.LinkedList;
+
 /**
  * Class ComplexGridlet<p>
- * This class represents one gridlet i.e. one job and its parameters. Job may require 1 or more CPUs for its run.
+ * This class represents one gridlet i.e. one job and its parameters. Job may
+ * require 1 or more CPUs for its run.
  *
- * @author       Dalibor Klusacek
+ * @author Dalibor Klusacek
  */
-public class ComplexGridlet extends Gridlet{
-    /** required architecture */
+public class ComplexGridlet extends Gridlet {
+
+    /**
+     * required architecture
+     */
     private String archRequired;
-    /** required OS  */
+    /**
+     * required OS
+     */
     private String osRequired;
-    /** arrival time i.e. time of gridlet arrival in the system */
+    /**
+     * arrival time i.e. time of gridlet arrival in the system
+     */
     private double arrival_time;
-    /** release date i.e. how long from start time the gridlet can be started */
+    /**
+     * release date i.e. how long from start time the gridlet can be started
+     */
     private double release_date;
-    /** due date (deadline) */
+    /**
+     * due date (deadline)
+     */
     private double due_date;
-    /** gridlet priority */
+    /**
+     * gridlet priority
+     */
     private int priority;
-    /** required number of CPU */
+    /**
+     * required number of CPU
+     */
     private int numPE;
-    /** expected computational length */
+    /**
+     * expected computational length
+     */
     private double estimatedLength;
-    /** unused */
+    /**
+     * unused
+     */
     private double estimatedMachine;
-    /** queue name where the job was submitted in */
+    /**
+     * queue name where the job was submitted in
+     */
     private String queue;
     private String properties;
     private boolean repeated;
@@ -39,9 +63,38 @@ public class ComplexGridlet extends Gridlet{
     private int numNodes;
     private int ppn;
     private boolean backfilled;
+
+    private String onJobStart = null;
+    private String onJobCompl = null;
+    private String onJobFail = null;
+
+    public String getOnJobStart() {
+        return onJobStart;
+    }
+
+    public String getOnJobCompl() {
+        return onJobCompl;
+    }
     
+    public String getOnJobFail() {
+        return onJobFail;
+    }
+
+    public void setOnJobStart(String agent) {
+        onJobStart = agent;
+    }
+
+    public void setOnJobCompl(String agent) {
+        onJobCompl = agent;
+    }
     
-    /** Creates a new instance of ComplexGridlet representing one Job
+    public void setOnJobFail(String agent) {
+        onJobFail = agent;
+    }
+
+    /**
+     * Creates a new instance of ComplexGridlet representing one Job
+     *
      * @param gridletID id of this gridlet
      * @param gridletLength computational length in MI
      * @param gridletFileSize size in Bytes
@@ -58,7 +111,7 @@ public class ComplexGridlet extends Gridlet{
      */
     public ComplexGridlet(int gridletID, String user, long job_limit, double gridletLength, double estimatedLength, long gridletFileSize,
             long gridletOutputSize, String oSrequired, String archRequired,
-            double arrival_time, double due_date, int priority, int numPE, double estMach, String queue, String properties, double percentage,long ram,int numNodes, int ppn) {
+            double arrival_time, double due_date, int priority, int numPE, double estMach, String queue, String properties, double percentage, long ram, int numNodes, int ppn) {
         // call Gridlet constructor
         super(gridletID, gridletLength, gridletFileSize, gridletOutputSize);
         this.setOpSystemRequired(oSrequired);
@@ -81,75 +134,129 @@ public class ComplexGridlet extends Gridlet{
         this.setPpn(ppn);
         this.setNumNodes(numNodes);
     }
-    /** Getter method */
+
+    /**
+     * Getter method
+     */
     public String getOpSystemRequired() {
         return osRequired;
     }
-    /** Setter method */
+
+    /**
+     * Setter method
+     */
     public void setOpSystemRequired(String osRequired) {
         this.osRequired = osRequired;
     }
-    /** Getter method */
+
+    /**
+     * Getter method
+     */
     public double getArrival_time() {
         return arrival_time;
     }
-    /** Setter method */
+
+    /**
+     * Setter method
+     */
     public void setArrival_time(double start_time) {
         this.arrival_time = start_time;
     }
-    /** Getter method */
+
+    /**
+     * Getter method
+     */
     public String getArchRequired() {
         return archRequired;
     }
-    /** Setter method */
+
+    /**
+     * Setter method
+     */
     public void setArchRequired(String archRequired) {
         this.archRequired = archRequired;
     }
-    /** Getter method */
+
+    /**
+     * Getter method
+     */
     public double getRelease_date() {
         return release_date;
     }
-    /** Setter method */
+
+    /**
+     * Setter method
+     */
     public void setRelease_date(double release_date) {
         this.release_date = release_date;
     }
-    /** Getter method */
+
+    /**
+     * Getter method
+     */
     public double getDue_date() {
         return due_date;
     }
-    /** Setter method */
+
+    /**
+     * Setter method
+     */
     public void setDue_date(double due_date) {
         this.due_date = due_date;
     }
-    /** Getter method */
+
+    /**
+     * Getter method
+     */
     public int getPriority() {
         return priority;
     }
-    /** Setter method */
+
+    /**
+     * Setter method
+     */
     public void setPriority(int priority) {
         this.priority = priority;
     }
-    /** Getter method */
+
+    /**
+     * Getter method
+     */
     public double getEstimatedLength() {
         return estimatedLength;
     }
-    /** Setter method */
+
+    /**
+     * Setter method
+     */
     public void setEstimatedLength(double estimated) {
         this.estimatedLength = estimated;
     }
-    /** Getter method */
+
+    /**
+     * Getter method
+     */
     public double getEstimatedMachine() {
         return estimatedMachine;
     }
-    /** Setter method */
+
+    /**
+     * Setter method
+     */
     public void setEstimatedMachine(double estimatedMachine) {
         this.estimatedMachine = estimatedMachine;
     }
-    /** Getter method */
+
+    /**
+     * Getter method
+     */
     public String getQueue() {
         return queue;
     }
-    /** Setter method */
+
+    /**
+     * Setter method
+     */
     public void setQueue(String queue) {
         this.queue = queue;
     }
@@ -193,6 +300,7 @@ public class ComplexGridlet extends Gridlet{
     public void setJobLimit(long job_limit) {
         this.job_limit = job_limit;
     }
+
     public double getExpectedFinishTime() {
         return this.expectedFinishtime;
     }
@@ -265,5 +373,5 @@ public class ComplexGridlet extends Gridlet{
     public void setBackfilled(boolean backfilled) {
         this.backfilled = backfilled;
     }
-    
+
 }

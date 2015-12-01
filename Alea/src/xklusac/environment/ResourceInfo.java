@@ -12,12 +12,12 @@ import xklusac.extensions.Hole;
 import xklusac.extensions.StartComparator;
 
 /**
- * Class ResourceInfo<p> This class stores dynamic information about each
- * resource. E.g., prepared schedule for this resource, list of
- * gridletDescriptions of jobs in execution/waiting on machine. It also provides
- * methods to calculate various parameters based on the knowledge of the
- * schedule/queue and resource status, e.g. expected makespan, machine usage,
- * first free slot, etc.
+ * Class ResourceInfo<p>
+ * This class stores dynamic information about each resource. E.g., prepared
+ * schedule for this resource, list of gridletDescriptions of jobs in
+ * execution/waiting on machine. It also provides methods to calculate various
+ * parameters based on the knowledge of the schedule/queue and resource status,
+ * e.g. expected makespan, machine usage, first free slot, etc.
  *
  * @author Dalibor Klusacek
  */
@@ -128,9 +128,12 @@ public class ResourceInfo {
     public int peRating = 0;
     protected boolean stable_w = false;
     protected boolean stable_s = false;
+    protected boolean stable_free = false;
     double[] r_tuwt;
     double[] r_tusa;
     public MachineList virt_machines;
+
+    public int nowFreePE = 0;
 
     /**
      * Creates a new instance of ResourceInfo with "in schedule" and "on
@@ -185,6 +188,7 @@ public class ResourceInfo {
                 stable = false;
                 stable_w = false;
                 stable_s = false;
+                stable_free = false;
                 removed = true;
                 break;
             }
@@ -216,17 +220,23 @@ public class ResourceInfo {
      * Gets the number of currently free CPUs on a resource.
      */
     public int getNumFreePE() {
-        //int freePE = this.numPE;
-        int freePE = getNumRunningPE();
-        // just testing
-        freePE = Math.min(freePE, this.numPE);
-        for (int j = 0; j < resInExec.size(); j++) {
-            GridletInfo gi = (GridletInfo) resInExec.get(j);
-            if (gi.getStatus() != Gridlet.SUCCESS) {
-                freePE = freePE - gi.getNumPE();
+        if (stable_free) {
+            return nowFreePE;
+        } else {
+            //int freePE = this.numPE;
+            int freePE = getNumRunningPE();
+            // just testing
+            freePE = Math.min(freePE, this.numPE);
+            for (int j = 0; j < resInExec.size(); j++) {
+                GridletInfo gi = (GridletInfo) resInExec.get(j);
+                if (gi.getStatus() != Gridlet.SUCCESS) {
+                    freePE = freePE - gi.getNumPE();
+                }
             }
+            stable_free = true;
+            nowFreePE = Math.max(0, freePE);
+            return Math.max(0, freePE);
         }
-        return Math.max(0, freePE);
     }
 
     /**
@@ -267,7 +277,6 @@ public class ResourceInfo {
                 return false;
             }
         }
-
 
         if (ExperimentSetup.use_RAM == false) {
             if (this.getNumFreePE() >= gi.getNumPE()) {
@@ -339,17 +348,17 @@ public class ResourceInfo {
                     }
                     allocateNodes = numNodes;
 
-                for (int i = 0; i < machines.size(); i++) {
-                    MachineWithRAM machine = (MachineWithRAM) machines.get(i);
-                    // cannot use such machine
-                    if (machine.getFailed()) {
-                        continue;
-                    }
-                    // cannot use machine with job assigned if exclusive use required
-                    if (excl && machine.getNumFreePE() < machine.getNumPE()) {
-                        //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because prop=" + gi.getProperties()+ " and mach"+i+" has "+machine.getNumBusyPE()+" used CPUs");
-                        continue;
-                    }
+                    for (int i = 0; i < machines.size(); i++) {
+                        MachineWithRAM machine = (MachineWithRAM) machines.get(i);
+                        // cannot use such machine
+                        if (machine.getFailed()) {
+                            continue;
+                        }
+                        // cannot use machine with job assigned if exclusive use required
+                        if (excl && machine.getNumFreePE() < machine.getNumPE()) {
+                            //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because prop=" + gi.getProperties()+ " and mach"+i+" has "+machine.getNumBusyPE()+" used CPUs");
+                            continue;
+                        }
 
                         if (ExperimentSetup.anti_starvation == false) {
                             if (machine.getNumFreePE() >= ppn && machine.getFreeRam() >= ram) {
@@ -358,18 +367,18 @@ public class ResourceInfo {
                         } else {
                             if (machine.getNumFreeVirtualPE() >= ppn && machine.getFreeRam() >= ram) {
                                 allocateNodes--;
+                            }
                         }
-                    }
 
-                    if (allocateNodes <= 0) {
-                        gi.setPpn(ppn);
-                        gi.setNumNodes(numNodes);
-                        gi.setRam(ram);
-                        gi.getGridlet().setRam(ram);
-                        gi.getGridlet().setNumNodes(numNodes);
-                        gi.getGridlet().setPpn(ppn);
-                        System.out.println(gi.getID() + " Job packing SUCCESS: " + gi.getProperties() + " ppn=" + gi.getPpn() + " node=" + gi.getNumNodes());
-                        return true;
+                        if (allocateNodes <= 0) {
+                            gi.setPpn(ppn);
+                            gi.setNumNodes(numNodes);
+                            gi.setRam(ram);
+                            gi.getGridlet().setRam(ram);
+                            gi.getGridlet().setNumNodes(numNodes);
+                            gi.getGridlet().setPpn(ppn);
+                            System.out.println(gi.getID() + " Job packing SUCCESS: " + gi.getProperties() + " ppn=" + gi.getPpn() + " node=" + gi.getNumNodes());
+                            return true;
                         }
                     }
 
@@ -429,10 +438,8 @@ public class ResourceInfo {
             }
         }
 
-
         // all machines tested and not enough CPUs/RAM found to execute job now
         return false;
-
 
     }
 
@@ -471,23 +478,23 @@ public class ResourceInfo {
             // rezervaci udelam na stroji, ktery bude nejdrive volny
             double earliest_start_time = Double.MAX_VALUE;
             MachineWithRAM earliest_machine = null;
-                for (int i = 0; i < machines.size(); i++) {
-                    MachineWithRAM machine = (MachineWithRAM) machines.get(i);
-                    if (machine.getNumPE() >= ppn && machine.getRam() >= ram) {
-                        double local_est = machine.getEarliestStartTimeForNodeJob(ppn);
-                        if (local_est < earliest_start_time) {
-                            earliest_start_time = local_est;
-                            earliest_machine = machine;
-                        }
+            for (int i = 0; i < machines.size(); i++) {
+                MachineWithRAM machine = (MachineWithRAM) machines.get(i);
+                if (machine.getNumPE() >= ppn && machine.getRam() >= ram) {
+                    double local_est = machine.getEarliestStartTimeForNodeJob(ppn);
+                    if (local_est < earliest_start_time) {
+                        earliest_start_time = local_est;
+                        earliest_machine = machine;
                     }
                 }
-                if (earliest_machine != null) {
-                    earliest_machine.setNumFreeVirtualPE(earliest_machine.getNumFreeVirtualPE() - ppn);
-                    earliest_machine.setUsedRam(earliest_machine.getUsedRam() + ram);
-                    // TO DO - ted natvrdo navysim na Double.MAXVALUE (uvnitr rutiny updateFirst...)
-                    //System.out.println(gi.getID()+" Allocating nodes on "+this.resource.getResourceName()+" mach: "+earliest_machine.getMachineID());
-                    earliest_machine.updateFirstFreeTimeAfterNodeJobAllocation(ppn, gi.getJobLimit());
-                }
+            }
+            if (earliest_machine != null) {
+                earliest_machine.setNumFreeVirtualPE(earliest_machine.getNumFreeVirtualPE() - ppn);
+                earliest_machine.setUsedRam(earliest_machine.getUsedRam() + ram);
+                // TO DO - ted natvrdo navysim na Double.MAXVALUE (uvnitr rutiny updateFirst...)
+                //System.out.println(gi.getID()+" Allocating nodes on "+this.resource.getResourceName()+" mach: "+earliest_machine.getMachineID());
+                earliest_machine.updateFirstFreeTimeAfterNodeJobAllocation(ppn, gi.getJobLimit());
+            }
         }
 
     }
@@ -548,22 +555,23 @@ public class ResourceInfo {
             virt_machines.add(virt_machine);
         }
     }
+
     public double computeLocalPE(GridletInfo gi) {
         long ram = gi.getRam();
         int ppn = gi.getPpn();
         int numNodes = gi.getNumNodes();
-        
+
         MachineList machines = this.resource.getMachineList();
         MachineWithRAM machine = (MachineWithRAM) machines.get(0);
-        double PEcpu = ppn/(machine.getNumPE()*1.0);
-        double PEram = ram/(machine.getRam()*1.0);
-        return (Math.max(PEcpu,PEram)*machine.getNumPE())*numNodes;
+        double PEcpu = ppn / (machine.getNumPE() * 1.0);
+        double PEram = ram / (machine.getRam() * 1.0);
+        return (Math.max(PEcpu, PEram) * machine.getNumPE()) * numNodes;
     }
-    
-    public boolean executedHere(GridletInfo gi){
-        if(gi.getOsRequired().contains(this.resource.getResourceName())){
+
+    public boolean executedHere(GridletInfo gi) {
+        if (gi.getOsRequired().contains(this.resource.getResourceName())) {
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -578,7 +586,7 @@ public class ResourceInfo {
                 return false;
             }
             //pozitivni vlastnost
-            if (!req_nodes[r].contains("^") && req_nodes[r].contains("cl_") && !req_nodes[r].contains(this.resource.getResourceName().substring(0, Math.min(this.resource.getResourceName().length(),5)))) {
+            if (!req_nodes[r].contains("^") && req_nodes[r].contains("cl_") && !req_nodes[r].contains(this.resource.getResourceName().substring(0, Math.min(this.resource.getResourceName().length(), 5)))) {
                 //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because prop=" + gi.getProperties());
                 return false;
             }
@@ -591,7 +599,6 @@ public class ResourceInfo {
                 return false;
             }
         }
-
 
         long ram = gi.getRam();
         int ppn = gi.getPpn();
@@ -784,7 +791,6 @@ public class ResourceInfo {
         //gi.getPEs().clear();
         //System.out.println("finding gaps over = "+numPE);
 
-
         for (int i = 0; i < numPE; i++) {
             for (int j = 0; j < finishTimeOnPE2.length; j++) {
                 // if other PE needed to run gridlet - be carefull when comparing 2 double values
@@ -971,8 +977,6 @@ public class ResourceInfo {
             // update of old structure - compatibility reasons
             int lasti = usedIDs.get(usedIDs.size() - 1);
 
-
-
             for (int i = 0; i < usedIDs.size(); i++) {
                 index = usedIDs.get(i);
                 if (i != (usedIDs.size() - 1)) {
@@ -1131,9 +1135,8 @@ public class ResourceInfo {
         GridletInfo last = null;
         int idUns[] = new int[resSchedule.size()];
 
-
         if (prev_clock == current_time && stable) {
-            // no change - so save computational time            
+            // no change - so save computational time
             return;
         } else {
             stable_w = false;
@@ -1156,7 +1159,6 @@ public class ResourceInfo {
             }
 
             // calculate all required values for jobs in schedule
-
             for (int j = 0; j < resSchedule.size(); j++) {
                 GridletInfo gi = (GridletInfo) resSchedule.get(j);
                 idUns[j] = gi.getID();
@@ -1169,7 +1171,6 @@ public class ResourceInfo {
                 // set expected start time wrt. current schedule
                 gi.setExpectedStartTime(finishTimeOnPE[index]);
                 accum_start_time += finishTimeOnPE[index];
-
 
                 double glFinishTime = gi.getJobRuntime(peRating);
                 if (glFinishTime < 1.0) {
@@ -1205,7 +1206,6 @@ public class ResourceInfo {
                 //start_hole = earliestNextTime;
                 start_hole_max = finishTimeOnPE[index];
             }
-
 
             // prepare min and max starting points for last gap
             for (int i = 0; i < finishTimeOnPE.length; i++) {
@@ -1252,7 +1252,6 @@ public class ResourceInfo {
             //Hole h_last = new Hole(start_hole, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, numPE, last);
             //holes.addLast(h_last);
             //System.arraycopy(est, numPE, est, numPE, numPE);
-
             double finishTimeOnPE2[] = new double[resource.getNumPE()];
             for (int i = 0; i < finishTimeOnPE.length; i++) {
                 finishTimeOnPE2[i] = finishTimeOnPE[i];
@@ -1320,7 +1319,6 @@ public class ResourceInfo {
             gi.setExpectedStartTime(finishTimeOnPE[index]);
             accum_start_time += finishTimeOnPE[index];
 
-
             double glFinishTime = gi.getJobRuntime(peRating);
             if (glFinishTime < 1.0) {
                 glFinishTime = 1.0;
@@ -1368,7 +1366,6 @@ public class ResourceInfo {
                 start_hole_min = finishTimeOnPE[i];
             }
         }
-
 
         expected_fails = resSchedule.size() - nondelayed;
 
@@ -1492,6 +1489,7 @@ public class ResourceInfo {
         stable = false;
         stable_w = false;
         stable_s = false;
+        stable_free = false;
         resInExec.add(gi);
         holes.clear();
 
@@ -1519,7 +1517,6 @@ public class ResourceInfo {
         this.usablePEs = findUsablePEs(index, finishTimeOnPE, gi);
 
 //        for(int i = 0; i<)
-
         return this.est;
     }
 
@@ -1644,7 +1641,6 @@ public class ResourceInfo {
             for (int i = 0; i < r_tuwt.length; i++) {
                 r_tuwt[i] = 0.0;
             }
-
 
             for (int i = 0; i < resInExec.size(); i++) {
                 GridletInfo gi = resInExec.get(i);

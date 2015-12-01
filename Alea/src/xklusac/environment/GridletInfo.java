@@ -1,17 +1,17 @@
 package xklusac.environment;
 
 import gridsim.GridSim;
-import gridsim.Gridlet;
+import java.util.HashMap;
 import java.util.LinkedList;
-import xklusac.environment.ComplexGridlet;
 //import gridsim.*;
 
 /**
- * Class GridletInfo<p> This class creates an object handling information about
- * gridlets. It use set / get methods to set / get information about gridlet. It
- * stores various information of real gridlet. If more information required,
- * this is the right place to store them (see set/getTardiness(gridletInfo)
- * method) rather then changing ComplexGridlet class (if possible).
+ * Class GridletInfo<p>
+ * This class creates an object handling information about gridlets. It use set
+ * / get methods to set / get information about gridlet. It stores various
+ * information of real gridlet. If more information required, this is the right
+ * place to store them (see set/getTardiness(gridletInfo) method) rather then
+ * changing ComplexGridlet class (if possible).
  *
  * @author Dalibor Klusacek
  */
@@ -118,6 +118,8 @@ public class GridletInfo {
     private int numNodes;
     private int ppn;
 
+    private HashMap<Integer, Boolean> resourceSuitable;
+
     /**
      * Creates a new instance of GridletInfo object based on the "real" gridlet
      *
@@ -156,6 +158,7 @@ public class GridletInfo {
         this.setRam(gl.getRam());
         this.setNumNodes(gl.getNumNodes());
         this.setPpn(gl.getPpn());
+        this.setResourceSuitable(new HashMap());
     }
 
     /**
@@ -496,50 +499,50 @@ public class GridletInfo {
                 //System.out.println(this.getID()+" last length = "+Math.min(jobLimit, Math.max(0.0, (this.getLast_length() / peRating)))+" / job limit = "+jobLimit+" user = "+this.getUser());
                 return Math.min(jobLimit, Math.max(0.0, (ExperimentSetup.runtime_multiplicator * (this.getLast_length() / peRating))));
             }/* else if (ExperimentSetup.useUserPrecision) {
-                //System.out.println("last length ===== "+jobLimit);
-                double real_runtime = Math.max(0.0, (this.getLength() / peRating));
-                double diff = (jobLimit - real_runtime) / 100.0;
-                diff = diff * this.getPercentage();
-                //System.out.println(this.getID()+": limit = "+jobLimit+", estimate increased by "+this.getPercentage()+"% from "+Math.round(real_runtime)+" to "+Math.round(real_runtime+diff)+" which is "+Math.round(((Math.round(real_runtime+diff)*100)/real_runtime))+"% of real runtime");
-                // return real runtime + additional time as "added" bu user estimate 
-                return Math.min(jobLimit, Math.max(0.0, (real_runtime + diff)));
-            } else if (ExperimentSetup.useDurationPrecision) {
-                //System.out.println("last length ===== "+jobLimit);
-                double real_runtime = Math.max(0.0, (this.getLength() / peRating));
-                double diff = (real_runtime) / 100.0;
-                diff = diff * this.getPercentage();
-                //System.out.println(this.getID()+": D_limit = "+jobLimit+", estimate (in/de)creased by "+this.getPercentage()+"% from "+Math.round(real_runtime)+" to "+Math.round(real_runtime+diff)+" which is "+Math.round(((Math.round(real_runtime+diff)*100)/real_runtime))+"% of real runtime");
-                //System.out.println(this.getID()+": D_limit = "+jobLimit+", real runtime in/de creased by "+this.getPercentage()+" % from "+Math.round(real_runtime)+" to "+Math.round(real_runtime+diff)+" which is "+((Math.round(real_runtime+diff))/real_runtime));
-                // return real runtime + additional time as "added" bu user estimate 
+             //System.out.println("last length ===== "+jobLimit);
+             double real_runtime = Math.max(0.0, (this.getLength() / peRating));
+             double diff = (jobLimit - real_runtime) / 100.0;
+             diff = diff * this.getPercentage();
+             //System.out.println(this.getID()+": limit = "+jobLimit+", estimate increased by "+this.getPercentage()+"% from "+Math.round(real_runtime)+" to "+Math.round(real_runtime+diff)+" which is "+Math.round(((Math.round(real_runtime+diff)*100)/real_runtime))+"% of real runtime");
+             // return real runtime + additional time as "added" bu user estimate
+             return Math.min(jobLimit, Math.max(0.0, (real_runtime + diff)));
+             } else if (ExperimentSetup.useDurationPrecision) {
+             //System.out.println("last length ===== "+jobLimit);
+             double real_runtime = Math.max(0.0, (this.getLength() / peRating));
+             double diff = (real_runtime) / 100.0;
+             diff = diff * this.getPercentage();
+             //System.out.println(this.getID()+": D_limit = "+jobLimit+", estimate (in/de)creased by "+this.getPercentage()+"% from "+Math.round(real_runtime)+" to "+Math.round(real_runtime+diff)+" which is "+Math.round(((Math.round(real_runtime+diff)*100)/real_runtime))+"% of real runtime");
+             //System.out.println(this.getID()+": D_limit = "+jobLimit+", real runtime in/de creased by "+this.getPercentage()+" % from "+Math.round(real_runtime)+" to "+Math.round(real_runtime+diff)+" which is "+((Math.round(real_runtime+diff))/real_runtime));
+             // return real runtime + additional time as "added" bu user estimate
 
 
-                return Math.min(jobLimit, Math.max(0.0, (real_runtime + diff)));
-            }*/ else {
+             return Math.min(jobLimit, Math.max(0.0, (real_runtime + diff)));
+             }*/ else {
 
                 double REAL_RUNTIME = Math.max(0.0, (this.getLength() / peRating));
                 double RUNTIME = jobLimit;
                 /*if (RUNTIME == 86400) {
-                    //6 8 12 16 20
-                    if (REAL_RUNTIME < (5 * 3600)) {
-                        RUNTIME = 5 * 3600;
-                    } else if (REAL_RUNTIME < (6 * 3600)) {
-                        RUNTIME = 6 * 3600;
-                    } else if (REAL_RUNTIME < (8 * 3600)) {
-                        RUNTIME = 8 * 3600;
-                    } else if (REAL_RUNTIME < (12 * 3600)) {
-                        RUNTIME = 12 * 3600;
-                    } else if (REAL_RUNTIME < (16 * 3600)) {
-                        RUNTIME = 16 * 3600;
-                    } else if (REAL_RUNTIME < (20 * 3600)) {
-                        RUNTIME = 20 * 3600;
-                    }
-                }
-                if (RUNTIME == 14400) {
-                    //6 8 12 16 20
-                    if (REAL_RUNTIME < (3 * 3600)) {
-                        RUNTIME = 3 * 3600;
-                    }
-                }*/
+                 //6 8 12 16 20
+                 if (REAL_RUNTIME < (5 * 3600)) {
+                 RUNTIME = 5 * 3600;
+                 } else if (REAL_RUNTIME < (6 * 3600)) {
+                 RUNTIME = 6 * 3600;
+                 } else if (REAL_RUNTIME < (8 * 3600)) {
+                 RUNTIME = 8 * 3600;
+                 } else if (REAL_RUNTIME < (12 * 3600)) {
+                 RUNTIME = 12 * 3600;
+                 } else if (REAL_RUNTIME < (16 * 3600)) {
+                 RUNTIME = 16 * 3600;
+                 } else if (REAL_RUNTIME < (20 * 3600)) {
+                 RUNTIME = 20 * 3600;
+                 }
+                 }
+                 if (RUNTIME == 14400) {
+                 //6 8 12 16 20
+                 if (REAL_RUNTIME < (3 * 3600)) {
+                 RUNTIME = 3 * 3600;
+                 }
+                 }*/
 
                 return RUNTIME;
                 //System.out.println("job limit length ===== "+jobLimit);
@@ -629,5 +632,19 @@ public class GridletInfo {
      */
     public void setPpn(int ppn) {
         this.ppn = ppn;
+    }
+
+    /**
+     * @return the resourceSuitable
+     */
+    public HashMap getResourceSuitable() {
+        return resourceSuitable;
+    }
+
+    /**
+     * @param resourceSuitable the resourceSuitable to set
+     */
+    public void setResourceSuitable(HashMap resourceSuitable) {
+        this.resourceSuitable = resourceSuitable;
     }
 }

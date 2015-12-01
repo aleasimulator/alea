@@ -11,8 +11,6 @@ import java.util.LinkedList;
 import java.util.Random;
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import xklusac.environment.DirectoryLevel;
-import xklusac.environment.ExperimentSetup;
 
 /**
  * Class Visualizator<p> It is used to create a JPanel where graphs are drawn.
@@ -1326,7 +1324,7 @@ public class Visualizator extends JPanel implements Runnable {
      */
     private void save(BufferedImage image, String i, String ext, String identifier) {
         System.out.println("saving file to: " + ext);
-        File file = new File(ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT) + "/graphs/" + identifier + "-" + i + "." + ext);
+        File file = new File("graphs/" + identifier + "-" + i + "." + ext);
         try {
             ImageIO.write(image, ext, file);
         } catch (IOException e) {

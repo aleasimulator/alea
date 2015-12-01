@@ -1,25 +1,24 @@
 /*
-Copyright (c) 2014 Šimon Tóth
+ Copyright (c) 2014-2015 Simon Toth (kontakt@simontoth.cz)
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
+ Permission is hereby granted, free of charge, to any person obtaining a copy of
+ this software and associated documentation files (the "Software"), to deal in
+ the Software without restriction, including without limitation the rights to
+ use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ of the Software, and to permit persons to whom the Software is furnished to do
+ so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+ */
 package xklusac.environment;
 
 import eduni.simjava.Sim_event;
@@ -30,7 +29,6 @@ import java.util.Random;
 import xklusac.extensions.*;
 import eduni.simjava.distributions.Sim_normal_obj;
 import alea.core.*;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,11 +37,15 @@ import java.util.List;
  * Loads jobs dynamically over time from the file. Then sends these gridlets to
  * the scheduler. SWF stands for Standard Workloads Format (SWF).
  *
- * @author Dalibor Klusacek
+ * @author Simon Toth (kontakt@simontoth.cz)
  */
 public class DynamicLoader extends GridSim {
-    /** Dynamic Agents */
+
+    /**
+     * Dynamic Agents
+     */
     List<GridSim> agents = new ArrayList<GridSim>();
+    List<String> agent_names = new ArrayList<String>();
 
     /**
      * total number of jobs in experiment
@@ -89,12 +91,13 @@ public class DynamicLoader extends GridSim {
     int agents_total = 0;
     // number of agents that finished processing
     int agents_finished = 0;
-    
+
     // number of finished jobs
     int jobs_finished = 0;
 
     /**
      * Creates a new instance of Dynamic Job Loader
+     *
      * @param name Name of this grid sim object.
      * @param baudRate ....
      * @param total_jobs IGNORED
@@ -111,7 +114,6 @@ public class DynamicLoader extends GridSim {
 
         Input r = new Input();
         BufferedReader br = r.openFile(new File(get_dataset_filename(data_set)));
-        System.out.println(br.toString());
 
         String line;
         while ((line = br.readLine()) != null) {
@@ -119,14 +121,13 @@ public class DynamicLoader extends GridSim {
             String agent_name = values[0];
             // spawn agent
             if (values[1].equalsIgnoreCase("static")) {
-                agents.add(new AgentStatic(agent_name,this.getEntityName(),baudRate,total_jobs,data_set,maxPE,minPErating,maxPErating));
+                agents.add(new AgentStatic(agent_name, this.getEntityName(), baudRate, data_set, maxPE, minPErating, maxPErating));
+                agent_names.add(agent_name);
                 agents_total++;
-            }
-            else if (values[1].equalsIgnoreCase("dynamic")) {
-
-            }
-            else if (values[1].equalsIgnoreCase("dummy_agent")) {
-
+            } else if (values[1].equalsIgnoreCase("dynamic")) {
+                agents.add(new AgentDynamic(agent_name, this.getEntityName(), baudRate, data_set, maxPE, minPErating, maxPErating));
+                agent_names.add(agent_name);
+                agents_total++;
             }
         }
 
@@ -139,16 +140,17 @@ public class DynamicLoader extends GridSim {
 
     }
 
-    /** Oversee the execution of spawned agents
+    /**
+     * Oversee the execution of spawned agents
      *
-     *  Once all agents are finished processing, signal end of simulation.
+     * Once all agents are finished processing, signal end of simulation.
      */
     public void body() {
         super.gridSimHold(10.0);    // hold by 10 second
 
         // wake up the spawned agents
         for (int i = 0; i < agents.size(); i++) {
-            super.sim_schedule(GridSim.getEntityId(agents.get(i).getEntityName()), 0, AleaSimTags.EVENT_WAKE);
+            super.sim_schedule(GridSim.getEntityId(agents.get(i).getEntityName()), 60, AleaSimTags.EVENT_WAKE);
         }
 
         // wait until all agents are finished
@@ -157,45 +159,45 @@ public class DynamicLoader extends GridSim {
             sim_get_next(ev);
             // agent has finished submission
             if (ev.get_tag() == AleaSimTags.AGENT_DONE) {
-                Integer total_jobs = (Integer)ev.get_data();
+                Integer total_jobs = (Integer) ev.get_data();
                 jobs_finished += total_jobs;
                 agents_finished++;
-                System.out.println("Agent " + GridSim.getEntityName(ev.get_src()) +  " finished processing after " + total_jobs + " jobs.");
-                System.out.println((agents_total - agents_finished) + "/" + agents_total + " running agents remaining.");
+                System.out.println("Agent " + GridSim.getEntityName(ev.get_src()) + " finished processing after " + total_jobs + " jobs.");
+                agent_names.remove(GridSim.getEntityName(ev.get_src()));
+                System.out.printf("%s", (agents_total - agents_finished) + "/" + agents_total + " running agents remaining. Total submited jobs : " + Integer.toString(jobs_finished));
+                for (String i : agent_names) {
+                    System.out.printf(" %s", i);
+                }
+                System.out.printf("\n");
+
+            } else if (ev.get_tag() == AleaSimTags.AGENT_ONJOBSTART) {
+                //System.out.println("Job started event received.");
+            } else if (ev.get_tag() == AleaSimTags.AGENT_ONJOBCOMPL) {
+                //System.out.println("Job completed event received.");
+            } else if (ev.get_tag() == AleaSimTags.AGENT_ONJOBFAIL) {
+
             }
         }
 
         // once all agents are finished, we can wrap up the simulation
-
         // notify the scheduler about the submission completion
         super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), super.clock(), AleaSimTags.SUBMISSION_DONE, new Integer(jobs_finished));
 
         // wait for a report back
-        Sim_event ev_local = new Sim_event();
-        sim_get_next(ev_local);
-        if (ev_local.get_tag() == GridSimTags.END_OF_SIMULATION) {
-            System.out.println("Shuting down the " + data_set + "_DynamicLoader... with: " + fail + " failed or skipped jobs");
+        while (true) {
+            Sim_event ev_local = new Sim_event();
+            sim_get_next(ev_local);
+            if (ev_local.get_tag() == GridSimTags.END_OF_SIMULATION) {
+                System.out.println("Shuting down the " + data_set + "_DynamicLoader... with: " + fail + " failed or skipped jobs");
+                shutdownUserEntity();
+                break;
+            }
         }
 
-        shutdownUserEntity();
         super.terminateIOEntities();
-     }
+    }
 
     private String get_dataset_filename(String data_set) {
-        String folder_prefix = System.getProperty("user.dir");
-
-        // Construct filename
-        if (ExperimentSetup.data) {
-            String[] path = folder_prefix.split("/");
-            if (path.length == 1) {
-                path = folder_prefix.split("\\\\");
-            }
-            folder_prefix = "";
-            for (int i = 0; i < path.length - 1; i++) {
-                folder_prefix += path[i] + "/";
-            }
-        }
-
-        return folder_prefix + "/data-set/" + data_set;
+        return ExperimentSetup.data_sets + "/" + data_set;
     }
 }

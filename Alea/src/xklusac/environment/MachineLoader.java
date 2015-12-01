@@ -68,29 +68,11 @@ public class MachineLoader {
         // read data-set from file
         LinkedList lines = new LinkedList();
         Input r = new Input();
-        String adresar = "";
-        if (ExperimentSetup.meta) {
-            adresar = System.getProperty("user.dir");
-        } else {
-            adresar = System.getProperty("user.dir");
-        }
-        //System.out.println("Adresar = "+adresar);
-        if (ExperimentSetup.data) {
-            String[] path = adresar.split("/");
-            if (path.length == 1) {
-                path = adresar.split("\\\\");
-            }
-            adresar = "";
-            for (int i = 0; i < path.length - 2; i++) {
-                adresar += path[i] + "/";
-            }
-            //System.out.println("Adresar = "+adresar);
-        }
 
         BufferedReader br = null;
 
-        br = r.openFile(new File(adresar + "/data-set/" + data_set + ".machines"));
-        System.out.println("Opening: " + adresar + "/data-set/" + data_set + ".machines");
+        br = r.openFile(new File(ExperimentSetup.data_sets + "/" + data_set + ".machines"));
+        System.out.println("Opening: " + ExperimentSetup.data_sets + "/" + data_set + ".machines");
         r.getLines(lines, br);
         r.closeFile(br);
         int name_id = 0;
@@ -240,27 +222,9 @@ public class MachineLoader {
         // read data-set from file
         LinkedList<String> lines = new LinkedList();
         Input r = new Input();
-        String adresar = "";
-
-        if (ExperimentSetup.meta) {
-            adresar = System.getProperty("user.dir");
-        } else {
-            adresar = System.getProperty("user.dir");
-        }
-        if (ExperimentSetup.data) {
-            String[] path = adresar.split("/");
-            if (path.length == 1) {
-                path = adresar.split("\\\\");
-            }
-            adresar = "";
-            for (int i = 0; i < path.length - 1; i++) {
-                adresar += path[i] + "/";
-            }
-            //System.out.println("Adresar = "+adresar);
-        }
         BufferedReader br = null;
 
-        br = r.openFile(new File(adresar + "/data-set/" + data_set + ".machines"));
+        br = r.openFile(new File(ExperimentSetup.data_sets + "/" + data_set + ".machines"));
         r.getLines(lines, br);
         r.closeFile(br);
 
@@ -463,25 +427,9 @@ public class MachineLoader {
         // read data-set from file
         LinkedList lines = new LinkedList();
         Input r = new Input();
-        String dir = "";
-        if (ExperimentSetup.meta) {
-            dir = System.getProperty("user.dir");
-        } else {
-            dir = System.getProperty("user.dir");
-        }
-        if (ExperimentSetup.data) {
-            String[] path = dir.split("/");
-            if (path.length == 1) {
-                path = dir.split("\\\\");
-            }
-            dir = "";
-            for (int i = 0; i < path.length - 1; i++) {
-                dir += path[i] + "/";
-            }
-            //System.out.println("Adresar = "+adresar);
-        }
+
         BufferedReader br = null;
-        br = r.openFile(new File(dir + "/data-set/" + data_set + ".machines"));
+        br = r.openFile(new File(ExperimentSetup.data_sets + "/" + data_set + ".machines"));
         r.getLines(lines, br);
         r.closeFile(br);
         // create machines from file

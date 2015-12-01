@@ -96,7 +96,7 @@ public class ExperimentSetup {
     /**
      * set true to use job runtime estimates
      */
-    static boolean estimates;
+    public static boolean estimates;
     /**
      * set true to use failure trace - if available
      */
@@ -129,11 +129,11 @@ public class ExperimentSetup {
     /**
      * random number generator seed
      */
-    static int rnd_seed;
+    public static int rnd_seed;
     /**
      * defines how many times the default max-time job's limit has been used
      */
-    static int max_estim;
+    public static int max_estim;
     /**
      * allows to increase job's runtime by given factor
      */
@@ -184,9 +184,9 @@ public class ExperimentSetup {
      */
     static String name;
     /**
-     * 
+     * Arrival of the first job (all jobs are normalized to this value).
      */
-    static int firstArrival = -1;
+    public static int firstArrival = -1;
     /**
      * the weight of fairness criterion in objective function
      */
@@ -305,6 +305,7 @@ public class ExperimentSetup {
      */
     public static boolean by_queue;
 
+    public static String data_sets;
     
     private static String[] dir = new String[4];
     
@@ -338,7 +339,9 @@ public class ExperimentSetup {
         String date = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(d);
         return date;
     }
-    
+
+    public static int getFirstArrival() { return firstArrival; }
+
     /**
      * The main method - create all entities and start the simulation. <br> It
      * is also capable of multiple starts of the simulation with different setup
@@ -403,11 +406,11 @@ public class ExperimentSetup {
         avail_CPUs = 0.0;
         
         backfilled = 0;
-
+        
         // set true to use different queues
         use_queues = aCfg.getBoolean("use_queues");
         by_queue = aCfg.getBoolean("by_queue");
-        
+        data_sets = aCfg.getString("data_set_dir");
         
         // if required - start the graphical output using -v parameter
         if (args.length > 0) {
@@ -588,12 +591,20 @@ public class ExperimentSetup {
             // FairShareMetaBackfilling = 8, FairShareCONS = 9, BestGap = 10, BestGap+RandomSearch = 11, FairShareOptimizedMetaBackfilling = 12
             // 18 = CONS+Tabu Search, 19 = CONS + Gap Search, 20 = CONS + RandomSearch, CONS no compression = 21,
 
-
             boolean use_anti_starvation[] = aCfg.getBooleanArray("use_anti_starvation");
             boolean use_resource_spec_packing[] = aCfg.getBooleanArray("use_resource_spec_packing");
             int skip[] = aCfg.getIntArray("skip");
 
             int timeskip[] = aCfg.getIntArray("first_arrival");
+            for (int i = 0; i < timeskip.length; i++) {
+                Calendar myCal = Calendar.getInstance();
+                myCal.setTimeInMillis(timeskip[i]*1000L);
+                if (!(myCal.get(Calendar.HOUR_OF_DAY) == 0 && myCal.get(Calendar.MINUTE) == 0 && myCal.get(Calendar.SECOND) == 0 && myCal.get(Calendar.MILLISECOND) == 0)) {
+                    throw new RuntimeException("Experiment starting time isn't midnight. (" + Integer.toString(myCal.get(Calendar.HOUR_OF_DAY)) + ":" +  
+                            Integer.toString(myCal.get(Calendar.MINUTE)) + ":" + Integer.toString(myCal.get(Calendar.SECOND)) + ").");
+                }
+            }
+            
             int algorithms[] = aCfg.getIntArray("algorithms");
 
             // select which algorithms from the algorithms[] list will be used.
@@ -602,12 +613,7 @@ public class ExperimentSetup {
                 anti_starvation = use_anti_starvation[sel_alg];
                 resource_spec_packing = use_resource_spec_packing[sel_alg];
                 skipJob = skip[set];
-
-                anti_starvation = use_anti_starvation[sel_alg];
-                resource_spec_packing = use_resource_spec_packing[sel_alg];
-                skipJob = skip[set];
                 firstArrival = timeskip[set];
-
 
                 // reset values from previous iterations
                 use_compresion = false;
