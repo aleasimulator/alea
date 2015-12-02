@@ -216,13 +216,22 @@ public class DynamicBatchMgr {
     }
 
     public JobBatchState getCurrentState() {
+        // there are still blocked batches
         if (!batches_waiting.isEmpty()) {
             return JobBatchState.BLOCKED_WAITING;
-        } else if (!batches_running.isEmpty()) {
-            return JobBatchState.DONE_SUBMITTING;
-        } else {
-            return JobBatchState.FINISHED;
         }
+
+        // no blocked batches, but we still have an active batch
+        if (current_batch != null) {
+            return JobBatchState.SUBMITTING;
+        }
+
+        // all batches have submitted their jobs, but these jobs are still running
+        if (!batches_running.isEmpty()) {
+            return JobBatchState.DONE_SUBMITTING;
+        }
+
+        return JobBatchState.FINISHED;
     }
 
     public void notifyJobSubmit(String jobid, double time) {
@@ -230,7 +239,6 @@ public class DynamicBatchMgr {
             deps.notifyBatchArrived(current_batch.getSessionID(), current_batch.getBatchID());
         }
         current_batch.notifyJobEnqueued(jobid, time);
-
     }
 
     public void notifyJobStart(ComplexGridlet job, double time) {
@@ -384,5 +392,6 @@ public class DynamicBatchMgr {
         for (JobBatchDynamic batch : batches_running) {
             batch.dumpJobInfo();
         }
+
     }
 }

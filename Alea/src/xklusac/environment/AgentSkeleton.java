@@ -46,8 +46,6 @@ public abstract class AgentSkeleton extends GridSim {
         wakeup_events.add((double) 0); // initial wakeup
         boolean need_reset = false;
 
-        double next_wakeup = 0;
-
         ComplexGridlet waiting_job = null;
 
         while (true) {

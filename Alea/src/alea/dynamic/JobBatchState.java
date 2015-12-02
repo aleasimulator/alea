@@ -41,6 +41,10 @@ public enum JobBatchState {
      */
     SUBMITTING,
     /**
+     * all jobs generated, waiting for submit confirmation
+     */
+    WAITING_FOR_SUBMIT,
+    /**
      * all jobs submited, not yet finished
      */
     DONE_SUBMITTING,
