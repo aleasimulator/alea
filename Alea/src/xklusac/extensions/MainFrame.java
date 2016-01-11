@@ -42,7 +42,7 @@ LinkedList<Visualizator> ia = null;
         jMenuItem1 = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Alea 2.1");
+        setTitle("Alea 4.0");
 
         jLabel1.setText("Save graphs to");
 
@@ -74,7 +74,7 @@ LinkedList<Visualizator> ia = null;
             }
         });
 
-        jMenu1.setText("Alea 3.1 beta");
+        jMenu1.setText("Alea 4.0");
 
         jMenuItem1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Q, java.awt.event.InputEvent.CTRL_MASK));
         jMenuItem1.setText("Exit");

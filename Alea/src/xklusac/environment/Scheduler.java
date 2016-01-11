@@ -716,7 +716,7 @@ public class Scheduler extends GridSim {
                     double wait = Math.round(clock() - gf.getRelease_date()) / 3600.0;
                     if (wait > 24) {
                         System.out.println("-------------------------------------------");
-                        System.out.println("WARNING: first job " + gf.getID() + " in queue waits for " + wait + " hours. Requires " + gf.getNumPE() + " CPUs and properties = " + gf.getProperties() + "");
+                        System.out.println("Long queue waiting: first job " + gf.getID() + " in queue waits for " + wait + " hours. Requires " + gf.getNumPE() + " CPUs and properties = " + gf.getProperties() + "");
                         for(int r = 0; r < resourceInfoList.size(); r++){
                             ResourceInfo rri = (ResourceInfo)resourceInfoList.get(r);
                             System.out.println(rri.resource.getResourceName()+" has now "+rri.getNumFreePE()+" free CPUs.");

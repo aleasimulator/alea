@@ -12,10 +12,10 @@ package xklusac.environment;
 /**
  * Class JobLoader<p>
  * generates the workload for the simulation. PWA, GWA, MetaCentrum and Pisa workloads are understood. Selction is done via file extension (swf,gwf,mwf,pwf).
- * Alea 2.1 supports <b>GRID WORKLOADS FORMAT (GWF)</b> which is described at the <b>GRID WORKLOAD ARCHIVE (GWA)</b>: <a href="http://gwa.ewi.tudelft.nl">http://gwa.ewi.tudelft.nl</a><p>
- * Alea 2.1 supports <b>STANDARD WORKLOADS FORMAT (SWF)</b> which is described at the <b>PARALLEL WORKLOADS ARCHIVE (GWA)</b>: <a href="http://www.cs.huji.ac.il/labs/parallel/workload/">http://www.cs.huji.ac.il/labs/parallel/workload/</a><p>
- * Alea 2.1 supports <b>MetaCentrum WORKLOAD FORMAT (MWF)</b> which is described at: <a href="http://www.fi.muni.cz/~xklusac/workload/">http://www.fi.muni.cz/~xklusac/workload/</a><p>
- * Alea 2.1 supports <b>PISA WORKLOAD FORMAT (PWF)</b> which is described at: <a href="http://www.fi.muni.cz/~xklusac/alea/">http://www.fi.muni.cz/~xklusac/alea/</a><p>
+ * Alea 4.0 supports <b>GRID WORKLOADS FORMAT (GWF)</b> which is described at the <b>GRID WORKLOAD ARCHIVE (GWA)</b>: <a href="http://gwa.ewi.tudelft.nl">http://gwa.ewi.tudelft.nl</a><p>
+ * Alea 4.0 supports <b>STANDARD WORKLOADS FORMAT (SWF)</b> which is described at the <b>PARALLEL WORKLOADS ARCHIVE (GWA)</b>: <a href="http://www.cs.huji.ac.il/labs/parallel/workload/">http://www.cs.huji.ac.il/labs/parallel/workload/</a><p>
+ * Alea 4.0 supports <b>MetaCentrum WORKLOAD FORMAT (MWF)</b> which is described at: <a href="http://www.fi.muni.cz/~xklusac/workload/">http://www.fi.muni.cz/~xklusac/workload/</a><p>
+ * Alea 4.0 supports <b>PISA WORKLOAD FORMAT (PWF)</b> which is described at: <a href="http://www.fi.muni.cz/~xklusac/alea/">http://www.fi.muni.cz/~xklusac/alea/</a><p>
  * @author Dalibor Klusacek
  */
 public class JobLoader {

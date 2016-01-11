@@ -30,6 +30,7 @@ import xklusac.extensions.*;
 import eduni.simjava.distributions.Sim_normal_obj;
 import alea.core.*;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -146,6 +147,15 @@ public class DynamicLoader extends GridSim {
      * Once all agents are finished processing, signal end of simulation.
      */
     public void body() {
+
+        Calendar myCal = Calendar.getInstance();
+        myCal.setTimeInMillis(ExperimentSetup.firstArrival * 1000L);
+        if (!(myCal.get(Calendar.HOUR_OF_DAY) == 0 && myCal.get(Calendar.MINUTE) == 0 && myCal.get(Calendar.SECOND) == 0 && myCal.get(Calendar.MILLISECOND) == 0)) {
+            throw new RuntimeException("Experiment starting time isn't midnight. (" + Integer.toString(myCal.get(Calendar.HOUR_OF_DAY)) + ":"
+                    + Integer.toString(myCal.get(Calendar.MINUTE)) + ":" + Integer.toString(myCal.get(Calendar.SECOND)) + "). "
+                    + "Dynamic workload simulations must start at midnight for synchronization reasons. Please adjust your \"first_arrival\" value in configuration.properties.");
+        }
+
         super.gridSimHold(10.0);    // hold by 10 second
 
         // wake up the spawned agents
@@ -181,7 +191,8 @@ public class DynamicLoader extends GridSim {
 
         // once all agents are finished, we can wrap up the simulation
         // notify the scheduler about the submission completion
-        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), super.clock(), AleaSimTags.SUBMISSION_DONE, new Integer(jobs_finished));
+        System.out.println("Job Submission from " + data_set + "_DynamicLoader completed ");
+        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.SUBMISSION_DONE, new Integer(jobs_finished));
 
         // wait for a report back
         while (true) {

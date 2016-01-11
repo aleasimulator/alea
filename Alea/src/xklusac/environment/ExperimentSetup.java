@@ -17,6 +17,7 @@ import xklusac.algorithms.queue_based.EDF;
 import xklusac.algorithms.queue_based.multi_queue.Fairshare_EASY_Backfilling;
 import xklusac.algorithms.queue_based.SJF;
 import xklusac.algorithms.queue_based.multi_queue.FCFS;
+import alea.core.Registration;
 
 import eduni.simjava.Sim_system;
 import java.io.IOException;
@@ -43,13 +44,13 @@ import xklusac.plugins.PluginFactory;
  * data-sets and algorithms. This parameters has to be properly set manually.
  * The results are printed on the screen and also stored in a text files when
  * the simulation is finished. Information about various objectives (machine
- * usage, slowdown, deadlines,...) are stored.<p> Alea 3.1beta partially
+ * usage, slowdown, deadlines,...) are stored.<p> Alea 4.0 partially
  * supports <b>scheduling with RAM requirements</b> beside the common CPU
  * requests.<p>
  *
- * Most recent versions of <b>Alea 3.1 final</b> are available at: <a
+ * Most recent versions of <b>Alea</b> are available at: <a
  * href="http://www.fi.muni.cz/~xklusac/alea">http://www.fi.muni.cz/~xklusac/alea</a><br>
- * To run the simulation with Alea 3.1 final, Java 1.6 or newer is needed and
+ * To run the simulation with Alea 4.0, Java 1.6 or newer is needed and
  * the latest GridSim should be used.
  *
  * @author Dalibor Klusacek
@@ -298,6 +299,8 @@ public class ExperimentSetup {
     
     //private static String subDir;
     
+    public static String alea_version = "4.0";
+    
     /**
      * if several different queues in the system should are defined, this variable
      * defines whether they will be used separately (queue-by-queue in a defined priority
@@ -349,28 +352,9 @@ public class ExperimentSetup {
      */
     public static void main(String[] args) {
         String user_dir = System.getProperty("user.dir");
-        File activatedFile = new File("activated");
-        if (!activatedFile.exists()) {
-            System.out.println("NEEEXIST-------------------------------------------");
-            try {
-                URL aleaHomePage = new URL("http://www.fi.muni.cz/~xpodoln/alea/index.php?key=xxx");
-                HttpURLConnection conn = (HttpURLConnection) aleaHomePage.openConnection();
-                InputStream is = conn.getInputStream();
-                java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
-                String str = s.hasNext() ? s.next() : "";
-                System.out.println("STR:"+str);
-                if (!str.contains("hits")) {
-                    throw new Exception("Could not open expected site content.");
-                }
-                // OK, connection established
-                activatedFile.mkdir();
-            } catch (Exception e) {
-                // Will try next time
-                e.printStackTrace();
-            }
-        }else{
-            System.out.println("EXIST-------------------------------------------");
-        }
+        
+        Registration.register();
+        
         try {
             aCfg = new AleaConfiguration();
         } catch (IOException e) { 
@@ -600,14 +584,14 @@ public class ExperimentSetup {
             int skip[] = aCfg.getIntArray("skip");
 
             int timeskip[] = aCfg.getIntArray("first_arrival");
-            for (int i = 0; i < timeskip.length; i++) {
+            /*for (int i = 0; i < timeskip.length; i++) {
                 Calendar myCal = Calendar.getInstance();
                 myCal.setTimeInMillis(timeskip[i]*1000L);
                 if (!(myCal.get(Calendar.HOUR_OF_DAY) == 0 && myCal.get(Calendar.MINUTE) == 0 && myCal.get(Calendar.SECOND) == 0 && myCal.get(Calendar.MILLISECOND) == 0)) {
                     throw new RuntimeException("Experiment starting time isn't midnight. (" + Integer.toString(myCal.get(Calendar.HOUR_OF_DAY)) + ":" +  
                             Integer.toString(myCal.get(Calendar.MINUTE)) + ":" + Integer.toString(myCal.get(Calendar.SECOND)) + ").");
                 }
-            }
+            }*/
             
             int algorithms[] = aCfg.getIntArray("algorithms");
 
@@ -879,7 +863,7 @@ public class ExperimentSetup {
                             FailureLoaderNew failure = new FailureLoaderNew(failure_loader_name, baudRate, data_sets[set], clusterNames, machineNames, 0);
                         }
                         // start the simulation
-                        System.out.println("Starting simulation using Alea 3.1 final");
+                        System.out.println("Starting simulation using Alea "+alea_version);
                         
                         GridSim.startGridSimulation();
                     } catch (Exception e) {
