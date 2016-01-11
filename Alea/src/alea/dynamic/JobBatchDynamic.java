@@ -196,7 +196,7 @@ public class JobBatchDynamic {
             }
             status = JobBatchState.READY_TO_SUBMIT;
 
-            System.out.println("Batch [" + Integer.toString(sessionID) + "-" + Integer.toString(batchID) + "] batch unblocked after arrival of [" + Integer.toString(session_id) + "-" + Integer.toString(batch_id) + "].");
+            //System.out.println("Batch [" + Integer.toString(sessionID) + "-" + Integer.toString(batchID) + "] batch unblocked after arrival of [" + Integer.toString(session_id) + "-" + Integer.toString(batch_id) + "].");
         }
     }
 
@@ -214,7 +214,7 @@ public class JobBatchDynamic {
                 throw new RuntimeException("Received dependency update for an already unblocked batch.");
             }
             status = JobBatchState.READY_TO_SUBMIT;
-            System.out.println("Batch [" + Integer.toString(sessionID) + "-" + Integer.toString(batchID) + "] batch unblocked after completion of [" + Integer.toString(session_id) + "-" + Integer.toString(batch_id) + "].");
+            //System.out.println("Batch [" + Integer.toString(sessionID) + "-" + Integer.toString(batchID) + "] batch unblocked after completion of [" + Integer.toString(session_id) + "-" + Integer.toString(batch_id) + "].");
         }
     }
 

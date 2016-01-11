@@ -351,12 +351,14 @@ public class ExperimentSetup {
         String user_dir = System.getProperty("user.dir");
         File activatedFile = new File("activated");
         if (!activatedFile.exists()) {
+            System.out.println("NEEEXIST-------------------------------------------");
             try {
                 URL aleaHomePage = new URL("http://www.fi.muni.cz/~xpodoln/alea/index.php?key=xxx");
                 HttpURLConnection conn = (HttpURLConnection) aleaHomePage.openConnection();
                 InputStream is = conn.getInputStream();
                 java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
                 String str = s.hasNext() ? s.next() : "";
+                System.out.println("STR:"+str);
                 if (!str.contains("hits")) {
                     throw new Exception("Could not open expected site content.");
                 }
@@ -366,6 +368,8 @@ public class ExperimentSetup {
                 // Will try next time
                 e.printStackTrace();
             }
+        }else{
+            System.out.println("EXIST-------------------------------------------");
         }
         try {
             aCfg = new AleaConfiguration();

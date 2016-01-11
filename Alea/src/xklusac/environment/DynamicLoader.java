@@ -164,7 +164,7 @@ public class DynamicLoader extends GridSim {
                 agents_finished++;
                 System.out.println("Agent " + GridSim.getEntityName(ev.get_src()) + " finished processing after " + total_jobs + " jobs.");
                 agent_names.remove(GridSim.getEntityName(ev.get_src()));
-                System.out.printf("%s", (agents_total - agents_finished) + "/" + agents_total + " running agents remaining. Total submited jobs : " + Integer.toString(jobs_finished));
+                //System.out.printf("%s", (agents_total - agents_finished) + "/" + agents_total + " running agents remaining. Total submited jobs : " + Integer.toString(jobs_finished));
                 for (String i : agent_names) {
                     System.out.printf(" %s", i);
                 }
