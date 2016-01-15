@@ -1231,6 +1231,7 @@ public class Scheduler extends GridSim {
             }
         }
         //System.out.println(resId+" Resource found "+ri.resource.getResourceName());
+        ri.stable_free = false;
         return ri.getNumRunningPE();
     }
 

@@ -311,7 +311,7 @@ public class MachineLoader {
                     peList.add(new PE(k, peRating));
                 }
                 // 4. Create one Machine with its id and list of PEs or CPUs
-                mList.add(new Machine(machine_id, peList));
+                mList.add(new MachineWithRAM(machine_id, peList,1000));
                 machine_id++;
             }
             //System.out.println();
