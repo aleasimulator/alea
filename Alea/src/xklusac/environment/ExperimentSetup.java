@@ -874,6 +874,7 @@ public class ExperimentSetup {
 
                     System.out.println("=============== END OF TEST " + pass_count + " ====================");
                     // reset inner variables of the simulator
+                    Visualizator.saveImages();
                     Scheduler.load = 0.0;
                     Scheduler.classic_load = 0.0;
                     Scheduler.max_load = 0.0;

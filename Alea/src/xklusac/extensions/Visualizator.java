@@ -7,10 +7,13 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.Random;
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import xklusac.environment.DirectoryLevel;
+import xklusac.environment.ExperimentSetup;
 
 /**
  * Class Visualizator<p> It is used to create a JPanel where graphs are drawn.
@@ -114,6 +117,9 @@ public class Visualizator extends JPanel implements Runnable {
     LinkedList<Integer> used = new LinkedList();
     LinkedList<Integer> hours = new LinkedList();
     LinkedList<Integer> availCPUs = new LinkedList();
+    
+    private static LinkedList<Visualizator> ia;
+    
     boolean cl_usage = false;
     boolean cl_usage_col = false;
     boolean dcl_usage = false;
@@ -1324,7 +1330,7 @@ public class Visualizator extends JPanel implements Runnable {
      */
     private void save(BufferedImage image, String i, String ext, String identifier) {
         System.out.println("saving file to: " + ext);
-        File file = new File("graphs/" + identifier + "-" + i + "." + ext);
+        File file = new File(System.getProperty("user.dir") + File.separator + ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT) + File.separator + "graphs/" + identifier + "-" + i + "." + ext);
         try {
             ImageIO.write(image, ext, file);
         } catch (IOException e) {
@@ -1339,6 +1345,14 @@ public class Visualizator extends JPanel implements Runnable {
     public void saveToFile3(String ext, String identifier) {
         save(makeImage(), getName(), ext, identifier);
     }
+    
+    public static void saveImages() {
+        Date d = new Date();
+        String identifier = ""+d.getTime();
+        for (Visualizator iaw : ia) {
+            iaw.saveToFile3("bmp", identifier);
+        }
+    }
 
     /**
      * This method initializes the GUI, creating all windows that will be used
@@ -1346,7 +1360,7 @@ public class Visualizator extends JPanel implements Runnable {
      */
     public static void createGUI(LinkedList<Visualizator> windows) {
 
-        LinkedList<Visualizator> ia = new LinkedList();
+        ia = new LinkedList();
         Visualizator test1 = new Visualizator();
         JFrame f1 = new JFrame();
         f1.setTitle("Average system utilization");
