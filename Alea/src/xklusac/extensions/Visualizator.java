@@ -1330,7 +1330,8 @@ public class Visualizator extends JPanel implements Runnable {
      */
     private void save(BufferedImage image, String i, String ext, String identifier) {
         System.out.println("saving file to: " + ext);
-        File file = new File(System.getProperty("user.dir") + File.separator + ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT) + File.separator + "graphs/" + identifier + "-" + i + "." + ext);
+        //File file = new File(System.getProperty("user.dir") + File.separator + ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT) + File.separator + "graphs/" + identifier + "-" + i + "." + ext);
+        File file = new File(ExperimentSetup.getDirG(DirectoryLevel.GRAPHSALG) + File.separator + identifier + "-" + i + "." + ext);
         try {
             ImageIO.write(image, ext, file);
         } catch (IOException e) {
@@ -1350,7 +1351,7 @@ public class Visualizator extends JPanel implements Runnable {
         Date d = new Date();
         String identifier = ""+d.getTime();
         for (Visualizator iaw : ia) {
-            iaw.saveToFile3("bmp", identifier);
+            iaw.saveToFile3("png", identifier);
         }
     }
 

@@ -312,6 +312,8 @@ public class ExperimentSetup {
     
     private static String[] dir = new String[4];
     
+    private static String[] dirG = new String[5];
+    
     /**
      * Creates the path for storing simulation results.
      * 
@@ -327,6 +329,16 @@ public class ExperimentSetup {
         }
         return directory;
     }
+    
+        public static String getDirG(DirectoryLevel level) {
+        String directory = ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT);
+        for (int i=2; i<level.ordinal(); i++) {
+            directory += File.separator;
+            directory += dirG[i];
+        }
+        return directory;
+    }
+
 
     /*public static String getDir() {
         return subDir;
@@ -534,8 +546,11 @@ public class ExperimentSetup {
         }
         if (visualize) {
             //create folder graphs in experiment root directory
-            File graphs = new File(user_dir + File.separator + ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT) + File.separator + "graphs");
+            dirG[2] = "graphs";
+            //File graphs = new File(user_dir + File.separator + ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT) + File.separator + "graphs");
+            File graphs = new File(ExperimentSetup.getDirG(DirectoryLevel.DATA_SET));
             graphs.mkdir();
+            
         }
         
         String[] pluginsString = aCfg.getStringArray("plugins");
@@ -549,12 +564,6 @@ public class ExperimentSetup {
             pluginHeaders[i] = header;
             pluginConfigurations.add(plugincfg);      
         }
-        /*Map<String, String> plugin0cfg = new HashMap<String, String>();
-        Map<String, String> plugin1cfg = new HashMap<String, String>();
-        plugin0cfg.put(PluginConfiguration.RESULT_INDEX, "4");
-        plugin1cfg.put(PluginConfiguration.RESULT_INDEX, "10");
-        pluginConfigurations.add(plugin0cfg);
-        pluginConfigurations.add(plugin1cfg);*/
         
         // this cycle selects data set from data_sets[] list
         for (int set = 0; set < data_sets.length; set++) {
@@ -563,9 +572,14 @@ public class ExperimentSetup {
             dir[2] = data_sets[set] + "_" + date;
             File dataSetDirF = new File(ExperimentSetup.getDir(DirectoryLevel.DATA_SET));
             dataSetDirF.mkdir();
+            
+            dirG[3] = data_sets[set] + "_" + date;
+            File dataSetGraphs = new File(ExperimentSetup.getDirG(DirectoryLevel.ALGORITHM));
+            dataSetGraphs.mkdir();
             //subDir = dir + File.separator + data_sets[set] + "_" + date;
             //File subDirF = new File(subDir);
             //subDirF.mkdir();
+            
             
             String prob = problem;
             fair_weight = weight_of_fairness[set];
@@ -808,6 +822,9 @@ public class ExperimentSetup {
                     suff = "CONS-Fair-compr.";
                 }
 
+                dirG[4] = (sel_alg+1) + "-" + suff;
+                File algDirGraphs = new File(ExperimentSetup.getDirG(DirectoryLevel.GRAPHSALG));
+                algDirGraphs.mkdir();               
                 
                 dir[3] = (sel_alg+1) + "-" + suff;
                 File algDirF = new File(ExperimentSetup.getDir(DirectoryLevel.ALGORITHM));
@@ -874,7 +891,9 @@ public class ExperimentSetup {
 
                     System.out.println("=============== END OF TEST " + pass_count + " ====================");
                     // reset inner variables of the simulator
-                    Visualizator.saveImages();
+                    if (visualize) {
+                        Visualizator.saveImages();
+                    }
                     Scheduler.load = 0.0;
                     Scheduler.classic_load = 0.0;
                     Scheduler.max_load = 0.0;

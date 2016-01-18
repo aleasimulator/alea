@@ -9,5 +9,5 @@ package xklusac.environment;
  * @author Gabriela Podolnikova
  */
 public enum DirectoryLevel {
-    ALEA_ROOT, RESULT_ROOT, EXPERIMENT_ROOT, DATA_SET, ALGORITHM
+    ALEA_ROOT, RESULT_ROOT, EXPERIMENT_ROOT, DATA_SET, ALGORITHM, GRAPHSALG
 }
