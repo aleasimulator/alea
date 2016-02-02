@@ -306,6 +306,7 @@ public class WorkloadReaderSWF {
         String properties = "";
         if (values.length > 19) {
             properties = values[20];
+            queue = values[19];
 
             //if (data_set.contains("wagap") || data_set.contains("meta") || data_set.contains("ncbr") || data_set.contains("fairshare")) {
             if (true) {

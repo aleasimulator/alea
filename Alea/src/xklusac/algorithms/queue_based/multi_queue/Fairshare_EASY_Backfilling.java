@@ -52,6 +52,19 @@ public class Fairshare_EASY_Backfilling implements SchedulingPolicy {
         double est = 0.0;
         ResourceInfo r_cand = null;
         int r_cand_speed = 0;
+
+        int currently_free_CPUs = 0;
+
+        for (int j = 0; j < Scheduler.resourceInfoList.size(); j++) {
+            ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(j);
+            currently_free_CPUs += ri.getNumFreePE();
+
+        }
+        if (currently_free_CPUs == 0) {
+            //System.out.println("EASY terminated due to no free resources :"+currently_free_CPUs+" free CPUs.");
+            return 0;
+        }
+
         for (int q = 0; q < Scheduler.all_queues.size(); q++) {
             Scheduler.queue = Scheduler.all_queues.get(q);
             if (ExperimentSetup.use_fairshare) {
@@ -117,15 +130,30 @@ public class Fairshare_EASY_Backfilling implements SchedulingPolicy {
                 GridletInfo grsv = (GridletInfo) Scheduler.queue.get(0);
                 // reserved machine (i.e. Earliest Available)
                 ResourceInfo rsv_res = findReservedResource(grsv);
+                LinkedList<ResourceInfo> eligible_resources = new LinkedList();
+                for (int e = 0; e < Scheduler.resourceInfoList.size(); e++) {
+                    ResourceInfo re = (ResourceInfo) Scheduler.resourceInfoList.get(e);
+                    if (re.getNumFreePE() > 0) {
+                        eligible_resources.add(re);
+                    }
+                }
 
                 // try backfilling on all gridlets in queue except for head (grsv)
                 for (int j = 1; j < Scheduler.queue.size(); j++) {
                     GridletInfo gi = (GridletInfo) Scheduler.queue.get(j);
+                    int req = gi.getNumPE();
                     /*if (gi.getNumPE() >= grsv.getNumPE()) {
                      continue; // such gridlet will never succeed (not true if requirements used)
                      TODO
                      }*/
-                    ResourceInfo ri = findResourceBF(gi, grsv, rsv_res);
+
+                    if (req > currently_free_CPUs) {
+                        //System.out.println("Gridlet "+gi.getID()+" skipped in EASY. Total free CPUs = "+currently_free_CPUs+" while gridlet requests: "+gi.getNumPE()+" CPUs.");
+                        continue;
+                    }
+
+                    ResourceInfo ri = findResourceBF(gi, grsv, rsv_res, eligible_resources);
+
                     if (ri != null) {
                         Scheduler.queue.remove(j);
                         ri.addGInfoInExec(gi);
@@ -136,45 +164,73 @@ public class Fairshare_EASY_Backfilling implements SchedulingPolicy {
                         ri.is_ready = true;
                         succ = true;
                         //scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.GRIDLET_SENT, gi);
+
                         scheduled++;
                         j--; //to get correct gridlet from queue in next round. The queue was shortened...
                         return 1;
 
                     }
                 }
+                eligible_resources = null;
             }
-        //if(scheduled>0)System.out.println(queue.size()+" remain, backfilled = "+scheduled);
+
+            //if(scheduled>0)System.out.println(queue.size()+" remain, backfilled = "+scheduled);
         }//next queue
+        /*if (min_prop.equals("1:ppn=1:mem=409600KB:vmem=137438953472KB:scratch_type=any:scratch_volume=1024mb:x86:nfs4:debian7")) {
+         System.out.println("EASY scheduled " + scheduled + " gridlets, minimal requirement was " + min_CPUs_req + " CPUs with properties = (" + min_prop + "), while total available is: " + currently_free_CPUs + " CPUs, max per cluster = " + max_per_cluster);
+         currently_free_CPUs = 0;
+         for (int j = 0; j < Scheduler.resourceInfoList.size(); j++) {
+         ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(j);
+         currently_free_CPUs += ri.getNumFreePE();
+            
+         }
+         System.out.println("------CHECK------"+ currently_free_CPUs);
+         }*/
         return scheduled;
     }
 
     /**
      * auxiliary method needed for easy/edf backfilling
      */
-    private ResourceInfo findResourceBF(GridletInfo gi, GridletInfo grsv, ResourceInfo rsv_res) {
+    private ResourceInfo findResourceBF(GridletInfo gi, GridletInfo grsv, ResourceInfo rsv_res, LinkedList eligible_resources) {
         ResourceInfo r_cand = null;
         int r_cand_speed = 0;
-        for (int j = 0; j < Scheduler.resourceInfoList.size(); j++) {
-            ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(j);
-            if (Scheduler.isSuitable(ri, gi) && ri.canExecuteNow(gi) && ri.resource.getResourceID() != rsv_res.resource.getResourceID()) {
-                int speed = ri.peRating;
-                if (speed >= r_cand_speed) {
-                    r_cand = ri;
-                    r_cand_speed = speed;
-                }
-
-            } else if (Scheduler.isSuitable(ri, gi) && ri.canExecuteNow(gi) && ri.resource.getResourceID() == rsv_res.resource.getResourceID()) {
-                double eft = GridSim.clock() + gi.getJobRuntime(ri.peRating);
-                if ((eft < rsv_res.est) || rsv_res.usablePEs >= gi.getNumPE()) {
-                    int speed = ri.peRating;
-                    if (speed > r_cand_speed) {
-                        r_cand = ri;
-                        r_cand_speed = speed;
+        if (!ExperimentSetup.use_speeds) { // choose the first-fit resource since all have the same speed
+            for (int j = 0; j < eligible_resources.size(); j++) {
+                ResourceInfo ri = (ResourceInfo) eligible_resources.get(j);
+                if (Scheduler.isSuitable(ri, gi) && ri.canExecuteNow(gi) && ri.resource.getResourceID() != rsv_res.resource.getResourceID()) {
+                    return ri;
+                } else if (Scheduler.isSuitable(ri, gi) && ri.canExecuteNow(gi) && ri.resource.getResourceID() == rsv_res.resource.getResourceID()) {
+                    double eft = GridSim.clock() + gi.getJobRuntime(ri.peRating);
+                    if ((eft < rsv_res.est) || rsv_res.usablePEs >= gi.getNumPE()) {
+                        return ri;
                     }
                 }
             }
+            return r_cand;
+        } else { // resources do not have the same speed - choose the fastest one
+            for (int j = 0; j < eligible_resources.size(); j++) {
+                ResourceInfo ri = (ResourceInfo) eligible_resources.get(j);
+                if (Scheduler.isSuitable(ri, gi) && ri.canExecuteNow(gi) && ri.resource.getResourceID() != rsv_res.resource.getResourceID()) {
+                    int speed = ri.peRating;
+                    if (speed >= r_cand_speed) {
+                        r_cand = ri;
+                        r_cand_speed = speed;
+                    }
+
+                } else if (Scheduler.isSuitable(ri, gi) && ri.canExecuteNow(gi) && ri.resource.getResourceID() == rsv_res.resource.getResourceID()) {
+                    double eft = GridSim.clock() + gi.getJobRuntime(ri.peRating);
+                    if ((eft < rsv_res.est) || rsv_res.usablePEs >= gi.getNumPE()) {
+                        int speed = ri.peRating;
+                        if (speed > r_cand_speed) {
+                            r_cand = ri;
+                            r_cand_speed = speed;
+                        }
+                    }
+                }
+            }
+            return r_cand;
         }
-        return r_cand;
     }
 
     /**

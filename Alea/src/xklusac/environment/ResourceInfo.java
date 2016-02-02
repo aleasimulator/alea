@@ -278,6 +278,32 @@ public class ResourceInfo {
             }
         }
 
+        if (ExperimentSetup.use_RAM == false && ExperimentSetup.anti_starvation) {
+            MachineList machines = virt_machines;
+            int required = gi.getNumPE();
+            //System.out.println(this.resource.getResourceName()+ " Machines: ");
+            for (int i = 0; i < machines.size(); i++) {
+                MachineWithRAM machine = (MachineWithRAM) machines.get(i);
+                // cannot use such machine
+                if (machine.getFailed()) {
+                    continue;
+                }
+                // cannot use machine with job assigned if exclusive use required
+                if (excl && machine.getNumFreePE() < machine.getNumPE()) {
+                    //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because prop=" + gi.getProperties()+ " and mach"+i+" has "+machine.getNumBusyPE()+" used CPUs");
+                    continue;
+                }
+                if (machine.getNumFreeVirtualPE() >= 1) {
+                    required -= machine.getNumFreeVirtualPE();
+                }
+                if (required <= 0) {
+                    //System.out.println(this.resource.getResourceName() + " will execute now gi: " + gi.getID());
+                    return true;
+                }
+            }
+            return false;
+        }
+
         if (ExperimentSetup.use_RAM == false) {
             if (this.getNumFreePE() >= gi.getNumPE()) {
                 return true;
@@ -578,7 +604,14 @@ public class ResourceInfo {
 
     public boolean canExecuteEver(GridletInfo gi) {
         // zakaz spousteni uloh na clusteru, co nevyhovuje nodespecu
+        if (gi.getQueue().equals("uv")) {
+            if (!this.resource.getResourceName().contains("ungu") && !this.resource.getResourceName().contains("urga")) {
+                //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because queue=" + gi.getQueue());
+                return false;
+            }
+        }
         String[] req_nodes = gi.getProperties().split(":");
+        //System.out.println(gi.getID() + " has properties: "+gi.getProperties()); 
         for (int r = 0; r < req_nodes.length; r++) {
             // negativni vlastnost
             if (req_nodes[r].contains("^cl_") && req_nodes[r].contains(this.resource.getResourceName())) {

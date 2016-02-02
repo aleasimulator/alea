@@ -244,6 +244,10 @@ public class ExperimentSetup {
      */
     public static boolean use_fairshare;
     /**
+     * defines whether to use fairshare decay
+     */
+    public static boolean use_decay;
+    /**
      * defines whether to multiply sum of CPU and RAM in fairhshare
      */
     public static boolean multiply_sums;
@@ -396,6 +400,7 @@ public class ExperimentSetup {
         use_fairshare_WAIT = aCfg.getBoolean("use_fairshare_WAIT");
         use_fairshare_RAM = aCfg.getBoolean("use_fairshare_RAM");
         use_fairshare = aCfg.getBoolean("use_fairshare");
+        use_decay = aCfg.getBoolean("use_decay");
         multiply_sums = aCfg.getBoolean("multiply_sums");
         use_MAX = aCfg.getBoolean("use_MAX");
         use_SQRT = aCfg.getBoolean("use_SQRT");
@@ -868,7 +873,7 @@ public class ExperimentSetup {
                         // creates all grid resources
                         MachineLoader m_loader = new MachineLoader(10000, 3.0, data_sets[set]);
                         rnd_seed = sel_alg;
-                        System.out.println(avail_CPUs + " CPUs and RAM = " + avail_RAM);
+                        System.out.println("The system has "+Math.round(avail_CPUs) + " CPUs and " + Math.round(avail_RAM/(1024*1024))+" GBs of RAM.");
 
                         // creates job loader
                         JobLoader job_loader = new JobLoader(job_loader_name, baudRate, total_gridlet[set], data_sets[set], maxPE, minPErating, maxPErating,

@@ -698,7 +698,9 @@ public class Scheduler extends GridSim {
         // start periodic print of queue data
         //super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.LOG_SCHEDULER);
         // periodic decrease of old fairshare weights
-        //super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.FAIRSHARE_WEIGHT_DECAY);
+        if (ExperimentSetup.use_decay && ExperimentSetup.use_fairshare) {
+            super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.FAIRSHARE_WEIGHT_DECAY);
+        }
         // periodic update of fairshare weights according to currently running jobs
         double fairdelay = 100 - GridSim.clock();
         super.sim_schedule(this.getEntityId(this.getEntityName()), fairdelay, AleaSimTags.FAIRSHARE_UPDATE);
@@ -717,9 +719,9 @@ public class Scheduler extends GridSim {
                     if (wait > 24) {
                         System.out.println("-------------------------------------------");
                         System.out.println("Long queue waiting: first job " + gf.getID() + " in queue waits for " + wait + " hours. Requires " + gf.getNumPE() + " CPUs and properties = " + gf.getProperties() + "");
-                        for(int r = 0; r < resourceInfoList.size(); r++){
-                            ResourceInfo rri = (ResourceInfo)resourceInfoList.get(r);
-                            System.out.println(rri.resource.getResourceName()+" has now "+rri.getNumFreePE()+" free CPUs.");
+                        for (int r = 0; r < resourceInfoList.size(); r++) {
+                            ResourceInfo rri = (ResourceInfo) resourceInfoList.get(r);
+                            System.out.println(rri.resource.getResourceName() + " has now " + rri.getNumFreePE() + " free CPUs.");
                         }
                         System.out.println("-------------------------------------------");
                     }
@@ -959,10 +961,11 @@ public class Scheduler extends GridSim {
                 updateLengthStatistics(gridlet_received, cpu_time);
 
                 if (received % 100 == 0) {
-                    if ((algorithm >= 9 && algorithm != 12) || algorithm == 4) {
+                    /*if ((algorithm >= 9 && algorithm != 12) || algorithm == 4) {
                         System.out.println("<<< " + received + " so far completed, in schedule = " + getScheduleSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs free CPUs = " + getFreeCPUs());
-                    } else {
-                        System.out.println("<<< " + received + " so far completed, in queue = " + getQueueSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs free CPUs = " + getFreeCPUs());
+                    } else {*/
+                        String dated = new java.text.SimpleDateFormat("dd-MM-yyyy").format(new java.util.Date(Math.round(clock()) * 1000));
+                        System.out.println("<<< " + received + " so far completed, in queue/schedule = " + getQueueSize() + " jobs, requiring = " + getQueueCPUSize() + " CPUs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs free CPUs = " + getFreeCPUs()+", Day: "+dated);
                         /*
                          * Enumeration keys = ExperimentSetup.queues.keys(); int
                          * avail = 0; int used = 0; for (int i = 0; i <
@@ -973,7 +976,7 @@ public class Scheduler extends GridSim {
                          * "+avail);
                          */
 
-                    }
+                    
                 }
 
                 if (received % 5000 == 0) {
@@ -1039,7 +1042,7 @@ public class Scheduler extends GridSim {
                 // cancel all jobs that cannot be executed due to missing properties
                 if (!isGridletExecutable(gi)) {
                     bad++;
-                    System.out.println(Math.round(clock()) + " gi:" + gi.getID() + ": Error - unexecutable: [" + gi.getProperties() + "] CPUs=" + gi.getNumPE());
+                    System.out.println(Math.round(clock()) + " gi:" + gi.getID() + ": Error - unexecutable: [" + gi.getProperties() + "] CPUs=" + gi.getNumPE() + " RAM=" + gi.getRam() + " ppn=" + gi.getPpn() + " nodes=" + gi.getNumNodes());
                     try {
                         if (gl.getActualCPUTime() > 0.0) {
                             gl.setGridletStatus(Gridlet.FAILED_RESOURCE_UNAVAILABLE);
@@ -1077,13 +1080,13 @@ public class Scheduler extends GridSim {
 
                 // write on screen info so that the simulation progress can be seen
                 if (in_job_counter % 100 == 0) {
-                    if ((algorithm >= 9 && algorithm != 12) || algorithm == 4) {
+                    /*if ((algorithm >= 9 && algorithm != 12) || algorithm == 4) {
                         System.out.println(">>> " + in_job_counter + " so far arrived, in schedule = " + getScheduleSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + "jobs,  FREE CPUs = " + getFreeCPUs());
-                    } else {
+                    } else {*/
                         String dated = new java.text.SimpleDateFormat("dd-MM-yyyy").format(new java.util.Date(Math.round(clock()) * 1000));
                         //System.out.println(">>> " + in_job_counter + " so far arrived, in queue = " + getQueueSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs, free CPUs = " + getFreeCPUs() + ", #" + queue.getFirst().getID() + " is the first waiting job in queue. Day: " + dated);
-                        System.out.println(">>> " + in_job_counter + " so far arrived, in queue = " + getQueueSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs, free CPUs = " + getFreeCPUs() + ", Day: " + dated);
-                    }
+                        System.out.println(">>> " + in_job_counter + " so far arrived, in queue/schedule = " + getQueueSize() + " jobs, requiring = " + getQueueCPUSize() + " CPUs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs, free CPUs = " + getFreeCPUs() + ", Day: " + dated);
+                    
                 }
 
                 // update total sched. generation time
@@ -1158,6 +1161,17 @@ public class Scheduler extends GridSim {
         for (int i = 0; i < resourceInfoList.size(); i++) {
             ResourceInfo ri = (ResourceInfo) resourceInfoList.get(i);
             size += ri.resSchedule.size();
+        }
+        return size;
+    }
+
+    public static int getScheduleCPUSize() {
+        int size = 0;
+        for (int i = 0; i < resourceInfoList.size(); i++) {
+            ResourceInfo ri = (ResourceInfo) resourceInfoList.get(i);
+            for (int s = 0; s < ri.resSchedule.size(); s++) {
+                size += ri.resSchedule.get(s).getNumPE();
+            }
         }
         return size;
     }
@@ -1667,6 +1681,18 @@ public class Scheduler extends GridSim {
         }
 
         return size + getScheduleSize();
+    }
+
+    private int getQueueCPUSize() {
+        int size = 0;
+        for (int q = 0; q < all_queues.size(); q++) {
+            LinkedList queue_c = all_queues.get(q);
+            for (int qq = 0; qq < queue_c.size(); qq++) {
+                size += ((GridletInfo) queue_c.get(qq)).getNumPE();
+            }
+        }
+
+        return size + getScheduleCPUSize();
     }
 
     /**
