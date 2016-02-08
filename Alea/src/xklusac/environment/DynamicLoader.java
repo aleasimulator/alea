@@ -117,6 +117,7 @@ public class DynamicLoader extends GridSim {
         BufferedReader br = r.openFile(new File(get_dataset_filename(data_set)));
 
         String line;
+        int user_id = 0;
         while ((line = br.readLine()) != null) {
             String values[] = line.split("\t");
             String agent_name = values[0];
@@ -125,8 +126,13 @@ public class DynamicLoader extends GridSim {
                 agents.add(new AgentStatic(agent_name, this.getEntityName(), baudRate, data_set, maxPE, minPErating, maxPErating));
                 agent_names.add(agent_name);
                 agents_total++;
-            } else if (values[1].equalsIgnoreCase("dynamic")) {
+            } else if (values[1].equalsIgnoreCase("dynamic") && !ExperimentSetup.complain) {
                 agents.add(new AgentDynamic(agent_name, this.getEntityName(), baudRate, data_set, maxPE, minPErating, maxPErating));
+                agent_names.add(agent_name);
+                agents_total++;
+            } else if (values[1].equalsIgnoreCase("dynamic") && ExperimentSetup.complain) {
+                user_id++;
+                agents.add(new AgentDynamicWithSatisfactionModel(agent_name, this.getEntityName(), baudRate, data_set, maxPE, minPErating, maxPErating, user_id));
                 agent_names.add(agent_name);
                 agents_total++;
             }

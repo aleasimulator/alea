@@ -210,6 +210,10 @@ public class ExperimentSetup {
      */
     public static boolean use_compresion;
     /**
+     * defines whether to emulate user dissatisfaction in dynamic-workload simulations
+     */
+    public static boolean complain;
+    /**
      * defines whether to use Tsafrir's esimates (if available in the data set)
      */
     public static boolean use_tsafrir;
@@ -300,6 +304,8 @@ public class ExperimentSetup {
      * machine descriptions.
      */
     public static boolean use_queues;
+    
+    public static ResultCollector result_collector = null;
     
     //private static String subDir;
     
@@ -457,6 +463,8 @@ public class ExperimentSetup {
         if (visualize) {
             Visualizator.createGUI(windows);
         }
+        
+        complain = aCfg.getBoolean("complain");
 
         // set true to use failures
         failures = aCfg.getBoolean("failures");
@@ -523,7 +531,7 @@ public class ExperimentSetup {
         }
 
         // creates Result Collector
-        ResultCollector result_collector = new ResultCollector(results, problem);
+        result_collector = new ResultCollector(results, problem);
         System.out.println("Working directory: " + System.getProperty("user.dir"));
         
         //folder for all results

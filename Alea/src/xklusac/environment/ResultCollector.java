@@ -24,8 +24,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Class ResultCollector<p> This class stores results into csv file(s) and
- * graphs (future work).
+ * Class ResultCollector<p>
+ * This class stores results into csv file(s) and graphs (future work).
  *
  * @author Dalibor Klusacek
  */
@@ -39,6 +39,7 @@ public class ResultCollector {
     String output_name = "";
     PrintWriter pw = null;
     PrintWriter pw2 = null;
+    PrintWriter pwc = null;
     double TSA = 0.0;
     double SAJ = 0.0;
     double SDJ = 0.0;
@@ -111,9 +112,9 @@ public class ResultCollector {
      */
     private int received = 0;
     private String user_dir = "";
-    
+
     private List<Plugin> plugins = new ArrayList<Plugin>();
-    
+
     /**
      * Creates a new instance of ResultCollector
      */
@@ -121,28 +122,27 @@ public class ResultCollector {
         user_dir = System.getProperty("user.dir");
 
         /*if (ExperimentSetup.meta) {
-            user_dir = "/scratch/klusacek/" + ExperimentSetup.path;
-        } else {
-            user_dir = System.getProperty("user.dir");
-        }*/
-
+         user_dir = "/scratch/klusacek/" + ExperimentSetup.path;
+         } else {
+         user_dir = System.getProperty("user.dir");
+         }*/
         this.results = results;
         this.problem = prob;
         /*try {
-            //System.out.println("!&&&&&&&&&&&&&&&&&& "+user_dir + "/Results("+problem+").csv");
-            out.deleteResults(user_dir + "/Results(" + problem + ").csv");
-            out.deleteResults(user_dir + "/WGraphs(" + problem + ").csv");
-            out.deleteResults(user_dir + "/RGraphs(" + problem + ").csv");
-            out.deleteResults(user_dir + "/SGraphs(" + problem + ").csv");
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }*/
+         //System.out.println("!&&&&&&&&&&&&&&&&&& "+user_dir + "/Results("+problem+").csv");
+         out.deleteResults(user_dir + "/Results(" + problem + ").csv");
+         out.deleteResults(user_dir + "/WGraphs(" + problem + ").csv");
+         out.deleteResults(user_dir + "/RGraphs(" + problem + ").csv");
+         out.deleteResults(user_dir + "/SGraphs(" + problem + ").csv");
+         } catch (IOException ex) {
+         ex.printStackTrace();
+         }*/
     }
 
     public int getReceived() {
         return received;
     }
-    
+
     /**
      * generate results headers
      */
@@ -174,10 +174,10 @@ public class ResultCollector {
             saxis += "\t" + i;
         }
         saxis += "\t>1000";
-        
+
         // String with all plugin headers
         String headersOfPlugins = generatePluginHeaders(pluginHeaders);
-        
+
         try {
             out.writeString(user_dir + "/Results(" + problem + ").csv", "1/" + data_set
                     + "\tsubmit.\tcompl.\tkilled\tresp_time\truntime\tsch-cr-time\tmakespan\tweigh_usg\tclass_usg\ttardiness\twait\tsld\tawrt\tawsd\ts_resp\ts_wait\ts_sld\tbounded_sld\tbackfilled" + headersOfPlugins);
@@ -190,17 +190,17 @@ public class ResultCollector {
             ex.printStackTrace();
         }
     }
-    
+
     /**
      * Serializes headers into a String.
-     * 
+     *
      * @param headers array with all headers
-     * 
+     *
      * @return headers in one String
      */
     private static String generatePluginHeaders(String[] headers) {
         StringBuilder sb = new StringBuilder();
-        for (int i=0; i<headers.length; i++) {
+        for (int i = 0; i < headers.length; i++) {
             sb.append("\t");
             sb.append(headers[i]);
         }
@@ -234,7 +234,7 @@ public class ResultCollector {
         int backfilled = 0;
         double[] pluginsValues = new double[plugins.size()];
 
-        for (int i = 0; i < results.size(); i=i+19+plugins.size()) {
+        for (int i = 0; i < results.size(); i = i + 19 + plugins.size()) {
 
             // deadline score
             completed_jobs += (Integer) results.get(i);
@@ -269,9 +269,9 @@ public class ResultCollector {
             succ_slow += (Double) results.get(i + 16);
             b_succ_slow += (Double) results.get(i + 17);
             backfilled += (Integer) results.get(i + 18);
-            
-            for (int j=0; j<plugins.size(); j++) {
-                pluginsValues[j] += (Double) results.get(i+j+19);
+
+            for (int j = 0; j < plugins.size(); j++) {
+                pluginsValues[j] += (Double) results.get(i + j + 19);
             }
         }
         // print results (deadline score and scheduling time and makespan)
@@ -298,13 +298,12 @@ public class ResultCollector {
         }
 
         String pluginResultString = getPluginResultString(pluginsValues, experiment_count);
-        
+
         try {
             // delete old one, will be left at the end
             if (ExperimentSetup.algID != ExperimentSetup.prevAlgID) {
                 out.deleteResults(user_dir + "/Users" + prob + ".csv");
             }
-
 
             out.writeString(user_dir + "/Users" + prob + ".csv", fair);
             out.writeString(user_dir + "/Results(" + problem + ").csv", suff + "\t"
@@ -327,7 +326,7 @@ public class ResultCollector {
                     + Math.round(succ_slow * 100.0) / (experiment_count * 100.0) + "\t"
                     + Math.round(b_succ_slow * 100.0) / (experiment_count * 100.0) + "\t"
                     + Math.round(backfilled * 100.0) / (experiment_count * 100.0)
-                    + pluginResultString );
+                    + pluginResultString);
 
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -337,18 +336,18 @@ public class ResultCollector {
 
         results.clear();
     }
-    
+
     /**
      * Serialize all plugin values in one String.
-     * 
+     *
      * @param pluginsValues an array with results from all plugins
      * @param experiment_count the number of experiments
-     * 
+     *
      * @return one string with all values
      */
     private String getPluginResultString(double[] pluginsValues, int experiment_count) {
         StringBuilder sb = new StringBuilder();
-        for (int i=0; i<pluginsValues.length; i++) {
+        for (int i = 0; i < pluginsValues.length; i++) {
             sb.append("\t");
             sb.append(Math.round(pluginsValues[i] * 100.0) / (experiment_count * 100.0));
         }
@@ -383,11 +382,12 @@ public class ResultCollector {
             }
             this.output_name = user_dir + "/jobs" + prob + ".csv";
             out.deleteResults(output_name);
-   
+
             this.pw = new PrintWriter(new FileWriter(FileUtil.getPath(output_name)), true);
-            
+
             //this.pw = new PrintWriter(new FileWriter(output_name, true));
             this.pw2 = new PrintWriter(new FileWriter(FileUtil.getPath(user_dir + "/jobs(" + problem + "" + ExperimentSetup.algID + ").csv"), true));
+            this.pwc = new PrintWriter(new FileWriter(FileUtil.getPath(user_dir + "/complain(" + problem + "" + ExperimentSetup.algID + ").csv"), true));
 
             out.writeStringWriter(pw, "giID \t arrival \t wait \t runtime \t CPUs \t RAM \t userID \t queue");
 
@@ -450,22 +450,19 @@ public class ResultCollector {
             neg_score++;
         }
 
-
         double response = Math.max(0.0, (finish_time - arrival));
         double saj = gi.getNumPE() * mips;
-
-
 
         // utilized time by job
         job_time += gi.getNumPE() * cpu_time;
         wjob_time += gi.getNumPE() * gridlet_received.getGridletFinishedSoFar();
         flow_time += response;
-        
+
         //interates all plugins and cumulates their value
         for (Plugin pl : plugins) {
             pl.cumulate(gridlet_received);
         }
-        
+
         wait_time_global += Math.max(0.0, (response - cpu_time));
         // slowdown must be >= than 1.0, response may be 0 so normalize
         slowdown += Math.max(1.0, (response / Math.max(1.0, cpu_time))); // prevent division by zero
@@ -474,15 +471,10 @@ public class ResultCollector {
         awrt += saj * response;
         awsd += saj * Math.max(1.0, ((response / Math.max(1.0, cpu_time)))); // prevent division by zero
 
-
-
-
-
         // write out jobs 
-
         try {
             // giID - wait - runtime - userID - numPE - ram - arrival - queue
-                        out.writeStringWriterErr(pw2, gridlet_received.getGridletID() + "\t" + Math.max(0.0, (response - cpu_time))
+            out.writeStringWriterErr(pw2, gridlet_received.getGridletID() + "\t" + Math.max(0.0, (response - cpu_time))
                     + "\t" + cpu_time + "\t" + gi.getUser() + "\t" + gi.getNumPE() + "\t" + gi.getRam() + "\t" + gi.getRelease_date() + "\t" + gi.getQueue());
             String prob = "_";
             prob += ExperimentSetup.algID + "_" + ExperimentSetup.name;
@@ -502,17 +494,12 @@ public class ResultCollector {
             String line = gridlet_received.getGridletID() + "\t" + Math.round(gi.getRelease_date()) + "\t" + Math.round(Math.max(0.0, (response - cpu_time)) * 10) / 10.0
                     + "\t" + Math.round(cpu_time * 10) / 10.0 + "\t" + gi.getNumPE() + "\t" + gi.getRam() + "\t" + gi.getUser() + "\t" + gi.getQueue();
 
-
             //out.writeStringWriter(user_dir + "/jobs" + prob + ".csv", line.replace(".", ","));
-
             out.writeStringWriter(pw, line.replace(".", ","));
-
 
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-
-
 
         for (int j = 0; j < resourceInfoList.size(); j++) {
             ResourceInfo ri = (ResourceInfo) resourceInfoList.get(j);
@@ -549,7 +536,7 @@ public class ResultCollector {
         results.add(GridSim.clock());
         // classic machine usage
         results.add(usage / 100.0);
-        
+
         //wait time plugin at the end of the method
         wait_time_global = Math.round((wait_time_global / received) * 100) / 100.0;
         results.add(wait_time_global);
@@ -567,10 +554,10 @@ public class ResultCollector {
         // avg. tardiness
         results.add(tardiness / received);
         //av. slowdown
-        
+
         //calculated also as plugin at the end
         results.add(slowdown / received);
-        
+
         //av. weighted response time
         results.add(awrt / sa_total);
         //av. weigted slowdown
@@ -584,14 +571,14 @@ public class ResultCollector {
         results.add(bound_succ_slow / success);
         backfilled = ExperimentSetup.backfilled;
         results.add(backfilled);
-        
+
         //iterates all plugins and calculate their values and add them into results list
         for (Plugin pl : plugins) {
             //int index = Integer.parseInt(pl.getPluginConfiguration().get(PluginConfiguration.RESULT_HEADER));
             double result = pl.calculate(this, sd);
             results.add(result);
         }
-        
+
     }
 
     /**
@@ -618,6 +605,7 @@ public class ResultCollector {
         try {
             out.closeWriter(pw);
             out.closeWriter(pw2);
+            out.closeWriter(pwc);
         } catch (IOException ex) {
             Logger.getLogger(ResultCollector.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -642,14 +630,15 @@ public class ResultCollector {
     private void generateCDFJobsStatistics(String suff, double job_count) {
         String line = "";
         Input r = new Input();
-        
+
         try {
             out.closeWriter(pw2);
             out.closeWriter(pw);
+            out.closeWriter(pwc);
         } catch (IOException ex) {
             Logger.getLogger(ResultCollector.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         //pridan nazev slozky do puvodni cesty
         String fileName = user_dir + File.separator + ExperimentSetup.getDir(DirectoryLevel.ALGORITHM) + File.separator + "jobs(" + problem + "" + ExperimentSetup.algID + ").csv";
         //System.out.println("Nazev souboru:" + fileName);
@@ -748,7 +737,6 @@ public class ResultCollector {
             sline += "\t" + scdf;
         }
 
-
         // write out job's result
         try {
             out.writeString(user_dir + "/WGraphs(" + problem + ").csv", line);
@@ -813,10 +801,20 @@ public class ResultCollector {
 
     /**
      * Sets the plugins to be used throughout the simulation.
-     * 
+     *
      * @param plugins the plugins to use
      */
     public void setPlugins(List<Plugin> plugins) {
         this.plugins = plugins;
+    }
+
+    public void recordUserComplain(int gid, int userID, String user, double time) {
+        try {
+            // giID - time - userID - user  
+            out.writeStringWriterErr(pwc, gid + "\t" + Math.round(time) + "\t" + userID + "\t" + user);
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 }
