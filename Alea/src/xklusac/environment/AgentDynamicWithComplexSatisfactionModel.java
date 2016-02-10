@@ -33,7 +33,7 @@ import gridsim.GridSim;
  *
  * @author Simon Toth (kontakt@simontoth.cz)
  */
-public class AgentDynamicWithSatisfactionModel extends AgentSkeleton {
+public class AgentDynamicWithComplexSatisfactionModel extends AgentSkeleton {
 
     private DynamicBatchMgr dynamic_mgr = null;
     private ComplexGridlet next_job = null;
@@ -47,7 +47,7 @@ public class AgentDynamicWithSatisfactionModel extends AgentSkeleton {
     /**
      * Creates a new instance of JobLoader
      */
-    public AgentDynamicWithSatisfactionModel(String name, String loader_name, double baudRate, String data_set, int maxPE, int minPErating, int maxPErating, int user_id) throws Exception {
+    public AgentDynamicWithComplexSatisfactionModel(String name, String loader_name, double baudRate, String data_set, int maxPE, int minPErating, int maxPErating, int user_id) throws Exception {
         super(name, loader_name, baudRate);
 
         dynamic_mgr = new DynamicBatchMgr(name, data_set, maxPE, minPErating, maxPErating);

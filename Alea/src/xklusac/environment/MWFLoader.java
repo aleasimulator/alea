@@ -422,8 +422,7 @@ public class MWFLoader extends GridSim {
             job_limit = Long.parseLong(values[13]);
         }
 
-        // just for testing purposes
-        long deadline = Math.round(job_limit + arrival);
+        
 
         String properties = values[5];
         String user = values[1];
@@ -478,6 +477,9 @@ public class MWFLoader extends GridSim {
 
         int numNodes = 1;
         int ppn = numCPU;
+        
+        // manually established - fix it according to your needs
+        double deadline = job_limit * 2;
 
 
         // create one gridlet from one line in data set file

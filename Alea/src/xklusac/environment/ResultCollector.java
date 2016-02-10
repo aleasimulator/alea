@@ -440,6 +440,7 @@ public class ResultCollector {
         //run_time += cpu_time;
 
         gi.setTardiness(Math.max(0, finish_time - gridlet_received.getDue_date()));
+        //System.out.println(gi.getID()+" deadline = "+gi.getDue_date()+" tardiness = "+gi.getTardiness());
 
         // calculate various results
         double g_tard = gi.getTardiness();
@@ -808,10 +809,12 @@ public class ResultCollector {
         this.plugins = plugins;
     }
 
-    public void recordUserComplain(int gid, int userID, String user, double time) {
+    public void recordUserComplain(int gid, int userID, String user, double time, double factor) {
         try {
-            // giID - time - userID - user  
-            out.writeStringWriterErr(pwc, gid + "\t" + Math.round(time) + "\t" + userID + "\t" + user);
+            factor = Math.round(factor*1000)/1000.0;
+            String output = gid + "\t" + Math.round(time) + "\t" + userID + "\t" + user + "\t"+ factor;
+            // giID - time - userID - user - factor 
+            out.writeStringWriterErr(pwc, output.replace(".", ","));
 
         } catch (IOException ex) {
             ex.printStackTrace();

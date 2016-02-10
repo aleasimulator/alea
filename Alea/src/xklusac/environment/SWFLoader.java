@@ -309,8 +309,7 @@ public class SWFLoader extends GridSim {
         /*
          * if (id < 172262) { fail++; return null; }
          */
-        // manually established - fix it according to your needs
-        double deadline = arrival + Integer.parseInt(values[3]) * 2;
+        
 
         // finally create gridlet
         //numCPU = 1;
@@ -467,7 +466,8 @@ public class SWFLoader extends GridSim {
             return null;
         }
 
-
+        // manually established - fix it according to your needs
+        double deadline = job_limit * 2;
         ComplexGridlet gl = new ComplexGridlet(id, user, job_limit, new Double(length), estimatedLength, 10, 10,
                 "Linux", "Risc arch.", arrival, deadline, 1, numCPU, 0.0, queue, properties, perc, ram, numNodes, ppn);
 

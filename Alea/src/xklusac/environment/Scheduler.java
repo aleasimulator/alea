@@ -1016,6 +1016,8 @@ public class Scheduler extends GridSim {
             if (ev.get_tag() == AleaSimTags.GRIDLET_INFO) {
                 ComplexGridlet gl = (ComplexGridlet) ev.get_data();
                 GridletInfo gi = new GridletInfo(gl);
+                gi.setDue_date(gl.getDue_date()+GridSim.clock());
+                gl.setDue_date(gl.getDue_date()+GridSim.clock());
                 last_job_id = gi.getID();
                 setLengthStatistics(gi);
 

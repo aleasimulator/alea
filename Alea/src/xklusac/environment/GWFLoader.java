@@ -187,8 +187,7 @@ public class GWFLoader extends GridSim {
         // minPErating is the default speed of the slowest machine in the data set        
         double length = Math.round((Integer.parseInt(values[3])) * maxPErating);
 
-        // manually established - fix it according to your needs
-        double deadline = arrival + Integer.parseInt(values[3]) * 2;
+        
 
         // queue name
         String queue = "q3";
@@ -215,6 +214,9 @@ public class GWFLoader extends GridSim {
         
         int numNodes = 1;
         int ppn = numCPU;
+        
+        // manually established - fix it according to your needs
+        double deadline = job_limit * 2;
         
         ComplexGridlet gl = new ComplexGridlet(id, "J", job_limit, new Double(length), estimatedLength, 10, 10,
                 null, null, arrival, deadline, 1, numCPU, 0.0, queue, properties, perc,0, numNodes, ppn);
