@@ -39,10 +39,13 @@ public class AgentDynamicWithComplexSatisfactionModel extends AgentSkeleton {
     private ComplexGridlet next_job = null;
     private double latest_submit = 0.0;
     private double latest_runtime = 0.0;
-    private int latest_gid = 0;
+    private double total_requested_CPUtime = 0.0;
+    private int latest_gid = -1;
     private int user_id = 0;
     private int think_time = 3600;
     private int latest_CPUs = 0;
+    private double acceptable_wait = 0.0;
+    private ComplexGridlet previous_job = null;
 
     /**
      * Creates a new instance of JobLoader
@@ -58,17 +61,40 @@ public class AgentDynamicWithComplexSatisfactionModel extends AgentSkeleton {
     boolean onJobEnqueued(ComplexGridlet event) {
         dynamic_mgr.notifyJobSubmit(Integer.toString(event.getGridletID()), GridSim.clock());
         next_job = null;
+
+        if (previous_job != null) {
+            double actual_wait = GridSim.clock() - latest_submit;
+            if (acceptable_wait >= actual_wait) {
+                // do not complain, just update acceptable wait
+                acceptable_wait -= actual_wait;
+
+            } else {
+                // do complain and then reset everything
+                ExperimentSetup.result_collector.recordUserComplain(latest_gid, user_id, this.getEntityName(), GridSim.clock(), (actual_wait / acceptable_wait));
+                acceptable_wait = 0;
+            }
+        }
         latest_submit = GridSim.clock();
         latest_runtime = event.getJobLimit();
         latest_CPUs = event.getNumPE();
         latest_gid = event.getGridletID();
+        acceptable_wait += ((Math.log(latest_CPUs) + 1) * latest_runtime);
+        previous_job = event;
         return true;
     }
 
     @Override
     boolean onJobStarted(ComplexGridlet event) {
         dynamic_mgr.notifyJobStart(event, GridSim.clock());
-        //latest_submit = GridSim.clock();
+
+        double actual_wait = GridSim.clock() - latest_submit;
+        if (acceptable_wait >= actual_wait) {
+            // do not complain, and do nothing
+        } else {
+            // do complain and then do nothing
+            ExperimentSetup.result_collector.recordUserComplain(latest_gid, user_id, this.getEntityName(), GridSim.clock(), (actual_wait / acceptable_wait));            
+        }
+
         return false;
     }
 
@@ -81,12 +107,6 @@ public class AgentDynamicWithComplexSatisfactionModel extends AgentSkeleton {
     @Override
     boolean onJobCompleted(ComplexGridlet event) {
         dynamic_mgr.notifyJobCompletion(event, GridSim.clock());
-        double feedback = Math.max(0, GridSim.clock() - latest_submit);
-        double acceptable_wait = Math.max((think_time*latest_CPUs), latest_runtime * 2);
-        if (feedback > acceptable_wait) {
-            ExperimentSetup.result_collector.recordUserComplain(latest_gid, user_id, this.getEntityName(), GridSim.clock(), (feedback/acceptable_wait));
-        }
-        //latest_submit = GridSim.clock();
         return true;
     }
 
