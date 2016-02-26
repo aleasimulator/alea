@@ -809,11 +809,11 @@ public class ResultCollector {
         this.plugins = plugins;
     }
 
-    public void recordUserComplain(int gid, int userID, String user, double time, double factor) {
+    public void recordLongUserComplain(int gid, int userID, String user, double time, double factor, int job_count) {
         try {
-            factor = Math.round(factor*1000)/1000.0;
-            String output = gid + "\t" + Math.round(time) + "\t" + userID + "\t" + user + "\t"+ factor;
-            // giID - time - userID - user - factor 
+            factor = Math.round(factor * 1000) / 1000.0;
+            String output = gid + "\t" + Math.round(time) + "\t" + userID + "\t" + user + "\t" + factor + "\t" + job_count;
+            // giID - time - userID - user - factor - job count
             out.writeStringWriterErr(pwc, output.replace(".", ","));
 
         } catch (IOException ex) {

@@ -132,7 +132,7 @@ public class DynamicLoader extends GridSim {
                 agents_total++;
             } else if (values[1].equalsIgnoreCase("dynamic") && ExperimentSetup.complain) {
                 user_id++;
-                agents.add(new AgentDynamicWithComplexSatisfactionModel(agent_name, this.getEntityName(), baudRate, data_set, maxPE, minPErating, maxPErating, user_id));
+                agents.add(new AgentDynamicWithSatisfactionModel(agent_name, this.getEntityName(), baudRate, data_set, maxPE, minPErating, maxPErating, user_id));
                 agent_names.add(agent_name);
                 agents_total++;
             }
