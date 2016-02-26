@@ -10,8 +10,12 @@ The sources are stored in the Netbeans IDE project format. You can download Netb
 For the proper function you have to include simjava.jar (re-modified in Jan 2009) which is [here](http://www.fi.muni.cz/~xklusac/alea/download/simjava.jar).
 You will also need gridsim.jar which you can download [here](http://www.gridbus.org/gridsim/).
 
-The data sets are available at http://www.fi.muni.cz/~xklusac/workload and http://www.cs.huji.ac.il/labs/parallel/workload/logs.html. Sample data sets are provided within the distribution but only serve for demonstration purposes.
+The data sets are available at http://www.fi.muni.cz/~xklusac/workload and http://www.cs.huji.ac.il/labs/parallel/workload/logs.html. Sample data sets are provided within the distribution but only serve for demonstration purposes. Alea uses its own machine-description format, storing it in a file with .machines filename extension. The file format specifies one computer cluster per line, attributes are separated by TAB space. One line has following attributes:
 
+<pre><code>cluster_id   cluster_name  number_of_nodes   CPUs_per_node  CPU_speed   RAM_per_node_in_KB</code></pre>
+So, in the following example we have two clusters (zewura/zegox), having 20/48 nodes, each having 80/12 CPUs per node (with default speed 1) and approx. 500/90 GB of RAM per each node:
+<pre><code>0	zewura	20	80	1	529426432
+1	zegox	48	12	1	94035968 </code></pre>
 For further information, please refer to http://www.fi.muni.cz/~xklusac/alea/index.html.
 
 #####Software licence:
