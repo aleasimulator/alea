@@ -1668,7 +1668,7 @@ public class Scheduler extends GridSim {
             }
         }
 
-        //System.out.println(gi.getID()+": cannot run | CPU="+cpuok+" RAM="+ramok+" req: ppn="+gi.getPpn()+ " nodes="+gi.getNumNodes()+" RAM="+gi.getRam());
+        //if(!executable) System.out.println(gi.getID()+": cannot run | CPU="+cpuok+" RAM="+ramok+" req: ppn="+gi.getPpn()+ " nodes="+gi.getNumNodes()+" RAM="+gi.getRam());
         return executable;
 
     }
