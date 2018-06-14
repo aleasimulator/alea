@@ -24,6 +24,5 @@ This permission is granted for the duration of property rights. This software is
 
 ##### Important
 When using Alea in your paper or presentation, please use the following citations as an acknowledgement. Thank you!
-Dalibor Klusáček, Gabriela Podolníková and Šimon Tóth. Complex Job Scheduling Simulations with Alea 4. In Proceedings of the 9th EAI International Conference on Simulation Tools and Techniques, pages 124-129, 2016. 
-Dalibor Klusáček and Hana Rudová. Alea 2 - Job Scheduling Simulator. In proceedings of the 3rd International ICST Conference on Simulation Tools and Techniques (SIMUTools 2010), ICST, 2010.
-[download](http://www.fi.muni.cz/~xklusac/pub/alea2.pdf)
+- Dalibor Klusáček, Gabriela Podolníková and Šimon Tóth. Complex Job Scheduling Simulations with Alea 4. In Proceedings of the 9th EAI International Conference on Simulation Tools and Techniques, pages 124-129, 2016. 
+- Dalibor Klusáček and Hana Rudová. Alea 2 - Job Scheduling Simulator. In proceedings of the 3rd International ICST Conference on Simulation Tools and Techniques (SIMUTools 2010), ICST, 2010. [download](http://www.fi.muni.cz/~xklusac/pub/alea2.pdf)
