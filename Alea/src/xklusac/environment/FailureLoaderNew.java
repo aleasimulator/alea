@@ -54,17 +54,18 @@ public class FailureLoaderNew extends GridSim {
             }
         //System.out.println("Adresar = "+adresar);
         }
+        
 
 
         if (data_set.equals("das2.gwf") && version == 1) {
-            br = r.openFile(new File(folder_prefix + "/data-set/" + data_set + ".failuresL"));
+            br = r.openFile(new File(ExperimentSetup.data_sets + "/" + data_set + ".failuresL"));
             System.out.println(name + " loads " + folder_prefix + "/data-set/" + data_set + ".failuresL");
         } else if (data_set.equals("das2.gwf") && version == 2) {
-            br = r.openFile(new File(folder_prefix + "/data-set/" + data_set + ".failuresM"));
+            br = r.openFile(new File(ExperimentSetup.data_sets + "/" + data_set + ".failuresM"));
             System.out.println(name + " loads " + folder_prefix + "/data-set/" + data_set + ".failuresM");
         } else {
-            br = r.openFile(new File(folder_prefix + "/data-set/" + data_set + ".failures"));
-            System.out.println(name + " loads " + folder_prefix + "/data-set/" + data_set + ".failures");
+            System.out.println("Opening job file at: "+ExperimentSetup.data_sets + "/" + data_set);
+            br = r.openFile(new File(ExperimentSetup.data_sets + "/" + data_set+ ".failures"));
         }
 
 

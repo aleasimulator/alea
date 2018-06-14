@@ -125,6 +125,7 @@ public class AgentDynamicWithSatisfactionModel extends AgentSkeleton {
     ComplexGridlet getCurrentJob() {
         // Try to get the next job
         if (next_job == null) {
+            //System.out.println(this.user_id+ " get new job");
             next_job = dynamic_mgr.getNextJob(GridSim.clock());
         }
 

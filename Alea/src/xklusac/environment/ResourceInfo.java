@@ -610,17 +610,34 @@ public class ResourceInfo {
                 return false;
             }
         }
+        if (gi.getQueue().equals("phi")) {
+            if (!this.resource.getResourceName().contains("phi")) {
+                //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because queue=" + gi.getQueue());
+                return false;
+            }
+        }
+        // don't allow jobs running on ungu and urga unless they are from queue "uv"
+        if((this.resource.getResourceName().contains("ungu") || this.resource.getResourceName().contains("urga"))&& !gi.getQueue().equals("uv")){
+            //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because queue=" + gi.getQueue());
+            return false;
+        }
+        // don't allow jobs running on phi unless they are from queue "phi"
+        if(this.resource.getResourceName().contains("phi") && !gi.getQueue().equals("phi")){
+            //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because queue=" + gi.getQueue());
+            return false;
+        }
+        
         String[] req_nodes = gi.getProperties().split(":");
         //System.out.println(gi.getID() + " has properties: "+gi.getProperties()); 
         for (int r = 0; r < req_nodes.length; r++) {
             // negativni vlastnost
-            if (req_nodes[r].contains("^cl_") && req_nodes[r].contains(this.resource.getResourceName())) {
-                //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because prop=" + gi.getProperties());
+            if ((req_nodes[r].contains("^cl_") || req_nodes[r].contains("=False") || req_nodes[r].contains("=false") || req_nodes[r].contains("=0")) && req_nodes[r].contains(this.resource.getResourceName())) {
+                //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because prop=" + req_nodes[r]);
                 return false;
             }
             //pozitivni vlastnost
-            if (!req_nodes[r].contains("^") && req_nodes[r].contains("cl_") && !req_nodes[r].contains(this.resource.getResourceName().substring(0, Math.min(this.resource.getResourceName().length(), 5)))) {
-                //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because prop=" + gi.getProperties());
+            if (!(req_nodes[r].contains("=0") && req_nodes[r].contains("cl_")) && !req_nodes[r].contains("=false") && !req_nodes[r].contains("=False") && !req_nodes[r].contains("^") && req_nodes[r].contains("cl_") && !req_nodes[r].contains(this.resource.getResourceName().substring(0, Math.min(this.resource.getResourceName().length(), 5)))) {
+                //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because positive prop=" + req_nodes[r]);
                 return false;
             }
         }
@@ -629,6 +646,7 @@ public class ResourceInfo {
             if (this.getNumRunningPE() >= gi.getNumPE()) {
                 return true;
             } else {
+                //System.out.println(gi.getID() + " cannot run here - too few CPUs at: " + this.resource.getResourceName());
                 return false;
             }
         }
@@ -637,9 +655,7 @@ public class ResourceInfo {
         int ppn = gi.getPpn();
         int numNodes = gi.getNumNodes();
 
-        // Not a MetaCentrum-like node and CPU specification
-        if (ppn < 0 && numNodes < 0) {
-        }
+        
         MachineList machines = this.resource.getMachineList();
         int allocateNodes = numNodes;
 
@@ -769,14 +785,16 @@ public class ResourceInfo {
 
         earliest = finishTimeOnPE[index];
         finishTimeOnPE[index] = -999;
-
+        //System.out.println("----usable----");
         // count usable
         for (int j = 0; j < finishTimeOnPE.length; j++) {
             // if other PE needed to run gridlet - be carefull when comparing 2 double values
             if (finishTimeOnPE[j] == earliest) {
+                //System.out.println(finishTimeOnPE[j]);
                 usable++;
             }
         }
+        //System.out.println("----usable----");
         return usable;
     }
 
@@ -1061,6 +1079,7 @@ public class ResourceInfo {
         }
         return index;
     }
+
     /*
      * Auxiliary function predicting completion time of running jobs.
      *
@@ -1545,9 +1564,16 @@ public class ResourceInfo {
         // updates finishTimeOnPE
         this.updateFinishTimeOfAssignedGridlets(current_time);
         // get EST according to gi PE count
+        //System.out.println("===========================================================");
+        //System.out.println(gi.getNumPE() + " CPUs required for gi :" + gi.getID());
         int index = findFirstFreeSlot(finishTimeOnPE, gi);
+        for (int j = 0; j < finishTimeOnPE.length; j++) {
+            //System.out.println(j+":"+finishTimeOnPE[j]);
+        }
         this.est = finishTimeOnPE[index]; // Earl. Start Time for head of queue
         this.usablePEs = findUsablePEs(index, finishTimeOnPE, gi);
+        //System.out.println(gi.getNumPE() + " CPUs required and found " + usablePEs + " for gi :" + gi.getID()+" min time = "+this.est);
+        //System.out.println("===========================================================");
 
 //        for(int i = 0; i<)
         return this.est;

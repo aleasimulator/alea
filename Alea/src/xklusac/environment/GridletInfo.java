@@ -111,6 +111,7 @@ public class GridletInfo {
     private String user = "";
     private double avg_length = 0.0;
     private double last_length = 0.0;
+    private double avg_perc_length = 0.0;
     private long jobLimit = 0;
     private double percentage;
     private boolean init;
@@ -489,13 +490,32 @@ public class GridletInfo {
     public void setPEs(LinkedList<Integer> PEs) {
         this.getGridlet().setPEs(PEs);
     }
-
+    /**
+     * Returns (estimated) job runtime. The actual method for calculating the rutime is chosen via experiment setup. 
+     * Generally, it is either the exact runtime or the runtime estimate. Several methods for estimate calculation are supported.
+     */
+ 
     public double getJobRuntime(int peRating) {
         if (ExperimentSetup.estimates) {
-            if (ExperimentSetup.use_AvgLength) {
+            if (ExperimentSetup.use_PercentageLength) {
+                ExperimentSetup.scheduler.updateGridletWalltimeEstimateApproximation(this);
+                //System.out.println("avg PERC length ===== "+Math.round(this.getAvg_perc_length() / peRating)+" ? "+Math.round(this.getLast_length() / peRating));
+                return Math.min(jobLimit, Math.max(0.0, (this.getAvg_perc_length() / peRating)));
+            } else if (ExperimentSetup.use_MinPercentageLength) {
+                User u = ExperimentSetup.users.get(this.getUser());
+                double avg_perc = u.getMinPercentage();
+                double avg_l = this.getEstimatedLength() / avg_perc;
+                double run = Math.min(jobLimit, Math.max(0.0, (this.getLength() / peRating)));
+                double est = Math.min(jobLimit, Math.max(0.0, (avg_l / peRating)));
+                double error = Math.round((est/run)*100.0)/100.0;
+                //System.out.println(this.getID()+": avg 5 PERC length ===== "+est+" vs estim "+Math.round(jobLimit)+" vs run "+ run +" real error= "+error+" Percentages: "+u.printPercentage());
+                return Math.min(jobLimit, Math.max(0.0, (avg_l / peRating)));                
+            } else if (ExperimentSetup.use_AvgLength) {
+                ExperimentSetup.scheduler.updateGridletWalltimeEstimateApproximation(this);
                 //System.out.println("avg length ===== "+Math.round(this.getAvg_length() / peRating)+" ? "+Math.round(this.getLast_length() / peRating));
                 return Math.min(jobLimit, Math.max(0.0, (this.getAvg_length() / peRating)));
             } else if (ExperimentSetup.use_LastLength) {
+                ExperimentSetup.scheduler.updateGridletWalltimeEstimateApproximation(this);
                 //System.out.println(this.getID()+" last length = "+Math.min(jobLimit, Math.max(0.0, (this.getLast_length() / peRating)))+" / job limit = "+jobLimit+" user = "+this.getUser());
                 return Math.min(jobLimit, Math.max(0.0, (ExperimentSetup.runtime_multiplicator * (this.getLast_length() / peRating))));
             }/* else if (ExperimentSetup.useUserPrecision) {
@@ -646,5 +666,19 @@ public class GridletInfo {
      */
     public void setResourceSuitable(HashMap resourceSuitable) {
         this.resourceSuitable = resourceSuitable;
+    }
+
+    /**
+     * @return the avg_perc_length
+     */
+    public double getAvg_perc_length() {
+        return avg_perc_length;
+    }
+
+    /**
+     * @param avg_perc_length the avg_perc_length to set
+     */
+    public void setAvg_perc_length(double avg_perc_length) {
+        this.avg_perc_length = avg_perc_length;
     }
 }

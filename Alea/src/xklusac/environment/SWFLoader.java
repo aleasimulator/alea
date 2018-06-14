@@ -101,7 +101,8 @@ public class SWFLoader extends GridSim {
             }
             //System.out.println("Adresar = "+adresar);
         }
-        br = r.openFile(new File(folder_prefix + "/data-set/" + data_set));
+        System.out.println("Opening job file at: "+ExperimentSetup.data_sets + "/" + data_set);
+        br = r.openFile(new File(ExperimentSetup.data_sets + "/" + data_set));
         this.total_jobs = total_jobs;
         this.maxPE = maxPE;
         this.minPErating = minPErating;
@@ -330,7 +331,7 @@ public class SWFLoader extends GridSim {
                 job_limit = 64800; //18 hours
                 ExperimentSetup.max_estim++;
             } else if (data_set.equals("blue.swf")) {
-                job_limit = 7200; //2 hours
+                job_limit = 36*3600; //2 hours
                 ExperimentSetup.max_estim++;
             } else if (data_set.equals("kth-sp2.swf")) {
                 job_limit = 14400; //4 hours

@@ -111,6 +111,15 @@ public class ExperimentSetup {
      */
     static boolean use_LastLength;
     /**
+     * set true to use avg. perc. difference of all jobs to adjust runtime estimate
+     */
+    static boolean use_PercentageLength;
+    /**
+     * set true to min. perc. difference of last few jobs to adjust runtime estimate
+     */
+    static boolean use_MinPercentageLength;
+    
+    /**
      * set true to use on-demand LS-based optimization
      */
     static boolean useEventOpt;
@@ -247,6 +256,12 @@ public class ExperimentSetup {
      * defines whether to use fairshare at all
      */
     public static boolean use_fairshare;
+    
+    /**
+     * a reference to the job scheduler
+     */
+    public static Scheduler scheduler = null;
+    
     /**
      * defines whether to use fairshare decay
      */
@@ -283,6 +298,10 @@ public class ExperimentSetup {
      * counter measuring the number of backfilled jobs
      */
     public static int backfilled;
+    /**
+     * counter measuring the number of backfilled jobs
+     */
+    public static int backfilled_cons;
     /**
      * A list containing reference to all local resource schedulers
      * (AllocationPolicy)
@@ -417,6 +436,7 @@ public class ExperimentSetup {
         avail_CPUs = 0.0;
         
         backfilled = 0;
+        backfilled_cons = 0;
         
         // set true to use different queues
         use_queues = aCfg.getBoolean("use_queues");
@@ -476,6 +496,7 @@ public class ExperimentSetup {
         use_AvgLength = aCfg.getBoolean("use_AvgLength");
         // set true to use last job length as a new runtime estimate
         use_LastLength = aCfg.getBoolean("use_LastLength");
+        use_PercentageLength = aCfg.getBoolean("use_PercentageLength");
         // the minimal length (in seconds) of gap in schedule since when the "on demand" optimization is executed
         gap_length = aCfg.getInt("gap_length");
         // the weight of the fairness criteria in objective function
@@ -502,6 +523,9 @@ public class ExperimentSetup {
         }
         if (use_LastLength) {
             problem += "-LastL";
+        }
+        if (use_PercentageLength) {
+            problem += "-PercL";
         }
         if (useEventOpt) {
             problem += "-EventOpt";
@@ -593,7 +617,9 @@ public class ExperimentSetup {
             //File subDirF = new File(subDir);
             //subDirF.mkdir();
             
-            
+            if(data_sets[set].equals("sandia.swf")){
+                failures = true;
+            }
             String prob = problem;
             fair_weight = weight_of_fairness[set];
             max_estim = 0;
@@ -607,6 +633,11 @@ public class ExperimentSetup {
             // 18 = CONS+Tabu Search, 19 = CONS + Gap Search, 20 = CONS + RandomSearch, CONS no compression = 21,
 
             boolean use_anti_starvation[] = aCfg.getBooleanArray("use_anti_starvation");
+            boolean estimateAVG[] = aCfg.getBooleanArray("estimateAVG");
+            boolean estimateLAST[] = aCfg.getBooleanArray("estimateLAST");
+            boolean estimatePERC[] = aCfg.getBooleanArray("estimatePERC");
+            boolean estimateMPERC[] = aCfg.getBooleanArray("estimateMinPERC");
+            boolean estimate[] = aCfg.getBooleanArray("estimate");
             boolean use_resource_spec_packing[] = aCfg.getBooleanArray("use_resource_spec_packing");
             int skip[] = aCfg.getIntArray("skip");
 
@@ -626,6 +657,13 @@ public class ExperimentSetup {
             for (int sel_alg = 0; sel_alg < algorithms.length; sel_alg++) {
 
                 anti_starvation = use_anti_starvation[sel_alg];
+                
+                use_AvgLength = estimateAVG[sel_alg];
+                use_LastLength = estimateLAST[sel_alg];
+                use_PercentageLength = estimatePERC[sel_alg];
+                use_MinPercentageLength = estimateMPERC[sel_alg];
+                estimates = estimate[sel_alg];
+                
                 resource_spec_packing = use_resource_spec_packing[sel_alg];
                 skipJob = skip[set];
                 firstArrival = timeskip[set];
@@ -639,6 +677,7 @@ public class ExperimentSetup {
                 int alg = algorithms[sel_alg];
                 int experiment_count = 1;
                 backfilled = 0;
+                backfilled_cons = 0;
                 name = data_sets[set];
                 algID = alg;
                 if (sel_alg > 0) {
@@ -647,9 +686,10 @@ public class ExperimentSetup {
 
                 // used for output description
                 String suff = "";
+                
                 // initialize the simulation - create the scheduler
                 
-                Scheduler scheduler = null;
+                
                 String scheduler_name = "Alea_3.0_scheduler";
                 try {
                     Calendar calendar = Calendar.getInstance();
@@ -842,7 +882,22 @@ public class ExperimentSetup {
                 dir[3] = (sel_alg+1) + "-" + suff;
                 File algDirF = new File(ExperimentSetup.getDir(DirectoryLevel.ALGORITHM));
                 algDirF.mkdir();
+                if(estimates){
+                    suff+="-EST";
+                }                
                 
+                if(use_AvgLength){
+                    suff+="-AVG-L";
+                }
+                if(use_LastLength){
+                    suff+="-LAST-L";
+                }
+                if(use_PercentageLength){
+                    suff+="-PERC-L";
+                }
+                if(use_MinPercentageLength){
+                    suff+="-MinPERC-L";
+                }
                 result_collector.deleteSchedResults(suff);//originally in Scheduler constructor
                 
                 System.out.println("Now scheduling " + total_gridlet[set] + " jobs by: " + suff + ", using " + data_sets[set] + " data set.");

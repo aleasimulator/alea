@@ -312,8 +312,11 @@ public class WorkloadReaderSWF {
                 String[] req_nodes = values[20].split(":");
                 properties = values[20];
                 for (int r = 0; r < req_nodes.length; r++) {
-                    if (req_nodes[r].contains("ppn=")) {
+                    if (req_nodes[r].contains("ppn=") || req_nodes[r].contains("ncpus=")) {
+                        //System.out.println(id+" start parse> "+req_nodes[r]);
                         String ppns = req_nodes[r].replace("ppn=", "");
+                        ppns = ppns.replace("ncpus=", "");
+                        //System.out.println(id+" replace> "+ppns);
                         if (ppns.contains("#")) {
                             int ind = ppns.indexOf("#");
                             ppns = ppns.substring(0, ind);

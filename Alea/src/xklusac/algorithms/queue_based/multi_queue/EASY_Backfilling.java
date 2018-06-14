@@ -156,6 +156,10 @@ public class EASY_Backfilling implements SchedulingPolicy {
                         gi.setResourceID(ri.resource.getResourceID());
                         // submit job
                         scheduler.submitJob(gi.getGridlet(), ri.resource.getResourceID());
+                        if(ri.resource.getResourceID() == rsv_res.resource.getResourceID()){
+                            ExperimentSetup.backfilled_cons++;
+                        }
+                        ExperimentSetup.backfilled++;
                         ri.is_ready = true;
                         succ = true;
                         //scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.GRIDLET_SENT, gi);

@@ -81,6 +81,7 @@ public class DynamicBatchMgr {
 
     private JobBatchDynamic getNextBatch(double simulation_time) {
         for (JobBatchDynamic batch : batches_waiting) {
+            //System.out.println(simulation_time+" get new batch "+batch.getBatchID()+" of session "+batch.getSessionID()+" batch state:"+batch.getCurrentState());
             if (batch.getCurrentState() == JobBatchState.READY_TO_SUBMIT) {
                 double batch_arrival_time = -1;
 
@@ -155,22 +156,26 @@ public class DynamicBatchMgr {
             }
 
             current_batch = getNextBatch(simulation_time);
+            //System.out.println("Fetching new batch: "+current_batch.getBatchID());
             if (current_batch == null) {
                 return null;
             }
         }
 
         JobBatchState current_batch_state = current_batch.getCurrentState();
+        //System.out.println("-------------------------------------------");
+        //System.out.println("This is batch: "+current_batch.getBatchID()+ " with state = "+current_batch_state+" session id = "+current_batch.getSessionID());
         switch (current_batch_state) {
             case READY_TO_SUBMIT: {
                 ComplexGridlet job = swf_reader.getNextGridlet();
+                //System.out.println(job.getGridletID()+": new job of user "+job.getUser()+" time = "+simulation_time);
 
                 if (job == null) {
                     throw new RuntimeException("Batch in ready state, but no jobs found.");
                 }
 
                 if (!current_batch.hasListJob(Integer.toString(job.getGridletID()))) {
-                    throw new RuntimeException("Batch <-> Job mismatch, batch does not contain job.");
+                    throw new RuntimeException(current_batch.getBatchID()+ ": Batch <-> Job mismatch, batch does not contain job with ID: "+job.getGridletID());
                 }
 
                 // This is the first job that is arriving from this batch
@@ -199,8 +204,11 @@ public class DynamicBatchMgr {
 
             // current batch no longer submiting jobs
             case DONE_SUBMITTING:
+                //System.out.println("Done submitting from this batch: "+current_batch.getBatchID()+" with Session id = "+current_batch.getSessionID());
                 batches_running.add(current_batch);
                 current_batch = getNextBatch(simulation_time);
+                //System.out.println("Opening new batch: "+current_batch.getBatchID()+" and getting new job recursively. Session id = "+current_batch.getSessionID());
+                //System.out.println("............................");
                 return getNextJob(simulation_time);
 
             // current batch no longer submiting jobs & all jobs managed to finish

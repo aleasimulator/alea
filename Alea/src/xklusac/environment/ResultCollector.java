@@ -40,6 +40,7 @@ public class ResultCollector {
     PrintWriter pw = null;
     PrintWriter pw2 = null;
     PrintWriter pwc = null;
+    PrintWriter pwt = null;
     double TSA = 0.0;
     double SAJ = 0.0;
     double SDJ = 0.0;
@@ -180,7 +181,7 @@ public class ResultCollector {
 
         try {
             out.writeString(user_dir + "/Results(" + problem + ").csv", "1/" + data_set
-                    + "\tsubmit.\tcompl.\tkilled\tresp_time\truntime\tsch-cr-time\tmakespan\tweigh_usg\tclass_usg\ttardiness\twait\tsld\tawrt\tawsd\ts_resp\ts_wait\ts_sld\tbounded_sld\tbackfilled" + headersOfPlugins);
+                    + "\tsubmit.\tcompl.\tkilled\tresp_time\truntime\tsch-cr-time\tmakespan\tweigh_usg\tclass_usg\ttardiness\twait\tsld\tawrt\tawsd\ts_resp\ts_wait\ts_sld\tbounded_sld\tbackfilled\tbackfilledCONS" + headersOfPlugins);
             out.writeString(user_dir + "/WGraphs(" + problem + ").csv", waxis);
             out.writeString(user_dir + "/SGraphs(" + problem + ").csv", saxis);
             out.writeString(user_dir + "/RGraphs(" + problem + ").csv", raxis);
@@ -232,9 +233,10 @@ public class ResultCollector {
         double succ_slow = 0.0;
         double b_succ_slow = 0.0;
         int backfilled = 0;
+        int backfilled_cons = 0;
         double[] pluginsValues = new double[plugins.size()];
 
-        for (int i = 0; i < results.size(); i = i + 19 + plugins.size()) {
+        for (int i = 0; i < results.size(); i = i + 20 + plugins.size()) {
 
             // deadline score
             completed_jobs += (Integer) results.get(i);
@@ -269,9 +271,10 @@ public class ResultCollector {
             succ_slow += (Double) results.get(i + 16);
             b_succ_slow += (Double) results.get(i + 17);
             backfilled += (Integer) results.get(i + 18);
+            backfilled_cons += (Integer) results.get(i + 19);
 
             for (int j = 0; j < plugins.size(); j++) {
-                pluginsValues[j] += (Double) results.get(i + j + 19);
+                pluginsValues[j] += (Double) results.get(i + j + 20);
             }
         }
         // print results (deadline score and scheduling time and makespan)
@@ -325,7 +328,8 @@ public class ResultCollector {
                     + Math.round(succ_wait * 100.0) / (experiment_count * 100.0) + "\t"
                     + Math.round(succ_slow * 100.0) / (experiment_count * 100.0) + "\t"
                     + Math.round(b_succ_slow * 100.0) / (experiment_count * 100.0) + "\t"
-                    + Math.round(backfilled * 100.0) / (experiment_count * 100.0)
+                    + Math.round(backfilled * 100.0) / (experiment_count * 100.0) + "\t"
+                    + Math.round(backfilled_cons * 100.0) / (experiment_count * 100.0)
                     + pluginResultString);
 
         } catch (IOException ex) {
@@ -388,8 +392,9 @@ public class ResultCollector {
             //this.pw = new PrintWriter(new FileWriter(output_name, true));
             this.pw2 = new PrintWriter(new FileWriter(FileUtil.getPath(user_dir + "/jobs(" + problem + "" + ExperimentSetup.algID + ").csv"), true));
             this.pwc = new PrintWriter(new FileWriter(FileUtil.getPath(user_dir + "/complain(" + problem + "" + ExperimentSetup.algID + ").csv"), true));
+            this.pwt = new PrintWriter(new FileWriter(FileUtil.getPath(user_dir + "/throughput(" + problem + "" + ExperimentSetup.algID + ").csv"), true));
 
-            out.writeStringWriter(pw, "giID \t arrival \t wait \t runtime \t CPUs \t RAM \t userID \t queue");
+            out.writeStringWriter(pw, "giID \t arrival \t wait \t runtime \t CPUs \t RAM \t userID \t queue \t walltime_limit");
 
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -493,7 +498,7 @@ public class ResultCollector {
             }
 
             String line = gridlet_received.getGridletID() + "\t" + Math.round(gi.getRelease_date()) + "\t" + Math.round(Math.max(0.0, (response - cpu_time)) * 10) / 10.0
-                    + "\t" + Math.round(cpu_time * 10) / 10.0 + "\t" + gi.getNumPE() + "\t" + gi.getRam() + "\t" + gi.getUser() + "\t" + gi.getQueue();
+                    + "\t" + Math.round(cpu_time * 10) / 10.0 + "\t" + gi.getNumPE() + "\t" + gi.getRam() + "\t" + gi.getUser() + "\t" + gi.getQueue() + "\t" + gi.getJobLimit();
 
             //out.writeStringWriter(user_dir + "/jobs" + prob + ".csv", line.replace(".", ","));
             out.writeStringWriter(pw, line.replace(".", ","));
@@ -572,6 +577,7 @@ public class ResultCollector {
         results.add(bound_succ_slow / success);
         backfilled = ExperimentSetup.backfilled;
         results.add(backfilled);
+        results.add(ExperimentSetup.backfilled_cons);
 
         //iterates all plugins and calculate their values and add them into results list
         for (Plugin pl : plugins) {
@@ -607,6 +613,7 @@ public class ResultCollector {
             out.closeWriter(pw);
             out.closeWriter(pw2);
             out.closeWriter(pwc);
+            out.closeWriter(pwt);
         } catch (IOException ex) {
             Logger.getLogger(ResultCollector.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -636,6 +643,7 @@ public class ResultCollector {
             out.closeWriter(pw2);
             out.closeWriter(pw);
             out.closeWriter(pwc);
+            out.closeWriter(pwt);
         } catch (IOException ex) {
             Logger.getLogger(ResultCollector.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -815,6 +823,17 @@ public class ResultCollector {
             String output = gid + "\t" + Math.round(time) + "\t" + userID + "\t" + user + "\t" + factor + "\t" + job_count;
             // giID - time - userID - user - factor - job count
             out.writeStringWriterErr(pwc, output.replace(".", ","));
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void recordSystemThroughput(double time, int job_count) {
+        try {
+            String th = Math.round(time / (3600 * 24)) + "\t" + job_count;
+            // time - finished job count
+            out.writeStringWriterErr(pwt, th.replace(".", ","));
 
         } catch (IOException ex) {
             ex.printStackTrace();

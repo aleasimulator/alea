@@ -7,6 +7,7 @@ package xklusac.algorithms.schedule_based;
 import java.util.Date;
 import gridsim.GridSim;
 import xklusac.algorithms.SchedulingPolicy;
+import xklusac.environment.ExperimentSetup;
 import xklusac.environment.GridletInfo;
 import xklusac.environment.ResourceInfo;
 import xklusac.environment.Scheduler;
@@ -15,9 +16,8 @@ import xklusac.environment.Scheduler;
  * Class CONS<p>
  * Implements CONS (Conservative Backfilling).
  *
- * @author       Dalibor Klusacek
+ * @author Dalibor Klusacek
  */
-
 public class CONS implements SchedulingPolicy {
 
     private Scheduler scheduler;
@@ -91,10 +91,26 @@ public class CONS implements SchedulingPolicy {
             System.out.println(gi.getID() + " is not executable - danger!!! ok=" + ok + " hole=" + okh);
         }
         ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(resIndex);
+
+        // mark job as backfilled if it is not at the end of schedule
+        int gi_index = ri.resSchedule.indexOf(gi);
+        if (gi_index != (ri.resSchedule.size() - 1)) {
+            ExperimentSetup.backfilled++;
+        }
         // updates resource info's internal values (IMPORTANT! because of next use of this policy)
         ri.forceUpdate(GridSim.clock());
-        //System.out.println("New job has been received by CONS");
 
+        // different backfill computation
+        double g_start = gi.getExpectedFinishTime();
+        for (int b = 0; b < ri.resSchedule.size(); b++) {
+            GridletInfo gs = ri.resSchedule.get(b);
+            if (gs.getExpectedStartTime() > g_start) {
+                ExperimentSetup.backfilled_cons++;
+                break;
+            }
+        }
+
+        //System.out.println("New job has been received by CONS");
     }
 
     @Override
@@ -108,7 +124,6 @@ public class CONS implements SchedulingPolicy {
                 if (ri.canExecuteNow(gi)) {
                     ri.removeFirstGI();
                     ri.addGInfoInExec(gi);
-                    
 
                     // set the resource ID for this gridletInfo (this is the final scheduling decision)
                     gi.setResourceID(ri.resource.getResourceID());
