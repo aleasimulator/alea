@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package alea.core;
 
 import java.io.File;
@@ -16,11 +15,11 @@ import java.net.URL;
  * @author dalibor
  */
 public class Registration {
-    
-    public static void register(){
+
+    public static void register() {
         File activatedFile = new File("activated");
         if (!activatedFile.exists()) {
-            
+            /*
             try {
                 URL aleaHomePage = new URL("http://www.fi.muni.cz/~xpodoln/alea/index.php?key=xxx");
                 HttpURLConnection conn = (HttpURLConnection) aleaHomePage.openConnection();
@@ -37,9 +36,8 @@ public class Registration {
                 // Will try next time
                 e.printStackTrace();
             }
+             */
         }
     }
-    
+
 }
-
-
