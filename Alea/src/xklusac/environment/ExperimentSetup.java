@@ -91,6 +91,13 @@ public class ExperimentSetup {
      */
     static boolean visualize;
     /**
+     * set to true if visualization should be shown. <br> Be carefull,
+     * visualization requires some overhead which may slow down the simulation.
+     * Use only for testing or if you want to obtain graphical output.
+     */
+    public static boolean visualize_schedule;
+    
+    /**
      * set true to use specific job requirements
      */
     static boolean reqs;
@@ -123,14 +130,7 @@ public class ExperimentSetup {
      * set true to use on-demand LS-based optimization
      */
     static boolean useEventOpt;
-    /**
-     * defines where to look for sim. data - default is false
-     */
-    static boolean meta;
-    /**
-     * defines whether sim. data are outside of project folder.
-     */
-    static boolean data;
+    
     /**
      * defines whether heap is used to store schedule-data. Should be true, as
      * heap is faster than the default array.
@@ -299,9 +299,14 @@ public class ExperimentSetup {
      */
     public static int backfilled;
     /**
-     * counter measuring the number of backfilled jobs
+     * counter measuring the number of backfilled jobs that actually must fit before a later job starts
      */
     public static int backfilled_cons;
+    
+    /**
+     * the speed by which the schedule is updated in GUI
+     */
+    public static int schedule_repaint_delay;
     /**
      * A list containing reference to all local resource schedulers
      * (AllocationPolicy)
@@ -342,6 +347,8 @@ public class ExperimentSetup {
     private static String[] dir = new String[4];
     
     private static String[] dirG = new String[5];
+    
+    public static LinkedList<Schedule_Visualizator> schedule_windows = new LinkedList();
     
     /**
      * Creates the path for storing simulation results.
@@ -409,9 +416,12 @@ public class ExperimentSetup {
         maxPE = 1;
         
         visualize = aCfg.getBoolean("visualize");
-        data = aCfg.getBoolean("data");
+        visualize_schedule = aCfg.getBoolean("visualize_schedule");        
+        schedule_repaint_delay = aCfg.getInt("schedule_repaint_delay");
+        
         use_heap = aCfg.getBoolean("use_heap");
         sld_tresh = aCfg.getDouble("sld_tresh");
+        
         
         algID = 0;
         prevAlgID = -1;
@@ -484,6 +494,12 @@ public class ExperimentSetup {
             Visualizator.createGUI(windows);
         }
         
+        
+        // if true then create windows with graps.
+        if (visualize_schedule) {
+            Schedule_Visualizator.createGUI(schedule_windows);
+        }
+        
         complain = aCfg.getBoolean("complain");
 
         // set true to use failures
@@ -543,16 +559,7 @@ public class ExperimentSetup {
 
         // used only when executed on a real cluster (do not change)
         path = aCfg.getString("path");
-        meta = aCfg.getBoolean("meta");
-        if (meta) {
-            data = false;
-            String date = "-" + new Date().toString();
-            date = date.replace(" ", "_");
-            date = date.replace("CET_", "");
-            date = date.replace(":", "-");
-            System.out.println(date);
-            problem += date;
-        }
+        
 
         // creates Result Collector
         result_collector = new ResultCollector(results, problem);
@@ -581,7 +588,7 @@ public class ExperimentSetup {
         } catch (IOException ex) {
             Logger.getLogger(ExperimentSetup.class.getName()).log(Level.WARNING, null, ex);
         }
-        if (visualize) {
+        if (visualize || visualize_schedule) {
             //create folder graphs in experiment root directory
             dirG[2] = "graphs";
             //File graphs = new File(user_dir + File.separator + ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT) + File.separator + "graphs");
@@ -962,6 +969,9 @@ public class ExperimentSetup {
                     if (visualize) {
                         Visualizator.saveImages();
                     }
+                    if (visualize_schedule) {
+                        Schedule_Visualizator.saveImages();
+                    }
                     Scheduler.load = 0.0;
                     Scheduler.classic_load = 0.0;
                     Scheduler.max_load = 0.0;
@@ -980,7 +990,7 @@ public class ExperimentSetup {
                     result_collector.generateResults(suff, experiment_count);
                     result_collector.reset();
                     results.clear();
-                    System.out.println("Max. estim has been used = " + max_estim + " backfilled jobs = " + backfilled);
+                    System.out.println("Max. estimate has been used = " + max_estim + " backfilled jobs = " + backfilled);
                     System.gc();                    
                 }
             }

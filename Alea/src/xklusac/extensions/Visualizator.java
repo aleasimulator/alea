@@ -16,9 +16,10 @@ import xklusac.environment.DirectoryLevel;
 import xklusac.environment.ExperimentSetup;
 
 /**
- * Class Visualizator<p> It is used to create a JPanel where graphs are drawn.
- * What is drawn is driven by the paintComponent(Graphics g) method.<p> If you
- * want to change the graphical output, rewrite this method.
+ * Class Visualizator<p>
+ * It is used to create a JPanel where graphs are drawn. What is drawn is driven
+ * by the paintComponent(Graphics g) method.<p>
+ * If you want to change the graphical output, rewrite this method.
  *
  * @author Dalibor Klusacek
  */
@@ -117,11 +118,12 @@ public class Visualizator extends JPanel implements Runnable {
     LinkedList<Integer> used = new LinkedList();
     LinkedList<Integer> hours = new LinkedList();
     LinkedList<Integer> availCPUs = new LinkedList();
-    
+
     private static LinkedList<Visualizator> ia;
-    
+
     boolean cl_usage = false;
     boolean cl_usage_col = false;
+    boolean cl_wusage_col = false;
     boolean dcl_usage = false;
     boolean rw = false;
     boolean ru = false;
@@ -183,8 +185,6 @@ public class Visualizator extends JPanel implements Runnable {
                 y++;
             }
 
-
-
             // draw x axis
             g2.drawLine(50, h - 50, w - 10, h - 50);
             int x_count = days.size();
@@ -224,7 +224,6 @@ public class Visualizator extends JPanel implements Runnable {
                 }
                 x++;
             }
-
 
             g2.drawString("Average machine usage per day [%]", w / 2 - 70, 15);
             g2.drawString("days", w / 2 - 10, h - 5);
@@ -279,8 +278,6 @@ public class Visualizator extends JPanel implements Runnable {
                 y++;
             }
 
-
-
             // draw x axis
             g2.drawLine(50, h - 50, w - 220, h - 50);
             int x_count = days.size();
@@ -319,7 +316,6 @@ public class Visualizator extends JPanel implements Runnable {
                 }
                 x++;
             }
-
 
             g2.drawString("Cluster usage per day [%]", w / 2 - 70, 15);
             g2.drawString("days", w / 2 - 10, h - 5);
@@ -406,8 +402,6 @@ public class Visualizator extends JPanel implements Runnable {
                 y++;
             }
 
-
-
             // draw x axis
             g2.drawLine(60, h - 50, w - 10, h - 50);
             int x_count = days.size();
@@ -446,7 +440,6 @@ public class Visualizator extends JPanel implements Runnable {
                 }
                 x++;
             }
-
 
             g2.drawString("Number of waiting/running jobs", w / 2 - 70, 15);
             g2.drawString(" days", w / 2 - 10, h - 5);
@@ -488,14 +481,10 @@ public class Visualizator extends JPanel implements Runnable {
                 last_y = ys - length;
             }
 
-
-
             g2.setColor(Color.red);
             g2.drawString("waiting jobs", w - 100, 20 + 13 * 0);
             g2.setColor(Color.green);
             g2.drawString("running jobs", w - 100, 20 + 13 * 1);
-
-
 
             this.rw = true;
         }
@@ -542,8 +531,6 @@ public class Visualizator extends JPanel implements Runnable {
                 y++;
             }
 
-
-
             // draw x axis
             g2.drawLine(50, h - 50, w - 10, h - 50);
             int x_count = days.size();
@@ -582,7 +569,6 @@ public class Visualizator extends JPanel implements Runnable {
                 }
                 x++;
             }
-
 
             g2.drawString("Number of requested and used CPUS", w / 2 - 70, 15);
             g2.drawString(" days", w / 2 - 10, h - 5);
@@ -624,9 +610,6 @@ public class Visualizator extends JPanel implements Runnable {
                 last_y = ys - length;
             }
 
-
-
-
             g2.setColor(Color.red);
             last_x = 50;
             ys = h - 50;
@@ -642,18 +625,12 @@ public class Visualizator extends JPanel implements Runnable {
             //Long lys = Math.round((h - 50) - (totCPUs * y_step));
             //ys = Integer.valueOf(lys.intValue());
             //g2.drawLine(50, ys, w - 105, ys);
-
-
-
             g2.setColor(Color.blue);
             g2.drawString("requested CPUs", w - 100, 20 + 13 * 0);
             g2.setColor(Color.green);
             g2.drawString("used CPUs", w - 100, 20 + 13 * 1);
             g2.setColor(Color.red);
             g2.drawString("available CPUs", w - 100, 20 + 13 * 2);
-
-
-
 
             this.ru = true;
         }
@@ -688,8 +665,6 @@ public class Visualizator extends JPanel implements Runnable {
                 }
                 y++;
             }
-
-
 
             // draw x axis
             g2.drawLine(50, h - 50, w - 10, h - 50);
@@ -825,7 +800,6 @@ public class Visualizator extends JPanel implements Runnable {
             g2.drawString("Cluster usage per hour[%] in day = " + time, w / 2 - 70, 15);
             g2.drawString("usage [%]", w / 2 - 10, h - 5);
 
-
             //for (int c = cl_count-1; c >= 0; c--) {
             for (int c = 0; c < cl_count; c++) {
                 g2.setColor(colors[c]);
@@ -858,9 +832,6 @@ public class Visualizator extends JPanel implements Runnable {
 
             }
 
-
-
-
             this.dcl_usage = true;
         }
         if (cl_usage_col) {
@@ -890,8 +861,6 @@ public class Visualizator extends JPanel implements Runnable {
             }
 
             g2.setColor(Color.black);
-
-
 
             // draw x axis
             g2.drawLine(150, h - 50, w - 50, h - 50);
@@ -970,7 +939,6 @@ public class Visualizator extends JPanel implements Runnable {
                             b = 0;
                         }
 
-
                         Color cl = new Color(rd, gr, b);
                         g2.setColor(cl);
                     }
@@ -1040,7 +1008,6 @@ public class Visualizator extends JPanel implements Runnable {
              * 20, 5 + 5 * c, w - 10, 5 + 5 * c);
             }
              */
-
             this.cl_usage_col = true;
         }
         if (cl_status_col) {
@@ -1070,8 +1037,6 @@ public class Visualizator extends JPanel implements Runnable {
             }
 
             g2.setColor(Color.black);
-
-
 
             // draw x axis
             g2.drawLine(150, h - 50, w - 50, h - 50);
@@ -1178,6 +1143,211 @@ public class Visualizator extends JPanel implements Runnable {
 
             this.cl_status_col = true;
         }
+
+        // draw cluster usage respecting cluster sizes
+        if (cl_wusage_col) {
+            //draw y axis
+            g2.drawLine(150, 20, 150, h - 50);
+            int y_count = cl_count;
+            //int y_step = Math.max(1, (Math.round(((h - 70)) / y_count)));
+            int y_step = Math.max(1, (Math.round(((h - 70)) / y_count)));
+            // compute relative sizes of clusters
+            int[] y_size_steps = new int[cl_count];
+            int totalCPUs = 0;
+            for (int c = 0; c < cl_count; c++) {
+                totalCPUs += cl_CPUs.get(c);
+            }
+            int total_size = y_step * cl_count;
+            for (int c = 0; c < cl_count; c++) {
+                Long cl_pixels = Math.round(total_size / ((totalCPUs * 1.0) / cl_CPUs.get(c)));
+                y_size_steps[c] = Integer.valueOf(cl_pixels.intValue());
+            }
+
+            // draw cluster name
+            int mover = 0;
+            for (int c = 0; c < cl_count; c++) {
+                //g2.setColor(colors[c]);
+                int sub = Math.min((cl_names.get(c)).length(), 13);
+                String name = cl_names.get(c).substring(0, sub);
+
+                // draw cluster name
+                if (c == 0) {
+                    g2.drawString(name + " (" + cl_CPUs.get(c) + " CPUs)", 5, h - 50 - mover);
+                    mover = y_size_steps[c];
+                } else {
+                    g2.drawString(name + " (" + cl_CPUs.get(c) + " CPUs)", 5, h - 50 - mover);
+                    mover += y_size_steps[c];
+                }
+                //g2.setColor(colors[c]);
+                //g2.drawLine(w - 20, 5 + 5 * c, w - 10, 5 + 5 * c);
+            }
+            mover = 0;
+
+            g2.drawLine(150, h - 50, 150, h - 44);
+            int y_point = 0;
+            int y_num = 0;
+
+            if (y_step >= 20) {
+                y_point = 1;
+                y_num = 1;
+            } else {
+                y_point = 2;
+                y_num = 5;
+            }
+
+            g2.setColor(Color.black);
+
+            // draw x axis
+            g2.drawLine(150, h - 50, w - 50, h - 50);
+            int x_count = days.size();
+            int x_step = Math.max(1, (Math.round(((w - 200)) / x_count)));
+            int x = 1;
+            g2.drawString("0", 147, h - 25);
+            g2.drawLine(150, h - 50, 150, h - 44);
+            int x_point = 0;
+            int x_num = 0;
+            if (x_step >= 30) {
+                x_point = 1;
+                x_num = 1;
+            } else if (x_step < 30 && x_step >= 10) {
+                x_point = 1;
+                x_num = 5;
+            } else if (x_step < 10 && x_step >= 5) {
+                x_point = 5;
+                x_num = 10;
+            } else {
+                x_point = 5;
+                x_num = 25;
+            }
+            while ((x * x_step) + 190 <= (w - 10)) {
+                int xs = (x * x_step) + 150;
+                if (x % x_point == 0) {
+                    g2.drawLine(xs, h - 50, xs, h - 47);
+                }
+                if (x % x_num == 0) {
+                    g2.drawLine(xs, h - 50, xs, h - 44);
+                    int factor = 3;
+                    if (x < 10) {
+                        factor = 3;
+                    } else if (x < 100) {
+                        factor = 5;
+                    } else if (x >= 100) {
+                        factor = 8;
+                    }
+                    g2.drawString("" + x, xs - factor, h - 25);
+                }
+                x++;
+            }
+
+            //g2.drawString(x_step+" = step: "+x +"%"+ x_num+" = "+x % x_num, w / 2 - 70, 15);
+            g2.drawString("Cluster usage per day [%]", w / 2 - 70, 15);
+            g2.drawString("days", w / 2 - 10, h - 5);
+            int cl_pointer = 0;
+            int xs[] = new int[cl_count];
+            int last_x[] = new int[cl_count];
+            for (int c = 0; c < cl_count; c++) {
+                xs[c] = 151;
+                last_x[c] = 151;
+            }
+            for (int i = 1; i <= days.size(); i++) {
+                for (int c = 0; c < cl_count; c++) {
+                    double ut = cl_util.get(cl_pointer);
+                    if (ut < 0.0) {
+                        Color cl = new Color(68, 68, 68);
+                        g2.setColor(cl);
+                    } else {
+                        ut = ut / 100.0;
+                        int rd = 0;
+                        int gr = 0;
+                        int b = 0;
+                        Long dist = 0l;
+                        if (ut < 0.5) {
+                            dist = Math.round(255 * ut * 2);
+                            rd = Integer.valueOf(dist.intValue());
+                            gr = 255;
+                            b = 0;
+                        } else {
+                            ut = ut - 0.5;
+                            rd = 255;
+                            dist = Math.round(255 - (255 * ut * 2));
+                            gr = Integer.valueOf(dist.intValue());
+                            b = 0;
+                        }
+
+                        Color cl = new Color(rd, gr, b);
+                        g2.setColor(cl);
+                    }
+
+                    // draw utilization point in time
+                    int max = Math.max(1, y_size_steps[c] - 1);
+                    for (int width = 0; width < max; width++) {
+                        g2.drawLine(last_x[c], h - 51 - mover - width, xs[c] + i * x_step, h - 51 - mover - width);
+                    }
+                    if (c == 0) {
+                        mover = y_size_steps[c];
+                    } else {
+                        mover += y_size_steps[c];
+                    }
+                    last_x[c] = xs[c] + i * x_step;
+                    cl_pointer++;
+                }
+                mover = 0;
+            }
+
+            y_count = 100;
+            y_step = Math.max(1, (Math.round(((h - 70)) / y_count)));
+
+            for (int ff = 0; ff < 50; ff++) {
+                Long dist = Math.round(255 * (ff / 100.0) * 2);
+                int rd = Integer.valueOf(dist.intValue());
+                int gr = 255;
+                int b = 0;
+                Color cl = new Color(rd, gr, b);
+                g2.setColor(cl);
+                int max = Math.max(1, y_step - 1);
+                for (int width = 0; width <= max; width++) {
+                    g2.drawLine(w - 34, h - 52 - (y_step * ff) - width, w - 43, h - 52 - (y_step * ff) - width);
+                }
+                if (ff % 25 == 0) {
+                    g2.drawString(ff + "%", w - 32, h - 50 - (y_step * ff));
+                }
+            }
+
+            for (int ff = 50; ff < 101; ff++) {
+                Long dist = Math.round(255 * ((ff - 50) / 100.0) * 2);
+                int rd = 255;
+                int gr = 255 - Integer.valueOf(dist.intValue());
+                int b = 0;
+                Color cl = new Color(rd, gr, b);
+                g2.setColor(cl);
+                int max = Math.max(1, y_step - 1);
+                for (int width = 0; width <= max; width++) {
+                    g2.drawLine(w - 34, h - 52 - (y_step * ff) - width, w - 43, h - 52 - (y_step * ff) - width);
+                }
+                if (ff % 25 == 0) {
+                    g2.drawString(ff + "%", w - 32, h - 50 - (y_step * ff));
+                }
+            }
+            Color cl = new Color(68, 68, 68);
+            g2.setColor(cl);
+            int max = Math.max(1, y_step - 1);
+            for (int width = 0; width <= max * 6; width++) {
+                g2.drawLine(w - 34, h - 10 - width, w - 43, h - 10 - width);
+            }
+
+            g2.drawString("down", w - 32, h - 10);
+
+
+            /*
+             * for (int c = 0; c < cl_count; c++) { g2.setColor(colors[c]); int
+             * sub = Math.min(cl_names.get(c).length(), 20); String name =
+             * cl_names.get(c).substring(0, sub); g2.drawString(name + "...", w
+             * - 150, 20 + 13 * c); //g2.setColor(colors[c]); //g2.drawLine(w -
+             * 20, 5 + 5 * c, w - 10, 5 + 5 * c);
+            }
+             */
+            this.cl_wusage_col = true;
+        }
     }
 
     /**
@@ -1227,6 +1397,20 @@ public class Visualizator extends JPanel implements Runnable {
      */
     public void reDrawClusterUsageCol(LinkedList days, LinkedList cl_util, long timeS, int cl_count, LinkedList cl_names, LinkedList cl_CPUs) {
         this.cl_usage_col = true;
+        this.time = timeS;
+        this.days = days;
+        this.cl_util = cl_util;
+        this.cl_names = cl_names;
+        this.cl_CPUs = cl_CPUs;
+        this.cl_count = Math.min(cl_util.size(), cl_count);
+        repaint();
+    }
+
+    /**
+     * redraw certain graph based on input data
+     */
+    public void reDrawClusterWeightedUsageCol(LinkedList days, LinkedList cl_util, long timeS, int cl_count, LinkedList cl_names, LinkedList cl_CPUs) {
+        this.cl_wusage_col = true;
         this.time = timeS;
         this.days = days;
         this.cl_util = cl_util;
@@ -1346,10 +1530,10 @@ public class Visualizator extends JPanel implements Runnable {
     public void saveToFile3(String ext, String identifier) {
         save(makeImage(), getName(), ext, identifier);
     }
-    
+
     public static void saveImages() {
         Date d = new Date();
-        String identifier = ""+d.getTime();
+        String identifier = "" + d.getTime();
         for (Visualizator iaw : ia) {
             iaw.saveToFile3("png", identifier);
         }
@@ -1384,7 +1568,7 @@ public class Visualizator extends JPanel implements Runnable {
         f2.getContentPane().add(test2);
         test2.setBackground(Color.white);
         f2.setSize(1410, 230);
-        f2.setLocation(25, 630);
+        f2.setLocation(25, 610);
         f2.setVisible(true);
         test2.setName("cl_usage");
         test2.start();
@@ -1412,7 +1596,7 @@ public class Visualizator extends JPanel implements Runnable {
         f4.getContentPane().add(test4);
         test4.setBackground(Color.white);
         f4.setSize(700, 310);
-        f4.setLocation(735, 315);
+        f4.setLocation(735, 305);
         f4.setVisible(true);
         test4.setName("CPUs");
         test4.start();
@@ -1426,7 +1610,7 @@ public class Visualizator extends JPanel implements Runnable {
         f5.getContentPane().add(test5);
         test5.setBackground(Color.white);
         f5.setSize(350, 310);
-        f5.setLocation(25, 315);
+        f5.setLocation(25, 305);
         f5.setVisible(true);
         test5.setName("24hour_profile");
         test5.start();
@@ -1440,7 +1624,7 @@ public class Visualizator extends JPanel implements Runnable {
         f6.getContentPane().add(test6);
         test6.setBackground(Color.white);
         f6.setSize(350, 310);
-        f6.setLocation(380, 315);
+        f6.setLocation(380, 305);
         f6.setVisible(true);
         test6.setName("Cluster_hour_usage");
         test6.start();
@@ -1448,13 +1632,13 @@ public class Visualizator extends JPanel implements Runnable {
 
         Visualizator test7 = new Visualizator();
         JFrame f7 = new JFrame();
-        f7.setTitle("Average utilization per day");
+        f7.setTitle("Average cluster utilization per day");
         f7.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         //test.setOpaque(false);
         f7.getContentPane().add(test7);
         test7.setBackground(Color.white);
         f7.setSize(650, 310);
-        f7.setLocation(200, 100);
+        f7.setLocation(25, 835);
         f7.setVisible(true);
         test7.setName("Cluster_day_usage");
         test7.start();
@@ -1467,13 +1651,26 @@ public class Visualizator extends JPanel implements Runnable {
         //test.setOpaque(false);
         f8.getContentPane().add(test8);
         test8.setBackground(Color.white);
-        f8.setSize(650, 310);
-        f8.setLocation(380, 180);
+        f8.setSize(590, 310);
+        f8.setLocation(670, 835);
         f8.setVisible(true);
         test8.setName("Cluster_day_status");
         test8.start();
         windows.add(test8);
 
+        Visualizator test9 = new Visualizator();
+        JFrame f9 = new JFrame();
+        f9.setTitle("Average weighted cluster utilization per day");
+        f9.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        //test.setOpaque(false);
+        f9.getContentPane().add(test9);
+        test9.setBackground(Color.white);
+        f9.setSize(650, 310);
+        f9.setLocation(1250, 835);
+        f9.setVisible(true);
+        test9.setName("Cluster_day_wusage");
+        test9.start();
+        windows.add(test9);
 
         ia.add(test1);
         ia.add(test2);
@@ -1483,6 +1680,7 @@ public class Visualizator extends JPanel implements Runnable {
         ia.add(test6);
         ia.add(test7);
         ia.add(test8);
+        ia.add(test9);
 
         MainFrame mf = new MainFrame(ia);
         mf.setVisible(true);

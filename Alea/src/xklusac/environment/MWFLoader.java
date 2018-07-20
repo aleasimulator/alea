@@ -82,22 +82,7 @@ public class MWFLoader extends GridSim {
     public MWFLoader(String name, double baudRate, int total_jobs, String data_set, int maxPE, int minPErating, int maxPErating,
             double multiplier, int max_id, boolean estimates) throws Exception {
         super(name, baudRate);
-        if (ExperimentSetup.meta) {
-            folder_prefix = System.getProperty("user.dir");
-        } else {
-            folder_prefix = System.getProperty("user.dir");
-        }
-        if (ExperimentSetup.data) {
-            String[] path = folder_prefix.split("/");
-            if (path.length == 1) {
-                path = folder_prefix.split("\\\\");
-            }
-            folder_prefix = "";
-            for (int i = 0; i < path.length - 1; i++) {
-                folder_prefix += path[i] + "/";
-            }
-            //System.out.println("Adresar = "+adresar);
-        }
+        folder_prefix = System.getProperty("user.dir");
         br = r.openFile(new File(folder_prefix + "/data-set/" + data_set));
         brc = rc.openFile(new File(folder_prefix + "/data-set/" + data_set + ".machines"));
         this.total_jobs = total_jobs;

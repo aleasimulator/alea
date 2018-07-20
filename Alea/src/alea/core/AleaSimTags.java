@@ -151,9 +151,15 @@ public class AleaSimTags {
     public static final int AGENT_ONJOBFAIL = TAG_BASE + 206;
     
     /**
-     * print info on waiting jobs
+     * log info about jobs completed so far
      */
     public static final int SCHEDULER_PRINT_THROUGHPUT = TAG_BASE + 1981;
+    
+    /**
+     * print info about job schedule
+     */
+    public static final int SCHEDULER_PRINT_SCHEDULE = TAG_BASE + 1982;
+    
     
     
 }

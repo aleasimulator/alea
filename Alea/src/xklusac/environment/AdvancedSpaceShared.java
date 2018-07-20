@@ -230,7 +230,7 @@ class AdvancedSpaceShared extends AllocPolicy {
         // removed time_limit + 300
         if (expected_runtime > (time_limit)) {
             // we have to shorten the job so that the time limit is not exceeded
-            //System.out.println(gl.getGridletID()+" exceeds time limit by :"+ Math.round(expected_runtime - time_limit)/60+" minutes, limit = "+(time_limit)+" sec.");
+            //System.out.println(gl.getGridletID()+" exceeds time limit by :"+ Math.round(expected_runtime - time_limit)/60.0+" minutes, limit = "+(time_limit)+" sec.");
             double new_length = (time_limit) * this.resource_.getMIPSRatingOfOnePE();
             gl.setGridletLength(new_length);
             //System.out.println(gl.getGridletID()+" new length = "+Math.round(new_length));

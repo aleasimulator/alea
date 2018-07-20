@@ -41,22 +41,7 @@ public class PWFLoader extends GridSim {
     /** Creates a new instance of JobLoader */
     public PWFLoader(String name, double baudRate, int total_jobs, String data_set, int maxPE, int minPErating, int maxPErating, int exp) throws Exception {
         super(name, baudRate);
-        if (ExperimentSetup.meta) {
-            folder_prefix = System.getProperty("user.dir");
-        } else {
-            folder_prefix = System.getProperty("user.dir");
-        }
-        if (ExperimentSetup.data) {
-            String[] path = folder_prefix.split("/");
-            if (path.length == 1) {
-                path = folder_prefix.split("\\\\");
-            }
-            folder_prefix = "";
-            for (int i = 0; i < path.length - 1; i++) {
-                folder_prefix += path[i] + "/";
-            }
-            //System.out.println("Adresar = "+adresar);
-        }
+        folder_prefix = System.getProperty("user.dir");
         if (exp < 10) {
             br = r.openFile(new File(folder_prefix + "/data-set/" + data_set));
         } else {

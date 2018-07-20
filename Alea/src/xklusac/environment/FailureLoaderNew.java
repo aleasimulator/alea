@@ -17,16 +17,23 @@ import alea.core.AleaSimTags;
 /**
  * Class FailureLoader<p>
  * This class is responsible for loading and generating of machine failures.
- *  @author Dalibor Klusacek
+ *
+ * @author Dalibor Klusacek
  */
 public class FailureLoaderNew extends GridSim {
 
-    /** input */
+    /**
+     * input
+     */
     Input r = new Input();
     String folder_prefix = "";
-    /** buffered reader */
+    /**
+     * buffered reader
+     */
     BufferedReader br = null;
-    /** data set name */
+    /**
+     * data set name
+     */
     String data_set = "";
     String line;
     LinkedList clusterNames;
@@ -35,27 +42,13 @@ public class FailureLoaderNew extends GridSim {
     long tot_f_t = 0;
     int subm_fails = 0;
 
-    /** Creates a new instance of FailureLoader */
+    /**
+     * Creates a new instance of FailureLoader
+     */
     public FailureLoaderNew(String name, double baudRate, String data_set, LinkedList clusterNames, LinkedList machineNames, int version) throws Exception {
         super(name, baudRate);
-        if (ExperimentSetup.meta) {
-            folder_prefix = System.getProperty("user.dir");
-        } else {
-            folder_prefix = System.getProperty("user.dir");
-        }
-        if (ExperimentSetup.data) {
-            String[] path = folder_prefix.split("/");
-            if (path.length == 1) {
-                path = folder_prefix.split("\\\\");
-            }
-            folder_prefix = "";
-            for (int i = 0; i < path.length - 1; i++) {
-                folder_prefix += path[i] + "/";
-            }
-        //System.out.println("Adresar = "+adresar);
-        }
-        
 
+        folder_prefix = System.getProperty("user.dir");
 
         if (data_set.equals("das2.gwf") && version == 1) {
             br = r.openFile(new File(ExperimentSetup.data_sets + "/" + data_set + ".failuresL"));
@@ -64,24 +57,25 @@ public class FailureLoaderNew extends GridSim {
             br = r.openFile(new File(ExperimentSetup.data_sets + "/" + data_set + ".failuresM"));
             System.out.println(name + " loads " + folder_prefix + "/data-set/" + data_set + ".failuresM");
         } else {
-            System.out.println("Opening job file at: "+ExperimentSetup.data_sets + "/" + data_set);
-            br = r.openFile(new File(ExperimentSetup.data_sets + "/" + data_set+ ".failures"));
+            System.out.println("Opening job file at: " + ExperimentSetup.data_sets + "/" + data_set);
+            br = r.openFile(new File(ExperimentSetup.data_sets + "/" + data_set + ".failures"));
         }
-
 
         this.data_set = data_set;
 
     }
 
-    /** Reads failures from file and sends them to the specified machine dynamically over time. */
+    /**
+     * Reads failures from file and sends them to the specified machine
+     * dynamically over time.
+     */
     public void body() {
         super.gridSimHold(5.0);    // hold by 10 second
-
 
         if (data_set.equals("metacentrum.mwf") || data_set.equals("metacentrumE.mwf")) {
             // 1230768000 is the EPOCH time of 1.1.2009 00:00:00
             start_epoch = 1230768000;
-            
+
         } else if (data_set.equals("das2.gwf")) {
             start_epoch = 1109087545;
         } else if (data_set.equals("grid5000.gwf")) {
@@ -140,13 +134,12 @@ public class FailureLoaderNew extends GridSim {
 
                     tot_f_t += duration * 2 * ids.length;
 
-
                     Failure failure = new Failure(name, time, duration, ids);
                     //System.out.println(name+" "+Integer.parseInt(values[1])+" "+duration+" "+ids[0]);
                     // to synchronize failure arrival wrt. the data set.
                     double delay = Math.max(0.0, (time - super.clock()));
                     // some time is needed to transfer this job to the scheduler, i.e., delay should be delay = delay - transfer_time. Fix this in the future.
-                    System.out.println(Math.round(clock())+": Sending machine failure: " + values[0] + ", " + name + ", machID=" + ids[0] + ", delay = " + (Math.round(delay / 360.0))/10.0 + " hours, should arrive at: "+(Math.round(clock()+delay)));
+                    System.out.println(Math.round(clock()) + ": Sending machine failure: " + values[0] + ", " + name + ", machID=" + ids[0] + ", delay = " + (Math.round(delay / 360.0)) / 10.0 + " hours, should arrive at: " + (Math.round(clock() + delay)));
                     subm_fails += ids.length;
 
                     //System.out.println(Math.round(clock()+delay)+": sending F: " + name +" machines:["+printIds(ids)+"], dur:"+duration);
@@ -154,7 +147,7 @@ public class FailureLoaderNew extends GridSim {
                     //System.out.println(values[0]+" "+values[1]+" "+values[2]+" "+values[3]+" t="+Math.round(clock()+delay));
                     super.sim_schedule(this.getEntityId(this.getEntityName()), delay, AleaSimTags.EVENT_WAKE);
 
-                // resource failure
+                    // resource failure
                 } else {
                     double time = new Double(Integer.parseInt(values[0]));
                     String name = values[1];
@@ -176,7 +169,6 @@ public class FailureLoaderNew extends GridSim {
 
         System.out.println("FailureLoader awaits new event (END)");
 
-
         Sim_event ev = new Sim_event();
         sim_get_next(ev);
 
@@ -187,7 +179,6 @@ public class FailureLoaderNew extends GridSim {
         }
         shutdownUserEntity();
         super.terminateIOEntities();
-
 
     }
 

@@ -85,23 +85,10 @@ public class SWFLoader extends GridSim {
     public SWFLoader(String name, double baudRate, int total_jobs, String data_set, int maxPE, int minPErating, int maxPErating) throws Exception {
         super(name, baudRate);
         System.out.println(name + ": openning all jobs from " + data_set);
-        if (ExperimentSetup.meta) {
-            folder_prefix = System.getProperty("user.dir");
-        } else {
-            folder_prefix = System.getProperty("user.dir");
-        }
-        if (ExperimentSetup.data) {
-            String[] path = folder_prefix.split("/");
-            if (path.length == 1) {
-                path = folder_prefix.split("\\\\");
-            }
-            folder_prefix = "";
-            for (int i = 0; i < path.length - 1; i++) {
-                folder_prefix += path[i] + "/";
-            }
-            //System.out.println("Adresar = "+adresar);
-        }
-        System.out.println("Opening job file at: "+ExperimentSetup.data_sets + "/" + data_set);
+
+        folder_prefix = System.getProperty("user.dir");
+
+        System.out.println("Opening job file at: " + ExperimentSetup.data_sets + "/" + data_set);
         br = r.openFile(new File(ExperimentSetup.data_sets + "/" + data_set));
         this.total_jobs = total_jobs;
         this.maxPE = maxPE;
@@ -310,8 +297,6 @@ public class SWFLoader extends GridSim {
         /*
          * if (id < 172262) { fail++; return null; }
          */
-        
-
         // finally create gridlet
         //numCPU = 1;
         long job_limit = Integer.parseInt(values[8]);
@@ -331,7 +316,7 @@ public class SWFLoader extends GridSim {
                 job_limit = 64800; //18 hours
                 ExperimentSetup.max_estim++;
             } else if (data_set.equals("blue.swf")) {
-                job_limit = 36*3600; //2 hours
+                job_limit = 36 * 3600; //2 hours
                 ExperimentSetup.max_estim++;
             } else if (data_set.equals("kth-sp2.swf")) {
                 job_limit = 14400; //4 hours
@@ -448,7 +433,7 @@ public class SWFLoader extends GridSim {
                 properties += ":^cl_zapat";
             }
         }
-        
+
         if (queue.equals("backfill") && data_set.contains("meta")) {
             properties += ":^cl_manwe:^cl_mandos:^cl_skirit:^cl_ramdal:^cl_haldir:^cl_gram";
         }
@@ -460,10 +445,10 @@ public class SWFLoader extends GridSim {
         if (queue.contains("ncbr")) {
             properties += ":cl_perian";
         }
-        
-        if(!Scheduler.all_queues_names.contains(queue) && ExperimentSetup.use_queues){
+
+        if (!Scheduler.all_queues_names.contains(queue) && ExperimentSetup.use_queues) {
             fail++;
-            System.out.println("Unknown queue "+queue+" - skipping job "+id);
+            System.out.println("Unknown queue " + queue + " - skipping job " + id);
             return null;
         }
 

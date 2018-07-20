@@ -48,17 +48,7 @@ public class QueueLoader {
         Input r = new Input();
         String adresar = System.getProperty("user.dir");
         //System.out.println("Adresar = "+adresar);
-        if (ExperimentSetup.data) {
-            String[] path = adresar.split("/");
-            if (path.length == 1) {
-                path = adresar.split("\\\\");
-            }
-            adresar = "";
-            for (int i = 0; i < path.length - 1; i++) {
-                adresar += path[i] + "/";
-            }
-            //System.out.println("Adresar = "+adresar);
-        }
+        
 
         BufferedReader br = null;
 

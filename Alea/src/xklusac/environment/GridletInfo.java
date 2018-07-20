@@ -1,8 +1,11 @@
 package xklusac.environment;
 
 import gridsim.GridSim;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 //import gridsim.*;
 
 /**
@@ -94,6 +97,11 @@ public class GridletInfo {
      * expected start time - for schedule only
      */
     private double expectedStartTime;
+
+    /**
+     * expected wait time - for schedule only
+     */
+    private double expectedWaitTime;
     /**
      * estimatedLength length - not used
      */
@@ -108,6 +116,7 @@ public class GridletInfo {
     private String queue;
     private String properties;
     private LinkedList<Integer> PEs = new LinkedList();
+    private List<Integer> plannedPEs = Collections.synchronizedList(new ArrayList());
     private String user = "";
     private double avg_length = 0.0;
     private double last_length = 0.0;
@@ -145,7 +154,7 @@ public class GridletInfo {
         this.setTime_to_release(0.0);
         this.setPriority(gl.getPriority());
         this.setNumPE(gl.getNumPE());
-        this.setExpectedFinishTime(GridSim.clock() + gl.getJobLimit());
+        this.setExpectedFinishTime(GridSim.clock() + gl.getJobLimit());        
         this.setEstimatedLength(gl.getEstimatedLength());
         this.setEstimatedMachine(gl.getEstimatedMachine());
         this.setQueue(gl.getQueue());
@@ -160,6 +169,7 @@ public class GridletInfo {
         this.setNumNodes(gl.getNumNodes());
         this.setPpn(gl.getPpn());
         this.setResourceSuitable(new HashMap());
+        this.setExpectedWaitTime(this.getExpectedWaitTime());
     }
 
     /**
@@ -490,11 +500,41 @@ public class GridletInfo {
     public void setPEs(LinkedList<Integer> PEs) {
         this.getGridlet().setPEs(PEs);
     }
+
     /**
-     * Returns (estimated) job runtime. The actual method for calculating the rutime is chosen via experiment setup. 
-     * Generally, it is either the exact runtime or the runtime estimate. Several methods for estimate calculation are supported.
+     * @return the plannedPEs
      */
- 
+    public List<Integer> getPlannedPEs() {
+        return plannedPEs;
+    }
+
+    /**
+     * @param plannedPEs the plannedPEs to set
+     */
+    public void setPlannedPEs(ArrayList<Integer> planPEs) {
+        for (int i = 0; i < planPEs.size(); i++) {
+            this.plannedPEs.add(planPEs.get(i));
+        }
+    }
+
+    public String getPlannedPEsString() {
+        String pes = "";
+        for (int i = 0; i < plannedPEs.size(); i++) {
+            if (i < this.plannedPEs.size() - 1) {
+                pes += plannedPEs.get(i) + ",";
+            } else {
+                pes += plannedPEs.get(i) + "";
+            }
+        }
+        return pes;
+    }
+
+    /**
+     * Returns (estimated) job runtime. The actual method for calculating the
+     * rutime is chosen via experiment setup. Generally, it is either the exact
+     * runtime or the runtime estimate. Several methods for estimate calculation
+     * are supported.
+     */
     public double getJobRuntime(int peRating) {
         if (ExperimentSetup.estimates) {
             if (ExperimentSetup.use_PercentageLength) {
@@ -507,9 +547,9 @@ public class GridletInfo {
                 double avg_l = this.getEstimatedLength() / avg_perc;
                 double run = Math.min(jobLimit, Math.max(0.0, (this.getLength() / peRating)));
                 double est = Math.min(jobLimit, Math.max(0.0, (avg_l / peRating)));
-                double error = Math.round((est/run)*100.0)/100.0;
+                double error = Math.round((est / run) * 100.0) / 100.0;
                 //System.out.println(this.getID()+": avg 5 PERC length ===== "+est+" vs estim "+Math.round(jobLimit)+" vs run "+ run +" real error= "+error+" Percentages: "+u.printPercentage());
-                return Math.min(jobLimit, Math.max(0.0, (avg_l / peRating)));                
+                return Math.min(jobLimit, Math.max(0.0, (avg_l / peRating)));
             } else if (ExperimentSetup.use_AvgLength) {
                 ExperimentSetup.scheduler.updateGridletWalltimeEstimateApproximation(this);
                 //System.out.println("avg length ===== "+Math.round(this.getAvg_length() / peRating)+" ? "+Math.round(this.getLast_length() / peRating));
@@ -681,4 +721,19 @@ public class GridletInfo {
     public void setAvg_perc_length(double avg_perc_length) {
         this.avg_perc_length = avg_perc_length;
     }
+
+    /**
+     * @return the expectedWaitTime
+     */
+    public double getExpectedWaitTime() {
+        return Math.max(0.0, this.getExpectedStartTime() - this.getGridlet().getArrival_time());
+    }
+
+    /**
+     * @param expectedWaitTime the expectedWaitTime to set
+     */
+    public void setExpectedWaitTime(double expectedWaitTime) {
+        this.expectedWaitTime = expectedWaitTime;
+    }
+
 }

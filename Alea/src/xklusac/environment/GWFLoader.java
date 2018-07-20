@@ -10,32 +10,53 @@ import xklusac.extensions.*;
 
 /**
  * Class GWFLoader<p>
- * Loads jobs dynamically over time from the file. Then sends these gridlets to the scheduler. GWF stands for Grid Workloads Format (GWF).
- * 
+ * Loads jobs dynamically over time from the file. Then sends these gridlets to
+ * the scheduler. GWF stands for Grid Workloads Format (GWF).
+ *
  * @author Dalibor Klusacek
  */
 public class GWFLoader extends GridSim {
 
-    /** input */
+    /**
+     * input
+     */
     Input r = new Input();
-    /** current folder */
+    /**
+     * current folder
+     */
     String folder_prefix = "";
-    /** buffered reader */
+    /**
+     * buffered reader
+     */
     BufferedReader br = null;
-    /** total number of jobs in experiment */
+    /**
+     * total number of jobs in experiment
+     */
     int total_jobs = 0;
-    /** start time (for UNIX epoch converting) */
+    /**
+     * start time (for UNIX epoch converting)
+     */
     int start_time = 0;
-    /** number of PEs in the "biggest" resource */
+    /**
+     * number of PEs in the "biggest" resource
+     */
     int maxPE = 1;
-    /** minimal PE rating of the slowest resource */
+    /**
+     * minimal PE rating of the slowest resource
+     */
     int minPErating = 1;
     int maxPErating = 1;
-    /** gridlet counter */
+    /**
+     * gridlet counter
+     */
     int current_gl = 0;
-    /** data set name */
+    /**
+     * data set name
+     */
     String data_set = "";
-    /** counter of failed jobs (as stored in the GWF file) */
+    /**
+     * counter of failed jobs (as stored in the GWF file)
+     */
     int fail = 0;
     int submitted = 0;
     double earliest_end_time = 0.0;
@@ -45,22 +66,8 @@ public class GWFLoader extends GridSim {
      */
     public GWFLoader(String name, double baudRate, int total_jobs, String data_set, int maxPE, int minPErating, int maxPErating) throws Exception {
         super(name, baudRate);
-        if (ExperimentSetup.meta) {
-            folder_prefix = System.getProperty("user.dir");
-        } else {
-            folder_prefix = System.getProperty("user.dir");
-        }
-        if(ExperimentSetup.data){
-            String[] path = folder_prefix.split("/");
-            if(path.length == 1){
-                path = folder_prefix.split("\\\\");
-            }
-            folder_prefix = "";
-            for(int i = 0; i < path.length - 1; i++){
-            folder_prefix += path[i]+"/";
-            }
-            //System.out.println("Adresar = "+adresar);
-        }
+        folder_prefix = System.getProperty("user.dir");
+
         br = r.openFile(new File(folder_prefix + "/data-set/" + data_set));
         this.total_jobs = total_jobs;
         this.maxPE = maxPE;
@@ -71,7 +78,10 @@ public class GWFLoader extends GridSim {
         this.fail = 0;
     }
 
-    /** Reads jobs from data_set file and sends them to the Scheduler entity dynamically over time. */
+    /**
+     * Reads jobs from data_set file and sends them to the Scheduler entity
+     * dynamically over time.
+     */
     public void body() {
         super.gridSimHold(5.0);    // hold by 10 second
 
@@ -114,13 +124,14 @@ public class GWFLoader extends GridSim {
         if (ev.get_tag() == GridSimTags.END_OF_SIMULATION) {
             System.out.println("Shuting down the " + data_set + "_JobLoader... with: " + fail + " fails. Submitted: " + submitted + " jobs.");
         }
-    //shutdownUserEntity();
-    //super.terminateIOEntities();
-
+        //shutdownUserEntity();
+        //super.terminateIOEntities();
 
     }
 
-    /** Reads one job from file. */
+    /**
+     * Reads one job from file.
+     */
     private ComplexGridlet readGridlet(int j) {
         String[] values = null;
 
@@ -172,7 +183,6 @@ public class GWFLoader extends GridSim {
 
         }
 
-
         long arrival = 0;
         // synchronize GridSim's arrivals with the UNIX epoch format as given in GWF
         if (j == 0) {
@@ -187,8 +197,6 @@ public class GWFLoader extends GridSim {
         // minPErating is the default speed of the slowest machine in the data set        
         double length = Math.round((Integer.parseInt(values[3])) * maxPErating);
 
-        
-
         // queue name
         String queue = "q3";
         String properties = "";
@@ -199,27 +207,27 @@ public class GWFLoader extends GridSim {
         }
         // finally create gridlet
         long job_limit = Math.max(Integer.parseInt(values[8]), Integer.parseInt(values[3]));
-        
+
         double estimatedLength = 0.0;
-        if(ExperimentSetup.estimates){
+        if (ExperimentSetup.estimates) {
             //roughest estimate that can be done = queue limit        
             estimatedLength = Math.round(Math.max((job_limit * maxPErating), length));
             //System.out.println(id+" Estimates "+estimatedLength);
-        }else{
+        } else {
             // exact estimates
             estimatedLength = length;
             //System.out.println(id+" Exact "+estimatedLength);
         }
         double perc = 0.0;
-        
+
         int numNodes = 1;
         int ppn = numCPU;
-        
+
         // manually established - fix it according to your needs
         double deadline = job_limit * 2;
-        
+
         ComplexGridlet gl = new ComplexGridlet(id, "J", job_limit, new Double(length), estimatedLength, 10, 10,
-                null, null, arrival, deadline, 1, numCPU, 0.0, queue, properties, perc,0, numNodes, ppn);
+                null, null, arrival, deadline, 1, numCPU, 0.0, queue, properties, perc, 0, numNodes, ppn);
 
         // and set user id to the Scheduler entity - otherwise it would be returned to the GWFLoader when completed.
         gl.setUserID(super.getEntityId("Alea_3.0_scheduler"));

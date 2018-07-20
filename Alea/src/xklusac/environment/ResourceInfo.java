@@ -617,16 +617,16 @@ public class ResourceInfo {
             }
         }
         // don't allow jobs running on ungu and urga unless they are from queue "uv"
-        if((this.resource.getResourceName().contains("ungu") || this.resource.getResourceName().contains("urga"))&& !gi.getQueue().equals("uv")){
+        if ((this.resource.getResourceName().contains("ungu") || this.resource.getResourceName().contains("urga")) && !gi.getQueue().equals("uv")) {
             //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because queue=" + gi.getQueue());
             return false;
         }
         // don't allow jobs running on phi unless they are from queue "phi"
-        if(this.resource.getResourceName().contains("phi") && !gi.getQueue().equals("phi")){
+        if (this.resource.getResourceName().contains("phi") && !gi.getQueue().equals("phi")) {
             //System.out.println(gi.getID() + " cannot execute on " + this.resource.getResourceName() + ", because queue=" + gi.getQueue());
             return false;
         }
-        
+
         String[] req_nodes = gi.getProperties().split(":");
         //System.out.println(gi.getID() + " has properties: "+gi.getProperties()); 
         for (int r = 0; r < req_nodes.length; r++) {
@@ -646,7 +646,7 @@ public class ResourceInfo {
             if (this.getNumRunningPE() >= gi.getNumPE()) {
                 return true;
             } else {
-                //System.out.println(gi.getID() + " cannot run here - too few CPUs at: " + this.resource.getResourceName());
+                //System.out.println(gi.getID() + " cannot run here - too few CPUs at: " + this.resource.getResourceName()+", "+this.getNumRunningPE() +" < "+ gi.getNumPE());
                 return false;
             }
         }
@@ -655,7 +655,6 @@ public class ResourceInfo {
         int ppn = gi.getPpn();
         int numNodes = gi.getNumNodes();
 
-        
         MachineList machines = this.resource.getMachineList();
         int allocateNodes = numNodes;
 
@@ -827,6 +826,7 @@ public class ResourceInfo {
         }
         PEs.add(index);
         gi.setPEs(PEs);
+        //System.out.println("PEs computation for: "+gi.getID()+" cpu="+gi.getNumPE()+" PEs="+PEs.size()+" ("+gi.getPEsString()+")");
     }
 
     /*
@@ -947,16 +947,17 @@ public class ResourceInfo {
      * @param gi gridletInfo describing the multi-CPU gridlet
      * @param slots Binary heap with first free slots
      */
-    private int findFirstFreeSlotForWaitingJob(double finishTimeOnPE[], GridletInfo gi, BinaryHeap slots) {
+    private int findFirstFreeSlotForWaitingJob(double finishTimeOnPE[], GridletInfo gi, BinaryHeap slots, String who) {
         int index = 0;
         double min = Double.MAX_VALUE - 10;
         double hole_start = -1.0;
         int hole_size = 1;
         double earl_job_start = 0.0;
-        //gi.getPEs().clear();
-        //if(gi.getID()>4000)
-        //System.out.println(gi.getID()+": update on res: "+this.resource.getResourceName()+" Heap size = "+slots.size()+" CPUS = "+slots.getCPUcount());
-        //slots.printCPUcount("start for "+gi.getID());
+        /*if (gi.getID() == 69) {
+            System.out.println(GridSim.clock() + ": "+this.resource.getResourceName()+"("+who+"): " + gi.getID() + "["+gi.getNumPE()+"cpus]: clearing following " + gi.getPlannedPEs().size() + " planned PEs... " + gi.getPlannedPEsString());
+        }*/
+        gi.getPlannedPEs().clear();
+        
         if (ExperimentSetup.use_heap) {
             int needed = gi.getNumPE();
             int found = 0;
@@ -1035,6 +1036,10 @@ public class ResourceInfo {
                 }
 
             }
+            gi.setPlannedPEs(usedIDs);
+            /*if (gi.getID() == 69) {
+                System.out.println(GridSim.clock() + ": "+this.resource.getResourceName()+"("+who+"): "+ gi.getID() + "["+gi.getNumPE()+"cpus]: Resetting following " + gi.getPlannedPEs().size() + " planned PEs... " + gi.getPlannedPEsString());
+            }*/
             index = lasti;
 
         } else {
@@ -1084,7 +1089,6 @@ public class ResourceInfo {
      * Auxiliary function predicting completion time of running jobs.
      *
      */
-
     private void predictFirstFreeSlots(double current_time) {
         int peIndex = 0;
 
@@ -1132,6 +1136,7 @@ public class ResourceInfo {
                 gi.setExpectedFinishTime(finishTimeOnPE[PEs.get(0)]);
                 gi.setTardiness(giTard);
             } else if (gi.getStatus() != Gridlet.SUCCESS && gi.getStatus() != Gridlet.INEXEC && gi.getStatus() != Gridlet.QUEUED && gi.getStatus() != Gridlet.FAILED_RESOURCE_UNAVAILABLE) {
+
                 //System.out.println(gi.getID() + " status=" + gi.getGridlet().getGridletStatusString() + " resource=" + resource.getResourceName()+" at clock="+GridSim.clock());
                 if (PEs.size() < gi.getNumPE()) {
                     predictPEs(finishTimeOnPE, gi);
@@ -1218,7 +1223,7 @@ public class ResourceInfo {
                 res_usage += gi.getJobRuntime(peRating) * peRating * gi.getNumPE();
 
                 // simulate the FCFS attitude of LRM on the resource
-                int index = findFirstFreeSlotForWaitingJob(finishTimeOnPE, gi, slots);
+                int index = findFirstFreeSlotForWaitingJob(finishTimeOnPE, gi, slots, "up");
                 gi.setInit(false);
                 // set expected start time wrt. current schedule
                 gi.setExpectedStartTime(finishTimeOnPE[index]);
@@ -1366,7 +1371,7 @@ public class ResourceInfo {
             res_usage += gi.getJobRuntime(peRating) * peRating * gi.getNumPE();
 
             // simulate the FCFS attitude of LRM on the resource
-            int index = findFirstFreeSlotForWaitingJob(finishTimeOnPE, gi, slots);
+            int index = findFirstFreeSlotForWaitingJob(finishTimeOnPE, gi, slots, "fup");
             gi.setInit(false);
             gi.setExpectedStartTime(finishTimeOnPE[index]);
             accum_start_time += finishTimeOnPE[index];
@@ -1652,11 +1657,19 @@ public class ResourceInfo {
      * Method that print current schedule.
      */
     protected void printSchedule() {
-        for (int j = 0; j < resSchedule.size(); j++) {
-            GridletInfo gi = (GridletInfo) resSchedule.get(j);
-            System.out.print(gi.getNumPE() + ",");
+        System.out.print("Schedule on " + this.resource.getResourceName() + ": ");
+        if (resSchedule.size() == 0) {
+            System.out.print("Empty schedule (no planning here)");
+        } else {
+            for (int j = 0; j < resSchedule.size(); j++) {
+                GridletInfo gi = (GridletInfo) resSchedule.get(j);
+                String start_date = new java.text.SimpleDateFormat("kk:mm dd-MM-yyyy").format(new java.util.Date(Math.round(gi.getExpectedStartTime()) * 1000));
+                String end_date = new java.text.SimpleDateFormat("kk:mm dd-MM-yyyy").format(new java.util.Date(Math.round(gi.getExpectedFinishTime()) * 1000));
+                //print [jobID (nodes)(start)(end)]
+                System.out.print("[" + gi.getID() + "(node:" + gi.getPlannedPEsString() + ")(s:" + start_date + ")(e:" + end_date + ")] ");
+            }
         }
-        System.out.println(" on RES " + this.resource.getResourceID());
+        System.out.println(" END.");
     }
 
     /*
