@@ -120,6 +120,7 @@ public class GridletInfo {
     private List<Integer> plannedPEs = Collections.synchronizedList(new ArrayList());
     private List<Integer> lastPlannedPEs = new ArrayList();
     double last_alloc_time = -1.0;
+    double last_node_time = -1.0;
     double last_predicted_start_time = -1.0;
     private String user = "";
     private double avg_length = 0.0;
@@ -563,16 +564,16 @@ public class GridletInfo {
         if (ExperimentSetup.estimates) {
             if (ExperimentSetup.use_PercentageLength) {
                 ExperimentSetup.scheduler.updateGridletWalltimeEstimateApproximation(this);
-                //System.out.println("avg PERC length ===== "+Math.round(this.getAvg_perc_length() / peRating)+" ? "+Math.round(this.getLast_length() / peRating));
+                
                 return Math.min(jobLimit, Math.max(0.0, (this.getAvg_perc_length() / peRating)));
-            } else if (ExperimentSetup.use_MinPercentageLength) {
+            // estimate is calculated using 5 recent jobs of that user - for each a relative usage (percentage) of requested time is calculated. 
+            // Then, the max usage among those 5 jobs is used as a factor to multiply the new user estimate (conservative strategy).    
+            } else if (ExperimentSetup.use_MaxPercentageLength) {
                 User u = ExperimentSetup.users.get(this.getUser());
                 double avg_perc = u.getMinPercentage();
                 double avg_l = this.getEstimatedLength() / avg_perc;
                 double run = Math.min(jobLimit, Math.max(0.0, (this.getLength() / peRating)));
                 double est = Math.min(jobLimit, Math.max(0.0, (avg_l / peRating)));
-                double error = Math.round((est / run) * 100.0) / 100.0;
-                //System.out.println(this.getID()+": avg 5 PERC length ===== "+est+" vs estim "+Math.round(jobLimit)+" vs run "+ run +" real error= "+error+" Percentages: "+u.printPercentage());
                 this.getGridlet().setPredicted_runtime(Math.min(jobLimit, Math.max(0.0, (avg_l / peRating))));
 
                 double minPestimate = Math.min(jobLimit, Math.max(0.0, (avg_l / peRating)));
@@ -581,13 +582,10 @@ public class GridletInfo {
                     int est_multiplier = 1;
                     while (overtime > est_multiplier * minPestimate) {
                         est_multiplier++;
-                    }
-                    //System.out.println(this.getID()+" is overtime will be increased "+(est_multiplier+1)+"x ");
+                    }                    
                     minPestimate += minPestimate * est_multiplier;
                 }
-                //if(GridSim.clock() > (this.getRelease_date()))
-
-                return Math.min(jobLimit, minPestimate);
+                return Math.min(jobLimit, minPestimate);                
             } else if (ExperimentSetup.use_AvgLength) {
                 ExperimentSetup.scheduler.updateGridletWalltimeEstimateApproximation(this);
                 //System.out.println("avg length ===== "+Math.round(this.getAvg_length() / peRating)+" ? "+Math.round(this.getLast_length() / peRating));
@@ -595,7 +593,7 @@ public class GridletInfo {
             } else if (ExperimentSetup.use_LastLength) {
                 ExperimentSetup.scheduler.updateGridletWalltimeEstimateApproximation(this);
                 //System.out.println(this.getID()+" last length = "+Math.min(jobLimit, Math.max(0.0, (this.getLast_length() / peRating)))+" / job limit = "+jobLimit+" user = "+this.getUser());
-                return Math.min(jobLimit, Math.max(0.0, (ExperimentSetup.runtime_multiplicator * (this.getLast_length() / peRating))));
+                return Math.min(jobLimit, Math.max(0.0, ((this.getLast_length() / peRating))));
             }/* else if (ExperimentSetup.useUserPrecision) {
              //System.out.println("last length ===== "+jobLimit);
              double real_runtime = Math.max(0.0, (this.getLength() / peRating));
@@ -786,10 +784,12 @@ public class GridletInfo {
                 if (!plannedPEs.get(i).equals(lastPlannedPEs.get(i))) {
                     //System.out.println(this.getID() + ": CPU IDs are not equal since last planning: " + plannedPEs.get(i) + "<>" + lastPlannedPEs.get(i) + " time diff= " + (GridSim.clock() - last_alloc_time));
                     last_alloc_time = GridSim.clock();
+                    last_node_time = GridSim.clock();
                 }
             }
         } else {
             last_alloc_time = GridSim.clock();
+            last_node_time = GridSim.clock();
         }
         lastPlannedPEs.clear();
         for (int i = 0; i < plannedPEs.size(); i++) {
@@ -797,6 +797,7 @@ public class GridletInfo {
         }
         last_predicted_start_time = this.getExpectedStartTime();
         this.getGridlet().setLast_alloc_time(last_alloc_time);
+        this.getGridlet().setLast_node_time(last_node_time);
         //System.out.println(this.getID() + "--------------- "+who+" ---------------: "+GridSim.clock()+" CPUs="+this.getPEsString()); 
 
     }
