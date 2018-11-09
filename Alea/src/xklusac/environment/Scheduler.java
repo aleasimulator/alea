@@ -633,8 +633,6 @@ public class Scheduler extends GridSim {
                     // Get Resource Characteristic Info
                     ComplexResourceCharacteristics res = (ComplexResourceCharacteristics) super.getResourceCharacteristics(res_id);
                     ResourceInfo ri = new ResourceInfo(res);
-                    cl_names.add(ri.resource.getResourceName());
-                    cl_CPUs.add(ri.resource.getNumPE());
 
                     // increase number of available PEs
                     availPEs += ri.resource.getNumPE() * ri.resource.getMIPSRatingOfOnePE();
@@ -650,20 +648,28 @@ public class Scheduler extends GridSim {
                             if (ri.resource.getNumPE() >= rj.resource.getNumPE()) {
                                 if (ri.resource.getNumPE() == rj.resource.getNumPE() && ri.resource.getMIPSRatingOfOnePE() > rj.resource.getMIPSRatingOfOnePE()) {
                                     resourceInfoList.add(j, ri);
+                                    cl_names.add(j, ri.resource.getResourceName());
+                                    cl_CPUs.add(j, ri.resource.getNumPE());
                                     break;
                                 }
                                 if (ri.resource.getNumPE() > rj.resource.getNumPE()) {
                                     resourceInfoList.add(j, ri);
+                                    cl_names.add(j, ri.resource.getResourceName());
+                                    cl_CPUs.add(j, ri.resource.getNumPE());
                                     break;
                                 }
                             }
                             if (j == resourceInfoList.size() - 1) {
                                 resourceInfoList.add(ri);
+                                cl_names.add(ri.resource.getResourceName());
+                                cl_CPUs.add(ri.resource.getNumPE());
                                 break;
                             }
                         }
                     } else {
                         resourceInfoList.add(ri);
+                        cl_names.add(ri.resource.getResourceName());
+                        cl_CPUs.add(ri.resource.getNumPE());
                     }
                 }
                 ResourceInfo best = (ResourceInfo) resourceInfoList.get(0);
@@ -712,7 +718,8 @@ public class Scheduler extends GridSim {
             super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.FAIRSHARE_WEIGHT_DECAY);
         }
         // periodic update of fairshare weights according to currently running jobs
-        double fairdelay = 100 - GridSim.clock();
+        double fairdelay = 3600.0;
+        System.out.println("Fairdelay: " + fairdelay);
         super.sim_schedule(this.getEntityId(this.getEntityName()), fairdelay, AleaSimTags.FAIRSHARE_UPDATE);
         //super.sim_schedule(this.getEntityId(this.getEntityName()), fairdelay + 2, AleaSimTags.SCHEDULER_PRINT_FIRST_JOB_IN_QUEUE);
 
@@ -893,6 +900,8 @@ public class Scheduler extends GridSim {
             // gridlet was finished. Get it, record results and do another scheduling run
             if (ev.get_tag() == GridSimTags.GRIDLET_RETURN) {
                 ComplexGridlet gridlet_received = (ComplexGridlet) ev.get_data();
+
+                //System.out.println(gridlet_received.getGridletID() + " finished at: " + GridSim.clock());
                 boolean optimize = false;
 
                 if (ExperimentSetup.use_queues) {
@@ -1662,6 +1671,7 @@ public class Scheduler extends GridSim {
             } else {
                 HashMap h = gi.getResourceSuitable();
                 h.put(ri.resource.getResourceID(), false);
+                //System.out.println(gi.getID() + ": cannot run on:"+ri.resource.getResourceName()+" CPU=" + cpuok + " RAM=" + ramok + " req: ppn=" + gi.getPpn() + " nodes=" + gi.getNumNodes() + " RAM=" + gi.getRam()+" suit="+isGridletSuitable(ri, gi));
             }
         }
 

@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import xklusac.extensions.ProcessorComparator;
 //import gridsim.*;
 
 /**
@@ -117,6 +118,9 @@ public class GridletInfo {
     private String properties;
     private LinkedList<Integer> PEs = new LinkedList();
     private List<Integer> plannedPEs = Collections.synchronizedList(new ArrayList());
+    private List<Integer> lastPlannedPEs = new ArrayList();
+    double last_alloc_time = -1.0;
+    double last_predicted_start_time = -1.0;
     private String user = "";
     private double avg_length = 0.0;
     private double last_length = 0.0;
@@ -154,7 +158,7 @@ public class GridletInfo {
         this.setTime_to_release(0.0);
         this.setPriority(gl.getPriority());
         this.setNumPE(gl.getNumPE());
-        this.setExpectedFinishTime(GridSim.clock() + gl.getJobLimit());        
+        this.setExpectedFinishTime(GridSim.clock() + gl.getJobLimit());
         this.setEstimatedLength(gl.getEstimatedLength());
         this.setEstimatedMachine(gl.getEstimatedMachine());
         this.setQueue(gl.getQueue());
@@ -498,7 +502,21 @@ public class GridletInfo {
     }
 
     public void setPEs(LinkedList<Integer> PEs) {
+        //System.out.println(this.getID()+" setting not on a resource but from info...");
+        Collections.sort(PEs, new ProcessorComparator());
         this.getGridlet().setPEs(PEs);
+    }
+
+    public String getPEsString() {
+        String pes = "";
+        for (int i = 0; i < this.getGridlet().getPEs().size(); i++) {
+            if (i < this.getGridlet().getPEs().size() - 1) {
+                pes += this.getGridlet().getPEs().get(i) + ",";
+            } else {
+                pes += this.getGridlet().getPEs().get(i) + "";
+            }
+        }
+        return pes;
     }
 
     /**
@@ -511,10 +529,16 @@ public class GridletInfo {
     /**
      * @param plannedPEs the plannedPEs to set
      */
-    public void setPlannedPEs(ArrayList<Integer> planPEs) {
+    public void setPlannedPEs(ArrayList<Integer> planPEs, String who, String sch) {
+        Collections.sort(planPEs, new ProcessorComparator());
+
         for (int i = 0; i < planPEs.size(); i++) {
             this.plannedPEs.add(planPEs.get(i));
         }
+        /*if (this.getID() == 911) {
+            System.out.println("job " + this.getID() + ": simtime=" + Math.round(GridSim.clock()) + " setting plan: " + this.getPlannedPEsString() + " | start/finish= " + Math.round(this.getExpectedStartTime()) + " / " + Math.round(this.getExpectedFinishTime()) + " schedule: " + sch);
+        }*/
+        checkChangeInPlan(who);
     }
 
     public String getPlannedPEsString() {
@@ -549,7 +573,21 @@ public class GridletInfo {
                 double est = Math.min(jobLimit, Math.max(0.0, (avg_l / peRating)));
                 double error = Math.round((est / run) * 100.0) / 100.0;
                 //System.out.println(this.getID()+": avg 5 PERC length ===== "+est+" vs estim "+Math.round(jobLimit)+" vs run "+ run +" real error= "+error+" Percentages: "+u.printPercentage());
-                return Math.min(jobLimit, Math.max(0.0, (avg_l / peRating)));
+                this.getGridlet().setPredicted_runtime(Math.min(jobLimit, Math.max(0.0, (avg_l / peRating))));
+
+                double minPestimate = Math.min(jobLimit, Math.max(0.0, (avg_l / peRating)));
+                if (this.getExpectedFinishTime() < GridSim.clock()) {
+                    double overtime = GridSim.clock() - this.getExpectedFinishTime();
+                    int est_multiplier = 1;
+                    while (overtime > est_multiplier * minPestimate) {
+                        est_multiplier++;
+                    }
+                    //System.out.println(this.getID()+" is overtime will be increased "+(est_multiplier+1)+"x ");
+                    minPestimate += minPestimate * est_multiplier;
+                }
+                //if(GridSim.clock() > (this.getRelease_date()))
+
+                return Math.min(jobLimit, minPestimate);
             } else if (ExperimentSetup.use_AvgLength) {
                 ExperimentSetup.scheduler.updateGridletWalltimeEstimateApproximation(this);
                 //System.out.println("avg length ===== "+Math.round(this.getAvg_length() / peRating)+" ? "+Math.round(this.getLast_length() / peRating));
@@ -734,6 +772,33 @@ public class GridletInfo {
      */
     public void setExpectedWaitTime(double expectedWaitTime) {
         this.expectedWaitTime = expectedWaitTime;
+    }
+
+    public void checkChangeInPlan(String who) {
+        Collections.sort(plannedPEs, new ProcessorComparator());
+        Collections.sort(lastPlannedPEs, new ProcessorComparator());
+        if (plannedPEs.size() == lastPlannedPEs.size()) {
+            if (this.getExpectedStartTime() != last_predicted_start_time) {
+                //System.out.println(this.getID() + ": Start time is not equal since last planning: " + this.getExpectedStartTime() + "<>" + last_predicted_start_time + " time diff= " + (this.getExpectedStartTime() - last_predicted_start_time));
+                last_alloc_time = GridSim.clock();
+            }
+            for (int i = 0; i < plannedPEs.size(); i++) {
+                if (!plannedPEs.get(i).equals(lastPlannedPEs.get(i))) {
+                    //System.out.println(this.getID() + ": CPU IDs are not equal since last planning: " + plannedPEs.get(i) + "<>" + lastPlannedPEs.get(i) + " time diff= " + (GridSim.clock() - last_alloc_time));
+                    last_alloc_time = GridSim.clock();
+                }
+            }
+        } else {
+            last_alloc_time = GridSim.clock();
+        }
+        lastPlannedPEs.clear();
+        for (int i = 0; i < plannedPEs.size(); i++) {
+            lastPlannedPEs.add(new Integer(plannedPEs.get(i)));
+        }
+        last_predicted_start_time = this.getExpectedStartTime();
+        this.getGridlet().setLast_alloc_time(last_alloc_time);
+        //System.out.println(this.getID() + "--------------- "+who+" ---------------: "+GridSim.clock()+" CPUs="+this.getPEsString()); 
+
     }
 
 }

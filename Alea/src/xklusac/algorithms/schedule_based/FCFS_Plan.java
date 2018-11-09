@@ -23,12 +23,12 @@ import xklusac.extensions.SchedulingEvent;
  *
  * @author Dalibor Klusacek
  */
-public class CONS implements SchedulingPolicy {
+public class FCFS_Plan implements SchedulingPolicy {
 
     private Scheduler scheduler;
     Schedule_Visualizator anim = null;
 
-    public CONS(Scheduler scheduler) {
+    public FCFS_Plan(Scheduler scheduler) {
         this.scheduler = scheduler;
     }
 
@@ -56,7 +56,8 @@ public class CONS implements SchedulingPolicy {
             }
             ok = true;
             // if the gap is found - use it
-            if (ri.findHoleForGridlet(gi)) {
+            int gindex = ri.resSchedule.size();
+            if (ri.addGInfo(gindex, gi)) {
                 okh = true;
                 index = ri.resSchedule.indexOf(gi);
                 evaluate = true;
@@ -74,6 +75,7 @@ public class CONS implements SchedulingPolicy {
 
                 Scheduler.updateResourceInfos(current_time);
                 double start_time_new = gi.getExpectedStartTime();
+                //System.out.println(gi.getID()+" considers res "+ri.resource.getResourceName()+ "  start = "+start_time_new+" time:"+GridSim.clock());
 
                 // test the new assignement
                 if (start_time_new >= best_start_time && accept == false) {
@@ -97,7 +99,7 @@ public class CONS implements SchedulingPolicy {
             System.out.println(gi.getID() + " is not executable - danger!!! ok=" + ok + " hole=" + okh);
         }
         ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(resIndex);
-        
+
         // mark job as backfilled if it is not at the end of schedule
         int gi_index = ri.resSchedule.indexOf(gi);
         if (gi_index != (ri.resSchedule.size() - 1)) {
@@ -112,7 +114,7 @@ public class CONS implements SchedulingPolicy {
             GridletInfo gs = ri.resSchedule.get(b);
             if (gs.getExpectedStartTime() > g_start) {
                 ExperimentSetup.backfilled_cons++;
-                //System.out.println(gi.getID()+" backfilled! ");
+                System.out.println(gi.getID() + " backfilled! ");
                 break;
             }
         }
@@ -126,10 +128,11 @@ public class CONS implements SchedulingPolicy {
             int cpu_shift = 0;
             for (int i = 0; i < Scheduler.resourceInfoList.size(); i++) {
                 ResourceInfo r = (ResourceInfo) Scheduler.resourceInfoList.get(i);
-                
+
                 ArrayList<SchedulingEvent> job_schedule = new ArrayList();
                 for (int s = 0; s < r.resSchedule.size(); s++) {
                     GridletInfo ginf = r.resSchedule.get(s);
+                    //System.out.println(i+": "+ginf.getID()+" CPU-shift:"+cpu_shift+" cluster "+r.resource.getResourceName());
                     SchedulingEvent job_start = new SchedulingEvent(Math.round(ginf.getExpectedStartTime()), cpu_shift, ginf, true);
                     job_schedule.add(job_start);
                     job_schedule.add(new SchedulingEvent(Math.round(ginf.getExpectedFinishTime()), cpu_shift, ginf, false, job_start));
@@ -137,12 +140,17 @@ public class CONS implements SchedulingPolicy {
                 //sort all scheduling events by their time
                 Collections.sort(job_schedule, new EndTimeComparator());
                 schedules[i] = job_schedule;
-                
+                //System.out.println("-----------------------------CPU-shift:"+cpu_shift);
                 cpu_shift += r.getNumRunningPE();
+
             }
             anim.reDrawSchedule(schedules, Scheduler.resourceInfoList.size(), scheduler.cl_names, scheduler.cl_CPUs);
             try {
+                /*if(gi.getID()==141){
+                    Thread.sleep(5000);
+                }else{*/
                 Thread.sleep(ExperimentSetup.schedule_repaint_delay);
+                //}
             } catch (InterruptedException e) {
             }
 
@@ -169,7 +177,7 @@ public class CONS implements SchedulingPolicy {
                     /*if(ri.resource.getResourceName().equals("fat")){
                         System.out.println(gi.getID() + " ................. will run at: " +ri.resource.getResourceName());
                     }*/
-                    //System.out.println(gi.getID()+" will finish at: "+(GridSim.clock()+gi.getJobRuntime(1))+" runtime="+gi.getJobRuntime(1)+ " exp-finish-time="+gi.getExpectedFinishTime());
+                    //System.out.println(gi.getID() + " will finish at: " + (GridSim.clock() + gi.getJobRuntime(1)) + " runtime=" + gi.getJobRuntime(1) + " exp-finish-time=" + gi.getExpectedFinishTime() + " plannedPEs:" + gi.getPlannedPEsString());
 
                     ri.is_ready = true;
                     //scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.GRIDLET_SENT, gi);

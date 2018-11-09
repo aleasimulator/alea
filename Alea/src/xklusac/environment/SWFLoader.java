@@ -169,6 +169,7 @@ public class SWFLoader extends GridSim {
                     ex.printStackTrace();
                 }
                 if (!values[0].contains(";")) {
+                    //System.out.println(j+":"+line+": error --- "+values[0]);
                     if (line.charAt(0) == ' ') {
                         line = line.substring(1);
                     }
@@ -184,7 +185,7 @@ public class SWFLoader extends GridSim {
                     values = line.split("\\s+");
                     break;
                 } else {
-                    //System.out.println("error --- "+values[0]);
+                    //System.out.println("comment--- "+values[0]);
                 }
             }
         } else {
@@ -345,7 +346,7 @@ public class SWFLoader extends GridSim {
         //System.out.println(id + " requests " + ram + " KB RAM per " + numCPU + " CPUs, user: " + user + ", length: " + length + " estimatedLength: " + estimatedLength);
         int numNodes = -1;
         int ppn = -1;
-        String properties = "";
+        String properties = ""+values[15];
         if (values.length > 19) {
             properties = values[20];
 
@@ -454,11 +455,11 @@ public class SWFLoader extends GridSim {
 
         // manually established - fix it according to your needs
         double deadline = job_limit * 2;
-        ComplexGridlet gl = new ComplexGridlet(id, user, job_limit, new Double(length), estimatedLength, 10, 10,
+        ComplexGridlet gl = new ComplexGridlet(id, user, job_limit, new Double(length), estimatedLength, 0, 0,
                 "Linux", "Risc arch.", arrival, deadline, 1, numCPU, 0.0, queue, properties, perc, ram, numNodes, ppn);
 
         // and set user id to the Scheduler entity - otherwise it would be returned to the JobLoader when completed.
-        //System.out.println(id+" job has limit = "+(job_limit/3600.0)+" queue = "+queue);
+        //System.out.println(id+" job has limit = "+job_limit+" est_l = "+estimatedLength);
         gl.setUserID(super.getEntityId("Alea_3.0_scheduler"));
         return gl;
     }
