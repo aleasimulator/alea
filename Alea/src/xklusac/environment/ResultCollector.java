@@ -394,7 +394,7 @@ public class ResultCollector {
             this.pwc = new PrintWriter(new FileWriter(FileUtil.getPath(user_dir + "/complain(" + problem + "" + ExperimentSetup.algID + ").csv"), true));
             this.pwt = new PrintWriter(new FileWriter(FileUtil.getPath(user_dir + "/throughput(" + problem + "" + ExperimentSetup.algID + ").csv"), true));
 
-            out.writeStringWriter(pw, "giID \t arrival \t wait \t runtime \t CPUs \t RAM \t userID \t queue \t walltime_limit");
+            out.writeStringWriter(pw, "giID \t arrival \t wait \t runtime \t CPUs \t RAM \t userID \t queue \t walltime_limit \t initial_exp._wait \t predicted_walltime \t start_time \t last_alloc._time \t prediction_validity");
 
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -481,7 +481,8 @@ public class ResultCollector {
         try {
             // giID - wait - runtime - userID - numPE - ram - arrival - queue
             out.writeStringWriterErr(pw2, gridlet_received.getGridletID() + "\t" + Math.max(0.0, (response - cpu_time))
-                    + "\t" + cpu_time + "\t" + gi.getUser() + "\t" + gi.getNumPE() + "\t" + gi.getRam() + "\t" + gi.getRelease_date() + "\t" + gi.getQueue());
+                    + "\t" + cpu_time + "\t" + gi.getUser() + "\t" + gi.getNumPE() + "\t" + gi.getRam() + "\t" + gi.getRelease_date() + "\t" + gi.getQueue()
+                    + "\t" + gridlet_received.getPredicted_wait() + "\t" + gridlet_received.getPredicted_runtime());
             String prob = "_";
             prob += ExperimentSetup.algID + "_" + ExperimentSetup.name;
 
@@ -498,7 +499,9 @@ public class ResultCollector {
             }
 
             String line = gridlet_received.getGridletID() + "\t" + Math.round(gi.getRelease_date()) + "\t" + Math.round(Math.max(0.0, (response - cpu_time)) * 10) / 10.0
-                    + "\t" + Math.round(cpu_time * 10) / 10.0 + "\t" + gi.getNumPE() + "\t" + gi.getRam() + "\t" + gi.getUser() + "\t" + gi.getQueue() + "\t" + gi.getJobLimit();
+                    + "\t" + Math.round(cpu_time * 10) / 10.0 + "\t" + gi.getNumPE() + "\t" + gi.getRam() + "\t" + gi.getUser() + "\t" + gi.getQueue() + "\t" + gi.getJobLimit()
+                    + "\t" + gridlet_received.getPredicted_wait() + "\t" + gridlet_received.getPredicted_runtime() + "\t" + gridlet_received.getExecStartTime() + "\t" 
+                    + gridlet_received.getLast_alloc_time() + "\t" + Math.round((gridlet_received.getExecStartTime() - gridlet_received.getLast_alloc_time())*100)/100.0;
 
             //out.writeStringWriter(user_dir + "/jobs" + prob + ".csv", line.replace(".", ","));
             out.writeStringWriter(pw, line.replace(".", ","));

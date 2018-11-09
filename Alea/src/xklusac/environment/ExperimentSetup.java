@@ -24,15 +24,13 @@ import java.io.IOException;
 import java.util.*;
 import gridsim.*;
 import java.io.File;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import xklusac.extensions.*;
 import xklusac.extensions.Queue;
 import xklusac.algorithms.*;
+import xklusac.algorithms.schedule_based.FCFS_Plan;
 import xklusac.plugins.Plugin;
 import xklusac.plugins.PluginConfiguration;
 import xklusac.plugins.PluginFactory;
@@ -230,6 +228,7 @@ public class ExperimentSetup {
      * defines whether to use machine's speeds to adjust job execution time
      */
     public static boolean use_speeds;
+    public static boolean enforce_partition;
     /**
      * can be used to compress job inter-arrival times (1.0 = original, 2.0 =
      * twice that fast)
@@ -429,6 +428,7 @@ public class ExperimentSetup {
         
         use_tsafrir = aCfg.getBoolean("use_tsafrir");
         use_speeds = aCfg.getBoolean("use_speeds");
+        enforce_partition = aCfg.getBoolean("enforce_partition");
         arrival_rate_multiplier = aCfg.getDouble("arrival_rate_multiplier");
         runtime_minimizer = aCfg.getDouble("runtime_minimizer");
         use_RAM = aCfg.getBoolean("use_RAM");
@@ -637,7 +637,7 @@ public class ExperimentSetup {
             // write down the IDs of algorithm that you want to use (FCFS = 0, EDF = 1, EASY = 2, AgresiveBF = 3, CONS compression = 4, PBS PRO = 5, SJF = 6, FairShareFCFS = 7, 
             // (FCFS = 0, EDF = 1, EASY = 2, AgresiveBF = 3, CONS compression = 4, PBS PRO = 5, SJF = 6, FairShareFCFS = 7, 
             // FairShareMetaBackfilling = 8, FairShareCONS = 9, BestGap = 10, BestGap+RandomSearch = 11, FairShareOptimizedMetaBackfilling = 12
-            // 18 = CONS+Tabu Search, 19 = CONS + Gap Search, 20 = CONS + RandomSearch, CONS no compression = 21,
+            // 18 = CONS+Tabu Search, 19 = CONS + Gap Search, 20 = CONS + RandomSearch, CONS no compression = 21, FCFS_Plan = 100
 
             boolean use_anti_starvation[] = aCfg.getBooleanArray("use_anti_starvation");
             boolean estimateAVG[] = aCfg.getBooleanArray("estimateAVG");
@@ -880,6 +880,12 @@ public class ExperimentSetup {
                     // this update would break the detection of fairshare changes in BF_CONS_Fair
                     use_compresion = true;
                     suff = "CONS-Fair-compr.";
+                }
+                if (alg == 100) {
+                    policy = new FCFS_Plan(scheduler);
+                    // Plan build by FCFS (no RAM support)
+                    use_compresion = false; //no need for that (gaps are not used)
+                    suff = "FCFS_Plan";
                 }
 
                 dirG[4] = (sel_alg+1) + "-" + suff;

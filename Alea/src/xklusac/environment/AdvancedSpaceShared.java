@@ -815,7 +815,7 @@ class AdvancedSpaceShared extends AllocPolicy {
             }
         }
 
-        ((ComplexGridlet) rgl.getGridlet()).setPEs(PEs);
+        //((ComplexGridlet) rgl.getGridlet()).setPEs(PEs);
         // change Gridlet status
         rgl.setGridletStatus(Gridlet.INEXEC);
 
