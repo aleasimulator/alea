@@ -18,8 +18,9 @@ import xklusac.extensions.EndTimeComparator;
 import xklusac.extensions.SchedulingEvent;
 
 /**
- * Class CONS<p>
- * Implements CONS (Conservative Backfilling).
+ * Class FCFS_Plan<p>
+ * Implements FCFS-like scheduling policy, that creates jobs schedule using FCFS. 
+ * No backfilling is used to avoid changes in node allocations of already planned jobs.
  *
  * @author Dalibor Klusacek
  */

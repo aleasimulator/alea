@@ -123,6 +123,7 @@ public class ComplexGridlet extends Gridlet {
     }
     
     private double last_alloc_time = -1.0;
+    private double last_node_time = -1.0;
 
     /**
      * Creates a new instance of ComplexGridlet representing one Job
@@ -168,6 +169,7 @@ public class ComplexGridlet extends Gridlet {
         this.setPredicted_runtime(-1.0);
         this.setPredicted_wait(-1.0);       
         this.setLast_alloc_time(-1.0);
+        this.setLast_node_time(-1.0);
     }
 
     /**
@@ -421,6 +423,20 @@ public class ComplexGridlet extends Gridlet {
      */
     public void setLast_alloc_time(double last_alloc_time) {
         this.last_alloc_time = last_alloc_time;
+    }
+
+    /**
+     * @return the last_node_time
+     */
+    public double getLast_node_time() {
+        return last_node_time;
+    }
+
+    /**
+     * @param last_node_time the last_node_time to set
+     */
+    public void setLast_node_time(double last_node_time) {
+        this.last_node_time = last_node_time;
     }
 
 }
