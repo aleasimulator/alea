@@ -776,17 +776,21 @@ public class GridletInfo {
         Collections.sort(plannedPEs, new ProcessorComparator());
         Collections.sort(lastPlannedPEs, new ProcessorComparator());
         if (plannedPEs.size() == lastPlannedPEs.size()) {
-            if (this.getExpectedStartTime() != last_predicted_start_time) {
-                //System.out.println(this.getID() + ": Start time is not equal since last planning: " + this.getExpectedStartTime() + "<>" + last_predicted_start_time + " time diff= " + (this.getExpectedStartTime() - last_predicted_start_time));
+            
+            double abs_diff = Math.abs(Math.round(this.getExpectedStartTime()) - Math.round(last_predicted_start_time));
+            if (abs_diff > 3.0) {
+                //System.out.println(this.getID() + ": Start time is not equal since last planning: " + this.getExpectedStartTime() + "<>" + last_predicted_start_time + " time diff= " + (this.getExpectedStartTime() - last_predicted_start_time)+" at time: "+GridSim.clock());
                 last_alloc_time = GridSim.clock();
             }
             for (int i = 0; i < plannedPEs.size(); i++) {
                 if (!plannedPEs.get(i).equals(lastPlannedPEs.get(i))) {
-                    //System.out.println(this.getID() + ": CPU IDs are not equal since last planning: " + plannedPEs.get(i) + "<>" + lastPlannedPEs.get(i) + " time diff= " + (GridSim.clock() - last_alloc_time));
+                    //System.out.println(this.getID() + ": CPU IDs are not equal since last planning: " + plannedPEs.get(i) + "<>" + lastPlannedPEs.get(i) + " time diff= " + (GridSim.clock() - last_alloc_time)+" start time diff = "+Math.round(this.getExpectedStartTime()-last_predicted_start_time)+" sec. at simtime = "+GridSim.clock());
                     last_alloc_time = GridSim.clock();
                     last_node_time = GridSim.clock();
+                    break;                    
                 }
             }
+            
         } else {
             last_alloc_time = GridSim.clock();
             last_node_time = GridSim.clock();
@@ -798,7 +802,7 @@ public class GridletInfo {
         last_predicted_start_time = this.getExpectedStartTime();
         this.getGridlet().setLast_alloc_time(last_alloc_time);
         this.getGridlet().setLast_node_time(last_node_time);
-        //System.out.println(this.getID() + "--------------- "+who+" ---------------: "+GridSim.clock()+" CPUs="+this.getPEsString()); 
+        //System.out.println(this.getID() + "--------------- "+who+" ---------------: "+GridSim.clock()+" CPUs="+this.getPEsString()+" start="+this.getExpectedStartTime()); 
 
     }
 

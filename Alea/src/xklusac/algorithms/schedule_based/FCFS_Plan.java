@@ -62,6 +62,7 @@ public class FCFS_Plan implements SchedulingPolicy {
                 okh = true;
                 index = ri.resSchedule.indexOf(gi);
                 evaluate = true;
+                //gi.setResourceID(ri.resource.getResourceID());
 
                 // exists previous assignement
                 if (resIndex >= 0) {
@@ -84,6 +85,7 @@ public class FCFS_Plan implements SchedulingPolicy {
                     ri.removeGInfo(gi);
                     ResourceInfo rPrev = (ResourceInfo) Scheduler.resourceInfoList.get(resIndex);
                     rPrev.addGInfo(gIndex, gi);
+                    //gi.setResourceID(rPrev.resource.getResourceID());
 
                 } else {
                     // good move
@@ -115,7 +117,7 @@ public class FCFS_Plan implements SchedulingPolicy {
             GridletInfo gs = ri.resSchedule.get(b);
             if (gs.getExpectedStartTime() > g_start) {
                 ExperimentSetup.backfilled_cons++;
-                System.out.println(gi.getID() + " backfilled! ");
+                //System.out.println(gi.getID() + " backfilled! ");
                 break;
             }
         }
@@ -178,7 +180,7 @@ public class FCFS_Plan implements SchedulingPolicy {
                     /*if(ri.resource.getResourceName().equals("fat")){
                         System.out.println(gi.getID() + " ................. will run at: " +ri.resource.getResourceName());
                     }*/
-                    //System.out.println(gi.getID() + " will finish at: " + (GridSim.clock() + gi.getJobRuntime(1)) + " runtime=" + gi.getJobRuntime(1) + " exp-finish-time=" + gi.getExpectedFinishTime() + " plannedPEs:" + gi.getPlannedPEsString());
+                    //System.out.println(gi.getID() + " is starting at: "+GridSim.clock()+", will finish at: " + (GridSim.clock() + gi.getJobRuntime(1)) + " runtime=" + gi.getJobRuntime(1) + " exp-finish-time=" + gi.getExpectedFinishTime() + " plannedPEs:" + gi.getPlannedPEsString());
 
                     ri.is_ready = true;
                     //scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.GRIDLET_SENT, gi);
