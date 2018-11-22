@@ -106,6 +106,8 @@ public class ExperimentSetup {
      * set true to use job runtime estimates
      */
     public static boolean estimates;
+    
+    public static int debug_job = -400;
     /**
      * set true to use failure trace - if available
      */
@@ -177,6 +179,8 @@ public class ExperimentSetup {
      * optimization
      */
     static int gap_length;
+
+    public static boolean fast_schedule_compression;
     /**
      * ID of current sched. algorithm
      */
@@ -214,6 +218,11 @@ public class ExperimentSetup {
      * defines whether to use schedule compression upon early job completion
      */
     public static boolean use_compresion;
+
+    public static boolean limit_schedule_size = false;
+
+    public static int max_schedule_length = 36000;
+    public static double max_schedule_CPU_request_factor = 1.5;
     /**
      * defines whether to emulate user dissatisfaction in dynamic-workload
      * simulations
@@ -327,6 +336,7 @@ public class ExperimentSetup {
      * machine descriptions.
      */
     public static boolean use_queues;
+    public static boolean use_gaps = true;
 
     public static ResultCollector result_collector = null;
 
@@ -442,6 +452,10 @@ public class ExperimentSetup {
         sum_multiplications = aCfg.getBoolean("sum_multiplications");
         useEventOpt = aCfg.getBoolean("useEventOpt");
 
+        limit_schedule_size = aCfg.getBoolean("limit_schedule_size");
+        max_schedule_length = aCfg.getInt("max_schedule_length");
+        max_schedule_CPU_request_factor = aCfg.getDouble("max_schedule_CPU_request_factor");
+
         avail_RAM = 0.0;
         avail_CPUs = 0.0;
 
@@ -512,6 +526,7 @@ public class ExperimentSetup {
         //use_PercentageLength = aCfg.getBoolean("use_PercentageLength");
         // the minimal length (in seconds) of gap in schedule since when the "on demand" optimization is executed
         gap_length = aCfg.getInt("gap_length");
+        fast_schedule_compression = aCfg.getBoolean("fast_schedule_compression");
         // the weight of the fairness criteria in objective function
         int weight_of_fairness[] = aCfg.getIntArray("weight_of_fairness");
 
@@ -723,6 +738,7 @@ public class ExperimentSetup {
                     policy = new CONS(scheduler);
                     // Conservative backfilling (no RAM support)
                     use_compresion = true;
+                    use_gaps = true;
                     suff = "CONS+compression";
                 }
 
@@ -871,6 +887,7 @@ public class ExperimentSetup {
                     policy = new FCFS_Plan(scheduler);
                     // Plan build by FCFS (no RAM support)
                     use_compresion = false; //no need for that (gaps are not used)
+                    use_gaps = false;
                     suff = "FCFS_Plan";
                 }
 

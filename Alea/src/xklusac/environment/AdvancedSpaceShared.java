@@ -747,7 +747,7 @@ class AdvancedSpaceShared extends AllocPolicy {
                 rgl.getRemainingGridletLength());
 
         int roundUpTime = (int) (time + 1);   // rounding up
-        rgl.setFinishTime(roundUpTime);
+        rgl.setFinishTime(time);
 
 
         //update machine usage
@@ -759,7 +759,7 @@ class AdvancedSpaceShared extends AllocPolicy {
         Scheduler.classic_activePEs += 1;
 
         // then send this into itself
-        super.sim_schedule(super.myId_, roundUpTime, GridSimTags.INSIGNIFICANT);
+        super.sim_schedule(super.myId_, time, GridSimTags.INSIGNIFICANT);
 
         return true;
     }
@@ -840,7 +840,7 @@ class AdvancedSpaceShared extends AllocPolicy {
                 rgl.getRemainingGridletLength());
 
         int roundUpTime = (int) (time + 1);   // rounding up
-        rgl.setFinishTime(roundUpTime);
+        rgl.setFinishTime(time);
 
         //update machine usage
         Scheduler.load += (Scheduler.activePEs / Scheduler.availPEs) * (GridSim.clock() - Scheduler.last_event);
@@ -851,7 +851,7 @@ class AdvancedSpaceShared extends AllocPolicy {
         Scheduler.classic_activePEs += numPE;
 
         // then send this into itself
-        super.sim_schedule(super.myId_, roundUpTime, GridSimTags.INSIGNIFICANT);
+        super.sim_schedule(super.myId_, time, GridSimTags.INSIGNIFICANT);
 
         return true;
 
@@ -873,8 +873,8 @@ class AdvancedSpaceShared extends AllocPolicy {
         // This is as a safeguard since the finish time can be extremely
         // small close to 0.0, such as 4.5474735088646414E-14. Hence causing
         // some Gridlets never to be finished and consequently hang the program
-        if (finishTime < 1.0) {
-            finishTime = 1.0;
+        if (finishTime < 0.1) {
+            finishTime = 0.1;
         }
 
         return finishTime;

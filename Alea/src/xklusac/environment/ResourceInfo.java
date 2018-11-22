@@ -135,6 +135,7 @@ public class ResourceInfo {
     public MachineList virt_machines;
 
     public int nowFreePE = 0;
+    public double first_job_start = -1;
 
     /**
      * Creates a new instance of ResourceInfo with "in schedule" and "on
@@ -629,16 +630,16 @@ public class ResourceInfo {
         }
 
         String[] req_nodes = gi.getProperties().split(":");
-        
+
         // returns false if this resource partition is not the one required by job in SWF
-        if(req_nodes.length == 1 && !(gi.getProperties()).contains(":") && ExperimentSetup.enforce_partition){
+        if (req_nodes.length == 1 && !(gi.getProperties()).contains(":") && ExperimentSetup.enforce_partition) {
             String partition = this.resource.getProperties();
-            if(!partition.equals(req_nodes[0])){
+            if (!partition.equals(req_nodes[0])) {
                 //System.out.println(gi.getID() + " requires partition: "+gi.getProperties()+", but this resource partition is: "+partition);
                 return false;
-            }            
+            }
         }
-        
+
         for (int r = 0; r < req_nodes.length; r++) {
             // negativni vlastnost
             if ((req_nodes[r].contains("^cl_") || req_nodes[r].contains("=False") || req_nodes[r].contains("=false") || req_nodes[r].contains("=0")) && req_nodes[r].contains(this.resource.getResourceName())) {
@@ -963,15 +964,15 @@ public class ResourceInfo {
         double hole_start = -1.0;
         int hole_size = 1;
         double earl_job_start = 0.0;
-        /*if (gi.getID() == 1111911) {
+        if (gi.getID() == 65000) {
             //System.out.println(GridSim.clock() + ": "+this.resource.getResourceName()+"("+who+"): " + gi.getID() + "["+gi.getNumPE()+"cpus]: clearing following " + gi.getPlannedPEs().size() + " planned PEs... " + gi.getPlannedPEsString());
-            System.out.println(gi.getID()+": ------- R-info avail times:-------");
+            System.out.println(gi.getID() + ": ------- R-info avail times:-------");
             for (int j = 0; j < finishTimeOnPE.length; j++) {
                 System.out.println("[" + j + "]: " + finishTimeOnPE[j] + " ");
             }
             System.out.println();
-        }*/
-        
+        }
+
         gi.getPlannedPEs().clear();
         ArrayList<Integer> usedIDs = new ArrayList<Integer>();
 
@@ -1064,9 +1065,13 @@ public class ResourceInfo {
             for (int i = 0; i < gi.getNumPE(); i++) {
                 for (int j = 0; j < finishTimeOnPE.length; j++) {
                     // if other PE needed to run gridlet - be carefull when comparing 2 double values
-                    if (finishTimeOnPE[j] < min && finishTimeOnPE[j] > -998) {
+                    /*if (finishTimeOnPE[j] < min && finishTimeOnPE[j] > -998) {
                         min = finishTimeOnPE[j];
+                        index = j;*/
+                    if (Math.round(finishTimeOnPE[j]) < min && finishTimeOnPE[j] > -998) {
+                        min = Math.round(finishTimeOnPE[j]);
                         index = j;
+                        
                     }
                 }
                 if (hole_start <= 0.0) { // hole not started yet
@@ -1108,6 +1113,170 @@ public class ResourceInfo {
         gi.setPEs(PEs);
         gi.setExpectedStartTime(finishTimeOnPE[index]);
         gi.setPlannedPEs(usedIDs, who + ":" + this.resource.getResourceName(), this.printScheduleIDs());
+                
+        if (first_job_start > 0 && Math.max(0.0, (finishTimeOnPE[index] - first_job_start)) > ExperimentSetup.max_schedule_length) {
+            //System.out.println("Schedule is tooo long....: "+(finishTimeOnPE[index] - first_job_start)+ " end "+finishTimeOnPE[index]+" fj "+ first_job_start);
+            Scheduler.schedule_too_long = true;
+        } else {
+            //System.out.println("Schedule is first/short.: "+(finishTimeOnPE[index] - first_job_start)+ " end "+finishTimeOnPE[index]+" fj "+ first_job_start);
+            Scheduler.schedule_too_long = false;
+        }
+
+        return index;
+    }
+
+    private int findFirstFreeSlotForWaitingJobCheckCPUs(double finishTimeOnPE[], GridletInfo gi, BinaryHeap slots, String who) {
+        int index = 0;
+        double min = Double.MAX_VALUE - 10;
+        double hole_start = -1.0;
+        int hole_size = 1;
+
+        if (gi.getID() == ExperimentSetup.debug_job) {
+            //System.out.println(GridSim.clock() + ": "+this.resource.getResourceName()+"("+who+"): " + gi.getID() + "["+gi.getNumPE()+"cpus]: clearing following " + gi.getPlannedPEs().size() + " planned PEs... " + gi.getPlannedPEsString());
+            System.out.println(gi.getID() + ": ------- R-info avail times:------- at time: " + GridSim.clock());
+            for (int j = 0; j < finishTimeOnPE.length; j++) {
+                System.out.println("[" + j + "]: " + finishTimeOnPE[j] + " ");
+            }
+            System.out.println("compare 202 vs 334: " + Double.compare(finishTimeOnPE[202], finishTimeOnPE[334]) + ", 202>334 " + (finishTimeOnPE[334] < finishTimeOnPE[202]));
+        }
+
+        ArrayList<Integer> usedIDs = new ArrayList<Integer>();
+        double backup[] = new double[resource.getNumPE()];
+        for (int j = 0; j < finishTimeOnPE.length; j++) {
+            backup[j] = finishTimeOnPE[j];
+        }
+
+        // classical array will be used instead of Binary Heap
+        for (int i = 0; i < gi.getNumPE(); i++) {
+            for (int j = 0; j < finishTimeOnPE.length; j++) {
+                // if other PE needed to run gridlet - be carefull when comparing 2 double values
+                /*if (finishTimeOnPE[j] < min && finishTimeOnPE[j] > -998) {
+                        min = finishTimeOnPE[j];
+                        index = j;*/
+                if (finishTimeOnPE[j] < min && finishTimeOnPE[j] > -998) {
+                    min = finishTimeOnPE[j];
+                    index = j;
+                }
+            }
+            if (ExperimentSetup.use_gaps) {
+                if (hole_start <= 0.0) { // hole not started yet
+
+                    hole_start = min; // possible hole start
+
+                } else { // finish hole or continue creating it?
+
+                    if (hole_start != min) {
+                        // we have a new hole in schedule - store it.
+                        double length = min - hole_start;
+                        Hole h = new Hole(hole_start, min, length, (length * peRating), hole_size, gi);
+                        holes_length += length * hole_size;
+                        holes_mips += length * peRating * hole_size;
+                        holes.addLast(h);
+                        hole_size++;
+                        hole_start = min;
+                    } else {
+                        hole_size++;
+                    }
+                }
+            }
+
+            //reset min value if not the last PE allocated
+            min = Double.MAX_VALUE - 10; //here remember hole
+
+            if (i != (gi.getNumPE() - 1)) {
+                //gi.getPEs().add(index);
+                usedIDs.add(index);
+                finishTimeOnPE[index] = -999;
+                //System.out.println(gi.getID() +" marking CPU "+index);
+            }
+        }
+        usedIDs.add(index);
+
+        double new_start = finishTimeOnPE[index];
+        int max_index = -1;
+        double max = -1.0;
+        //perform check
+        boolean update = true;
+
+        if (gi.getResourceID() == resource.getResourceID()) {
+            //System.out.println(gi.getID() + "----"+ gi.getResourceID());
+            //System.out.println(gi.getPlannedPEs().size());
+            for (int pi = 0; pi < gi.getPlannedPEs().size(); pi++) {
+                //System.out.println("Opening " + pi + " of " + gi.getPlannedPEs().size() + " value " + gi.getPlannedPEs().get(pi) + " backup size " + backup.length + " res " + gi.getResourceID());
+                if (backup[gi.getPlannedPEs().get(pi)] <= (new_start + 0.0)) {
+                    if (backup[gi.getPlannedPEs().get(pi)] > max) {
+                        max = backup[gi.getPlannedPEs().get(pi)];
+                        max_index = gi.getPlannedPEs().get(pi);
+                    }
+                    update = false;
+                } else {
+
+                    update = true;
+                    break;
+                }
+            }
+        } else {
+            update = true;
+        }
+        //System.out.println("----");
+
+        //update = true;
+        if (update) {
+            // SCC modification
+            double ps = gi.getExpectedStartTime();
+            gi.getPlannedPEs().clear();
+            LinkedList<Integer> PEs = new LinkedList(usedIDs);
+            gi.setPEs(PEs);
+            gi.setExpectedStartTime(finishTimeOnPE[index]);
+            gi.setPlannedPEs(usedIDs, who + ":" + this.resource.getResourceName(), this.printScheduleIDs());
+            if (gi.getID() == ExperimentSetup.debug_job) {
+                System.out.println("Update was needed... for: " + gi.getID() + " new start = " + finishTimeOnPE[index] + " prev start = " + ps + " sch:" + gi.getPlannedPEsString());
+            }
+
+        } else {
+            for (int j = 0; j < finishTimeOnPE.length; j++) {
+                finishTimeOnPE[j] = backup[j];
+            }
+
+            for (int j = 0; j < gi.getPlannedPEs().size(); j++) {
+                finishTimeOnPE[gi.getPlannedPEs().get(j)] = -999;
+            }
+            index = max_index;
+            finishTimeOnPE[index] = max;
+
+            double abs_diff = Math.abs(new_start - finishTimeOnPE[index]);
+
+            if (new_start != finishTimeOnPE[index] && abs_diff > 0.0) {
+                //System.out.println(gi.getID() + " has different start times!!! " + new_start + " vs old " + finishTimeOnPE[index]);
+            }
+            LinkedList<Integer> PEs = new LinkedList(gi.getPlannedPEs());
+            gi.setPEs(PEs);
+            gi.setExpectedStartTime(finishTimeOnPE[index]);
+            //gi.setExpectedStartTime(new_start);
+            gi.getPlannedPEs().clear();
+            gi.setPlannedPEs(new ArrayList(PEs), who + ":" + this.resource.getResourceName(), this.printScheduleIDs());
+            if (gi.getID() == ExperimentSetup.debug_job) {
+                System.out.println("NO update needed... for: " + gi.getID() + " old start = " + finishTimeOnPE[index] + " found start = " + new_start + " sch:" + gi.getPlannedPEsString());
+            }
+
+        }
+
+        if (first_job_start > 0 && Math.max(0.0, (finishTimeOnPE[index] - first_job_start)) > ExperimentSetup.max_schedule_length) {
+            //System.out.println("Schedule is tooo long....: "+(finishTimeOnPE[index] - first_job_start)+ " end "+finishTimeOnPE[index]+" fj "+ first_job_start);
+            Scheduler.schedule_too_long = true;
+        } else {
+            //System.out.println("Schedule is first/short.: "+(finishTimeOnPE[index] - first_job_start)+ " end "+finishTimeOnPE[index]+" fj "+ first_job_start);
+            Scheduler.schedule_too_long = false;
+        }
+
+        /*if (gi.getID() == 66) {
+            //System.out.println(GridSim.clock() + ": "+this.resource.getResourceName()+"("+who+"): " + gi.getID() + "["+gi.getNumPE()+"cpus]: clearing following " + gi.getPlannedPEs().size() + " planned PEs... " + gi.getPlannedPEsString());
+            System.out.println(gi.getID() + ": ------- R-info avail times COMPLETED:------- at time: "+GridSim.clock());
+            for (int j = 0; j < finishTimeOnPE.length; j++) {
+                System.out.println("[" + j + "]: " + finishTimeOnPE[j] + " ");
+            }
+            System.out.println();
+        }*/
         return index;
     }
 
@@ -1142,6 +1311,9 @@ public class ResourceInfo {
         } else {
             for (int i = 0; i < finishTimeOnPE.length; i++) {
                 finishTimeOnPE[i] = current_time;
+                /*if (i == 0) {
+                    System.out.println(i + " is set to slot = " + finishTimeOnPE[i] + " at time " + GridSim.clock());
+                }*/
             }
         }
         peIndex = 0;
@@ -1153,21 +1325,35 @@ public class ResourceInfo {
                 double run_time = current_time - gi.getGridlet().getExecStartTime();
                 double time_remaining = Math.max(0.0, (gi.getJobRuntime(peRating) - run_time));
                 double glFinishTime = time_remaining;
+                //double glFinishTime = time_remaining+ current_time;
                 if (glFinishTime < 1.0) {
                     //System.out.println(gi.getID()+": rounding up running gridlet :"+glFinishTime);
-                    glFinishTime = 1.0;
+                    //glFinishTime = 1.0;
                 }
                 int roundUpTime = (int) (glFinishTime + 1);
 
                 // update all PE-finish-time that will run this gridlet
-                //System.out.println(gi.getID()+": executes on :");
+                //
+                if (gi.getID() == ExperimentSetup.debug_job) {
+                    System.out.println(gi.getID() + ": executes on :");
+                }
                 for (int k = 0; k < gi.getNumPE(); k++) {
-                    finishTimeOnPE[PEs.get(k)] += roundUpTime;
-                    //System.out.print("["+PEs.get(k)+"]"+finishTimeOnPE[PEs.get(k)]+",");
-                    
+                    //finishTimeOnPE[PEs.get(k)] += roundUpTime;
+                    finishTimeOnPE[PEs.get(k)] += glFinishTime;
+                    //
+                    if (gi.getID() == ExperimentSetup.debug_job) {
+                        System.out.print("[" + PEs.get(k) + "]" + finishTimeOnPE[PEs.get(k)] + ",");
+                    }
+                    /*if (PEs.get(k) == 0) {
+                        System.out.println(gi.getID() + " is using CPU 0, slot = " + finishTimeOnPE[PEs.get(k)]);
+                    }*/
+
                     peIndex++;
                 }
-                //System.out.println(" STOP");
+                //
+                if (gi.getID() == ExperimentSetup.debug_job) {
+                    System.out.println(" STOP");
+                }
 
                 double giTard = Math.max(0.0, finishTimeOnPE[PEs.get(0)] - gi.getDue_date());
                 gi.setExpectedFinishTime(finishTimeOnPE[PEs.get(0)]);
@@ -1187,6 +1373,7 @@ public class ResourceInfo {
                 }
                 for (int k = 0; k < gi.getNumPE(); k++) {
                     //System.out.println(gi.getID() + " stat=" + gi.getGridlet().getGridletStatusString() + " setting PEid: " + PEs.get(k) + " to complete: " + (max + gi.getJobRuntime(peRating)));
+                    //finishTimeOnPE[PEs.get(k)] = max + gi.getJobRuntime(peRating);
                     finishTimeOnPE[PEs.get(k)] = max + gi.getJobRuntime(peRating);
                 }
                 double giTard = Math.max(0.0, finishTimeOnPE[PEs.get(0)] - gi.getDue_date());
@@ -1241,6 +1428,7 @@ public class ResourceInfo {
             } else {
                 stable_w = false;
                 stable_s = false;
+                Scheduler.schedule_too_long = false;
                 // setup the field representing CPUs earliest free slot times
                 holes.clear();
                 holes_length = 0.0;
@@ -1259,6 +1447,7 @@ public class ResourceInfo {
                 }
 
                 // calculate all required values for jobs in schedule
+                //System.out.println(GridSim.clock() + ": updating schedule: " + printScheduleIDs());
                 for (int j = 0; j < resSchedule.size(); j++) {
                     GridletInfo gi = (GridletInfo) resSchedule.get(j);
                     idUns[j] = gi.getID();
@@ -1266,22 +1455,28 @@ public class ResourceInfo {
                     res_usage += gi.getJobRuntime(peRating) * peRating * gi.getNumPE();
 
                     // simulate the FCFS attitude of LRM on the resource
-                    int index = findFirstFreeSlotForWaitingJob(finishTimeOnPE, gi, slots, "up");
+                    int index = findFirstFreeSlotForWaitingJobCheckCPUs(finishTimeOnPE, gi, slots, "up");
+
+                    if (j == 0) {
+                        first_job_start = gi.getExpectedStartTime();
+                    }
                     gi.setInit(false);
                     // set expected start time wrt. current schedule
                     gi.setExpectedStartTime(finishTimeOnPE[index]);
+
                     accum_start_time += finishTimeOnPE[index];
 
                     double glFinishTime = gi.getJobRuntime(peRating);
                     if (glFinishTime < 1.0) {
-                        glFinishTime = 1.0;
+                        //glFinishTime = 1.0;
                     }
                     int roundUpTime = (int) (glFinishTime + 1);
 
                     double earliestNextTime = finishTimeOnPE[index];
 
                     // time when the gridlet will be probably finished on CPU #index
-                    finishTimeOnPE[index] += roundUpTime;
+                    //finishTimeOnPE[index] += roundUpTime;
+                    finishTimeOnPE[index] += glFinishTime;
                     // sets expected finish time
                     gi.setExpectedFinishTime(finishTimeOnPE[index]);
                     // tardiness of this gridlet in this schedule
@@ -1358,18 +1553,21 @@ public class ResourceInfo {
                 }
                 // add hole to the end of schedule (infinite hole)
                 //createLastHoles(finishTimeOnPE2, numPE);
-                createLastGapsFast(finishTimeOnPE2, numPE, start_hole_min, start_hole_max);
+                if (ExperimentSetup.use_gaps) {
+                    createLastGapsFast(finishTimeOnPE2, numPE, start_hole_min, start_hole_max);
+                }
 
                 //sort the schedule via start times - so that less gaps will appear
                 Collections.sort(resSchedule, new StartComparator());
 
-                for (int j = 0; j < resSchedule.size(); j++) {
+                /*for (int j = 0; j < resSchedule.size(); j++) {
                     GridletInfo gi = (GridletInfo) resSchedule.get(j);
                     if (gi.getID() != idUns[j]) {
                         System.out.println("Sorted, gaps corrupted..." + gi.getID() + "/" + idUns[j]);
                     }
-                }
-
+                }*/
+                first_job_start = -1;
+                //System.out.println(GridSim.clock() + ": END updating schedule: " + printScheduleIDs());
             }
         }
     }
@@ -1399,6 +1597,7 @@ public class ResourceInfo {
         int idUns[] = new int[resSchedule.size()];
         stable_w = false;
         stable_s = false;
+        Scheduler.schedule_too_long = false;
 
         // initialize the free slot array (must be done)
         predictFirstFreeSlots(current_time); //OK works
@@ -1408,6 +1607,7 @@ public class ResourceInfo {
         }
 
         // calculate all required values for jobs in schedule
+        //System.out.println(GridSim.clock() + ": force updating schedule: " + printScheduleIDs());
         for (int j = 0; j < resSchedule.size(); j++) {
             GridletInfo gi = (GridletInfo) resSchedule.get(j);
             idUns[j] = gi.getID();
@@ -1415,21 +1615,25 @@ public class ResourceInfo {
             res_usage += gi.getJobRuntime(peRating) * peRating * gi.getNumPE();
 
             // simulate the FCFS attitude of LRM on the resource
-            int index = findFirstFreeSlotForWaitingJob(finishTimeOnPE, gi, slots, "fup");
+            int index = findFirstFreeSlotForWaitingJobCheckCPUs(finishTimeOnPE, gi, slots, "fup");
             gi.setInit(false);
+            if (j == 0) {
+                first_job_start = gi.getExpectedStartTime();
+            }
             gi.setExpectedStartTime(finishTimeOnPE[index]);
             accum_start_time += finishTimeOnPE[index];
 
             double glFinishTime = gi.getJobRuntime(peRating);
             if (glFinishTime < 1.0) {
-                glFinishTime = 1.0;
+                //glFinishTime = 1.0;
             }
             int roundUpTime = (int) (glFinishTime + 1);
 
             double earliestNextTime = finishTimeOnPE[index];
 
             // time when the gridlet will be probably finished on CPU #index
-            finishTimeOnPE[index] += roundUpTime;
+            //finishTimeOnPE[index] += roundUpTime;
+            finishTimeOnPE[index] += glFinishTime;
             gi.setExpectedFinishTime(finishTimeOnPE[index]);
 
             // tardiness of this gridlet in this schedule
@@ -1507,16 +1711,19 @@ public class ResourceInfo {
         }
         // add hole to the end of schedule (infinite hole)
         //createLastHoles(finishTimeOnPE2, numPE);
-        createLastGapsFast(finishTimeOnPE2, numPE, start_hole_min, start_hole_max);
-
+        if (ExperimentSetup.use_gaps) {
+            createLastGapsFast(finishTimeOnPE2, numPE, start_hole_min, start_hole_max);
+        }
         //sort the schedule via start times - so that less gaps will appear
         Collections.sort(resSchedule, new StartComparator());
-        for (int j = 0; j < resSchedule.size(); j++) {
+        /*for (int j = 0; j < resSchedule.size(); j++) {
             GridletInfo gi = (GridletInfo) resSchedule.get(j);
             if (gi.getID() != idUns[j]) {
                 System.out.println("Force: Sorted, gaps corrupted..." + gi.getID() + "/" + idUns[j]);
             }
-        }
+        }*/
+        first_job_start = -1;
+        //System.out.println(GridSim.clock() + ": END force updating schedule: " + printScheduleIDs());
     }
 
     /**

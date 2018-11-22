@@ -66,7 +66,12 @@ public class Scheduler extends GridSim {
      * incoming job queue
      */
     public static LinkedList<GridletInfo> queue = new LinkedList();
+
+    public static LinkedList<GridletInfo> hold_queue = new LinkedList();
+
     public static LinkedList<String> all_queues_names = new LinkedList();
+
+    public static boolean schedule_too_long = false;
     /**
      * incoming job queue
      */
@@ -901,6 +906,20 @@ public class Scheduler extends GridSim {
             if (ev.get_tag() == GridSimTags.GRIDLET_RETURN) {
                 ComplexGridlet gridlet_received = (ComplexGridlet) ev.get_data();
 
+                if (hold_queue.size() > 0 && ExperimentSetup.limit_schedule_size) {
+                    updateResourceInfos(clock());
+                    //(getScheduleSize() > ExperimentSetup.max_schedule_size || (classic_availPEs * ExperimentSetup.max_schedule_CPU_request_factor) < getScheduleCPUSize())
+                    while (hold_queue.size() > 0 && ((classic_availPEs * ExperimentSetup.max_schedule_CPU_request_factor) > getScheduleCPUSize() && !schedule_too_long)) {
+                        GridletInfo gi = hold_queue.removeFirst();
+                        //System.out.println(gi.getID() + ": is returned. Requested " + getScheduleCPUSize() + " CPUs by " + getScheduleSize() + " jobs in schedule.");
+                        ExperimentSetup.policy.addNewJob(gi);
+                        if (prev_scheduled == 0) {
+                            super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
+                            //scheduleGridlets();
+                        }
+                    }
+                }
+
                 //System.out.println(gridlet_received.getGridletID() + " finished at: " + GridSim.clock());
                 boolean optimize = false;
 
@@ -954,9 +973,13 @@ public class Scheduler extends GridSim {
                         if (gridlet_received.getExpectedFinishTime() > gridlet_received.getFinishTime() && gridlet_received.getFinishTime() >= 0) {
                             double diff = gridlet_received.getExpectedFinishTime() - gridlet_received.getFinishTime();
                             // job finished earlier than expected - do compression of schedule
-                            if (diff > 60.0) {
+                            if (diff > ExperimentSetup.gap_length) {
                                 int id = gridlet_received.getResourceID();
-                                compressSchedule(id);
+                                if (ExperimentSetup.fast_schedule_compression) {
+                                    compressScheduleFast(id);
+                                } else {
+                                    compressSchedule(id);
+                                }
                             }
                         }
                     }
@@ -967,12 +990,12 @@ public class Scheduler extends GridSim {
                 // update of user's resource consuption
                 updateLengthStatistics(gridlet_received, cpu_time);
 
-                if (received % 100 == 0) {
+                if (received % 10 == 0) {
                     /*if ((algorithm >= 9 && algorithm != 12) || algorithm == 4) {
                         System.out.println("<<< " + received + " so far completed, in schedule = " + getScheduleSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs free CPUs = " + getFreeCPUs());
                     } else {*/
                     String dated = new java.text.SimpleDateFormat("dd-MM-yyyy").format(new java.util.Date(Math.round(clock()) * 1000));
-                    System.out.println("<<< " + received + " so far completed, in queue/schedule = " + getQueueSize() + " jobs, requiring = " + getQueueCPUSize() + " CPUs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs free CPUs = " + getFreeCPUs() + ", Day: " + dated);
+                    System.out.println("<<< " + received + " so far completed, in queue/schedule = " + getQueueSize() + " jobs, requiring = " + getQueueCPUSize() + " CPUs, held jobs = " + hold_queue.size() + ", at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs free CPUs = " + getFreeCPUs() + ", Day: " + dated);
                     /*
                          * Enumeration keys = ExperimentSetup.queues.keys(); int
                          * avail = 0; int used = 0; for (int i = 0; i <
@@ -1084,16 +1107,23 @@ public class Scheduler extends GridSim {
                 clock1 = d.getTime();
 
                 // call scheduling algorithm here
-                ExperimentSetup.policy.addNewJob(gi);
+                if (((classic_availPEs * ExperimentSetup.max_schedule_CPU_request_factor) < getScheduleCPUSize() || schedule_too_long) && ExperimentSetup.limit_schedule_size) {
+                    //System.out.println(gi.getID() + ": is held at time: " + GridSim.clock() + ". Requested " + getScheduleCPUSize() + " CPUs by " + getScheduleSize() + " jobs in schedule. Too long:" + schedule_too_long);
+                    hold_queue.add(gi);
+                    //updateResourceInfos(clock());
+                    //super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
+                } else {
+                    ExperimentSetup.policy.addNewJob(gi);
+                }
 
                 // write on screen info so that the simulation progress can be seen
-                if (in_job_counter % 100 == 0) {
+                if (in_job_counter % 10 == 0) {
                     /*if ((algorithm >= 9 && algorithm != 12) || algorithm == 4) {
                         System.out.println(">>> " + in_job_counter + " so far arrived, in schedule = " + getScheduleSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + "jobs,  FREE CPUs = " + getFreeCPUs());
                     } else {*/
                     String dated = new java.text.SimpleDateFormat("dd-MM-yyyy").format(new java.util.Date(Math.round(clock()) * 1000));
                     //System.out.println(">>> " + in_job_counter + " so far arrived, in queue = " + getQueueSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs, free CPUs = " + getFreeCPUs() + ", #" + queue.getFirst().getID() + " is the first waiting job in queue. Day: " + dated);
-                    System.out.println(">>> " + in_job_counter + " so far arrived, in queue/schedule = " + getQueueSize() + " jobs, requiring = " + getQueueCPUSize() + " CPUs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs, free CPUs = " + getFreeCPUs() + ", Day: " + dated);
+                    System.out.println(">>> " + in_job_counter + " so far arrived, in queue/schedule = " + getQueueSize() + " jobs, requiring = " + getQueueCPUSize() + " CPUs, held jobs = " + hold_queue.size() + ", at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs, free CPUs = " + getFreeCPUs() + ", Day: " + dated);
 
                 }
 
@@ -1103,7 +1133,9 @@ public class Scheduler extends GridSim {
                 clock += clock2 - clock1;
 
                 // try to schedule according to prepared queue/schedule
+                //System.out.println(GridSim.clock() + ": Try Scheduling gridlets from schedule of size: " + getQueueSize() + " prev_scheduled = " + prev_scheduled);
                 if (prev_scheduled == 0) {
+                    //System.out.println(GridSim.clock() + ": Scheduling gridlets from schedule of size: " + getQueueSize());
                     super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
                     //scheduleGridlets();
                 }
@@ -1153,6 +1185,11 @@ public class Scheduler extends GridSim {
         Date d = new Date();
         clock1 = d.getTime();
         // try to schedule according to prepared queue/schedule
+        /*System.out.println(GridSim.clock() + " OK, scheduling from following schedule:");
+        for (int i = 0; i < resourceInfoList.size(); i++) {
+            ResourceInfo ri = (ResourceInfo) resourceInfoList.get(i);
+            ri.printSchedule();
+        }*/
         prev_scheduled = ExperimentSetup.policy.selectJob();
         Date d2 = new Date();
         clock2 = d2.getTime();
@@ -1269,6 +1306,14 @@ public class Scheduler extends GridSim {
         for (int i = 0; i < resourceInfoList.size(); i++) {
             ResourceInfo ri = (ResourceInfo) resourceInfoList.get(i);
             ri.update(current_time);
+
+        }
+    }
+    public static void forceUpdateResourceInfos(double current_time) {
+
+        for (int i = 0; i < resourceInfoList.size(); i++) {
+            ResourceInfo ri = (ResourceInfo) resourceInfoList.get(i);
+            ri.forceUpdate(current_time);
 
         }
     }
@@ -2038,6 +2083,34 @@ public class Scheduler extends GridSim {
             }
             schedQueue2.clear();
             //System.out.println("Compression completed ...");
+            runtime += (new Date().getTime() - runtime1);
+            clock += new Date().getTime() - runtime1;
+        } else {
+            // do nothing as the schedule will be compressed via fair-share mechanism
+        }
+    }
+
+    /**
+     * Algorithm that quickly compresses the schedule when early job completion
+     * is detected. typically used by Conservative backfilling. Jobs are not
+     * reinserted, just compressed.
+     */
+    private void compressScheduleFast(int resid) {
+        if (!ExperimentSetup.use_fairshare || ExperimentSetup.algID == 4) {
+            ResourceInfo ri = null;
+            double runtime1 = new Date().getTime();
+
+            for (int i = 0; i < resourceInfoList.size(); i++) {
+                ri = (ResourceInfo) resourceInfoList.get(i);
+                if (ri.resource.getResourceID() == resid) {
+                    break;
+                }
+            }
+            ri.stable = false;
+            ri.holes.clear();
+            double current_time = clock();
+            ri.update(current_time);
+
             runtime += (new Date().getTime() - runtime1);
             clock += new Date().getTime() - runtime1;
         } else {
