@@ -52,16 +52,36 @@ public class AggressiveBackfilling implements SchedulingPolicy {
         //System.out.println("Selecting job by AggressiveBackfilling...");
         ResourceInfo r_cand = null;
         int scheduled = 0;
+        int max_free_CPUs = 0;
+        LinkedList<ResourceInfo> eligible_resources = new LinkedList();
+        for (int e = 0; e < Scheduler.resourceInfoList.size(); e++) {
+            ResourceInfo re = (ResourceInfo) Scheduler.resourceInfoList.get(e);
+            int frp = re.getNumFreePE();
+            if (frp > 0) {
+                eligible_resources.add(re);
+                if (frp > max_free_CPUs) {
+                    max_free_CPUs = frp;
+                }
+            }
+        }
+        if (max_free_CPUs < 1) {
+            return 0;
+        }
         for (int q = 0; q < Scheduler.all_queues.size(); q++) {
             Scheduler.queue = Scheduler.all_queues.get(q);
 
             // we go through the whole queue
+            int min_cannot_run = 50000;
             for (int i = 0; i < Scheduler.queue.size(); i++) {
 
                 GridletInfo gi = (GridletInfo) Scheduler.queue.get(i);
+                if (gi.getNumPE() >= min_cannot_run || gi.getNumPE() > max_free_CPUs) {
+                    //System.out.println(gi.getID()+" req more than previous failed job.. skiping");
+                    continue;
+                }
 
-                for (int j = 0; j < Scheduler.resourceInfoList.size(); j++) {
-                    ResourceInfo ri = (ResourceInfo) Scheduler.resourceInfoList.get(j);
+                for (int j = 0; j < eligible_resources.size(); j++) {
+                    ResourceInfo ri = (ResourceInfo) eligible_resources.get(j);
                     if (Scheduler.isSuitable(ri, gi) && ri.canExecuteNow(gi)) {
                         r_cand = ri;
                         break;
@@ -80,15 +100,20 @@ public class AggressiveBackfilling implements SchedulingPolicy {
                     r_cand.is_ready = true;
                     //scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.GRIDLET_SENT, gi);
                     scheduled++;
-                // we removed a job from position i so the next job is now on i
+                    // we removed a job from position i so the next job is now on i
                     // we have to decrease the counter otherwise we would skip a job due to i++ in for loop
                     i--;
                     r_cand = null;
                     return scheduled;
+                } else {
+                    if (min_cannot_run > gi.getNumPE()) {
+                        min_cannot_run = gi.getNumPE();
+                    }
                 }
 
             }//we went through the whole queue
         }//next queue
+        eligible_resources = null;
         return scheduled;
 
     }

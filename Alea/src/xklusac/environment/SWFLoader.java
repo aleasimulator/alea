@@ -162,6 +162,7 @@ public class SWFLoader extends GridSim {
             while (true) {
                 try {
                     for (int s = 0; s < ExperimentSetup.skipJob; s++) {
+                        //System.out.println(j+":"+line+"");
                         line = br.readLine();
                     }
                     values = line.split("\t");
@@ -230,6 +231,10 @@ public class SWFLoader extends GridSim {
         int numCPU;
         try {
             numCPU = Integer.parseInt(values[4]);
+            if (data_set.equals("thunder.swf")) {
+                numCPU = Math.max(1,(numCPU/4));
+                //System.out.println(values[0] + ": wants: " + values[4]+" gets "+numCPU);
+            }
         } catch (NumberFormatException ex) {
             System.out.println(values[0] + ": Number parsing error: " + values[4]);
             //ex.printStackTrace();
@@ -300,12 +305,19 @@ public class SWFLoader extends GridSim {
          */
         // finally create gridlet
         //numCPU = 1;
-        long job_limit = Integer.parseInt(values[8]);
+        long job_limit = 0;
+        if (values[8].contains(".")) {
+            //System.out.println("old="+values[8]);
+            values[8] = values[8].substring(0, values[8].indexOf("."));
+            //System.out.println("new="+values[8]);
+        }
+        job_limit = Integer.parseInt(values[8]);
         if (job_limit < 0) {
             // atlas = 432000
             // thunder = 432000
             if (data_set.equals("thunder.swf")) {
-                job_limit = 48000; //13 hours 20 min
+                job_limit = 360000; //~100 hours
+               // System.out.println(values[0] + ": limit: " + job_limit);
                 ExperimentSetup.max_estim++;
             } else if (data_set.equals("atlas.swf")) {
                 job_limit = 73200; //20 hours 20 minutes
