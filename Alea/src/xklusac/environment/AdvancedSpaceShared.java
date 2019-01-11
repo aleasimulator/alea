@@ -223,6 +223,7 @@ class AdvancedSpaceShared extends AllocPolicy {
         updateGridletProcessing();
         boolean success = false;
         boolean failure = false;
+        
 
         //System.out.println(gl.getGridletID()+" processing...");
         long time_limit = ((ComplexGridlet) gl).getJobLimit();
@@ -285,6 +286,7 @@ class AdvancedSpaceShared extends AllocPolicy {
         
         // allow next scheduling run
         if (failure == false && success == true) {
+            //System.out.println(gl.getGridletID()+": has started, requiring CPUs: "+gl.getNumPE());
             sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.GRIDLET_STARTED, gl);
         }
     }
@@ -851,6 +853,7 @@ class AdvancedSpaceShared extends AllocPolicy {
         Scheduler.classic_activePEs += numPE;
 
         // then send this into itself
+        //System.out.println(rgl.getGridletID()+" is allocated, will finish in "+time+" seconds, at time "+ (GridSim.clock()+time));
         super.sim_schedule(super.myId_, time, GridSimTags.INSIGNIFICANT);
 
         return true;
@@ -895,8 +898,9 @@ class AdvancedSpaceShared extends AllocPolicy {
         // Can't use iterator since it will cause an exception
         while (i < gridletInExecList_.size()) {
             obj = (ResGridlet) gridletInExecList_.get(i);
+            //System.out.println(obj.getGridletID()+ " Checking end, remain length = "+obj.getRemainingGridletLength()+ " at time "+GridSim.clock());
 
-            if (obj.getRemainingGridletLength() == 0.0) {
+            if (obj.getRemainingGridletLength() <= 0.0001) {
 
                 gridletInExecList_.remove(obj);
                 gridletFinish(obj, Gridlet.SUCCESS);

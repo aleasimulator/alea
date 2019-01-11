@@ -905,7 +905,7 @@ public class Scheduler extends GridSim {
             // gridlet was finished. Get it, record results and do another scheduling run
             if (ev.get_tag() == GridSimTags.GRIDLET_RETURN) {
                 ComplexGridlet gridlet_received = (ComplexGridlet) ev.get_data();
-
+                
                 if (hold_queue.size() > 0 && ExperimentSetup.limit_schedule_size) {
                     updateResourceInfos(clock());
                     //(getScheduleSize() > ExperimentSetup.max_schedule_size || (classic_availPEs * ExperimentSetup.max_schedule_CPU_request_factor) < getScheduleCPUSize())
@@ -1114,6 +1114,7 @@ public class Scheduler extends GridSim {
                     //super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
                 } else {
                     ExperimentSetup.policy.addNewJob(gi);
+                    
                 }
 
                 // write on screen info so that the simulation progress can be seen
@@ -1124,7 +1125,7 @@ public class Scheduler extends GridSim {
                     String dated = new java.text.SimpleDateFormat("dd-MM-yyyy").format(new java.util.Date(Math.round(clock()) * 1000));
                     //System.out.println(">>> " + in_job_counter + " so far arrived, in queue = " + getQueueSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs, free CPUs = " + getFreeCPUs() + ", #" + queue.getFirst().getID() + " is the first waiting job in queue. Day: " + dated);
                     System.out.println(">>> " + in_job_counter + " so far arrived, in queue/schedule = " + getQueueSize() + " jobs, requiring = " + getQueueCPUSize() + " CPUs, held jobs = " + hold_queue.size() + ", at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs, free CPUs = " + getFreeCPUs() + ", Day: " + dated);
-
+                    
                 }
 
                 // update total sched. generation time
@@ -1309,6 +1310,7 @@ public class Scheduler extends GridSim {
 
         }
     }
+
     public static void forceUpdateResourceInfos(double current_time) {
 
         for (int i = 0; i < resourceInfoList.size(); i++) {
