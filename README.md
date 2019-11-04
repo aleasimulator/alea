@@ -19,8 +19,7 @@ So, in the following example we have two clusters (zewura/zegox), having 20/48 n
 For further information, please refer to http://www.fi.muni.cz/~xklusac/alea/index.html.
 
 ##### Software licence:
-This software is the result of the research intent No. 0021622419 (Ministry of Education, Youth and Sports of the Czech Republic) and the grant No. 201/07/0205 (Grant Agency of the Czech Republic) and this result is consistent with the expected objectives of these projects. The owner of the result is Masaryk University, a public high school, ID: 00216224. Masaryk University allows other companies and individuals to use this software free of charge and without territorial restrictions under the terms of the LGPL licence. 
-This permission is granted for the duration of property rights. This software is not subject to special information treatment according to Act No. 412/2005 Coll., as amended. In case that a person who will use the software under this license offer violates the license terms, the permission to use the software terminates.
+This software is provided as is, free of charge under the terms of the LGPL licence. 
 
 ##### Important
 When using Alea in your paper or presentation, please use the following citations as an acknowledgement. Thank you!
