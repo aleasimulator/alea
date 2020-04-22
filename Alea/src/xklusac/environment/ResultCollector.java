@@ -308,8 +308,8 @@ public class ResultCollector {
                 out.deleteResults(user_dir + "/Users" + prob + ".csv");
             }
 
-            out.writeString(user_dir + "/Users" + prob + ".csv", fair);
-            out.writeString(user_dir + "/Results(" + problem + ").csv", suff + "\t"
+            out.writeString(user_dir + "/Users" + prob + ".csv", fair.replace(".", ","));
+            out.writeString(user_dir + "/Results(" + problem + ").csv", (suff + "\t"
                     + Math.round(submitted * 100.0) / (experiment_count * 100.0) + "\t"
                     + Math.round(completed_jobs * 100.0) / (experiment_count * 100.0) + "\t"
                     + Math.round(neg_score * 100.0) / (experiment_count * 100.0) + "\t"
@@ -330,7 +330,7 @@ public class ResultCollector {
                     + Math.round(b_succ_slow * 100.0) / (experiment_count * 100.0) + "\t"
                     + Math.round(backfilled * 100.0) / (experiment_count * 100.0) + "\t"
                     + Math.round(backfilled_cons * 100.0) / (experiment_count * 100.0)
-                    + pluginResultString);
+                    + pluginResultString).replace(".", ","));
 
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -394,7 +394,9 @@ public class ResultCollector {
             this.pwc = new PrintWriter(new FileWriter(FileUtil.getPath(user_dir + "/complain(" + problem + "" + ExperimentSetup.algID + ").csv"), true));
             this.pwt = new PrintWriter(new FileWriter(FileUtil.getPath(user_dir + "/throughput(" + problem + "" + ExperimentSetup.algID + ").csv"), true));
 
-            out.writeStringWriter(pw, "giID \t arrival \t wait \t runtime \t CPUs \t RAM \t userID \t queue \t walltime_limit \t initial_exp._wait \t predicted_walltime \t start_time \t last_valid_time_prediction \t time_valid_for \t last_valid_node_prediction \t node_valid_for");
+            out.writeStringWriter(pw, "job_ID \t DAG_ID \t arrival \t wait \t start_time \t runtime \t end_time \t CPUs \t RAM(KB) \t userID \t queue \t walltime_limit \t initial_exp._wait \t "
+                    + "predicted_walltime \t last_valid_time_prediction \t time_valid_for \t last_valid_node_prediction \t node_valid_for "
+                    + "\t backfilled \t cons_backf \t err_user \t err_predict \t abs_err_predict \t under_est_by(s) \t prolonged");
 
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -498,31 +500,23 @@ public class ResultCollector {
                 prob += "_stradani";
             }
 
-            String line = gridlet_received.getGridletID() + "\t" + Math.round(gi.getRelease_date()) + "\t" + Math.round(Math.max(0.0, (response - cpu_time)) * 10) / 10.0
-                    + "\t" + Math.round(cpu_time * 10) / 10.0 + "\t" + gi.getNumPE() + "\t" + gi.getRam() + "\t" + gi.getUser() + "\t" + gi.getQueue() + "\t" + gi.getJobLimit()
-                    + "\t" + gridlet_received.getPredicted_wait() + "\t" + gridlet_received.getPredicted_runtime() + "\t" + gridlet_received.getExecStartTime() + "\t" 
+            String line = gridlet_received.getGridletID() + "\t" +gridlet_received.getArchRequired()+ "\t" + Math.round(gi.getRelease_date()) + "\t" 
+                    + Math.round(Math.max(0.0, (response - cpu_time)) * 10) / 10.0
+                    + "\t" + gridlet_received.getExecStartTime() + "\t" + Math.round(cpu_time * 10) / 10.0 + "\t" + gridlet_received.getFinishTime() +"\t"
+                    + gi.getNumPE() + "\t" + gi.getRam() + "\t" + gi.getUser() + "\t" + gi.getQueue() + "\t" + gi.getJobLimit()
+                    + "\t" + gridlet_received.getPredicted_wait() + "\t" + gridlet_received.getPredicted_runtime() + "\t" 
                     + gridlet_received.getLast_alloc_time() + "\t" + Math.round((gridlet_received.getExecStartTime() - gridlet_received.getLast_alloc_time())*100)/100.0+ "\t"
-                    + gridlet_received.getLast_node_time() + "\t" + Math.round((gridlet_received.getExecStartTime() - gridlet_received.getLast_node_time())*100)/100.0;
+                    + gridlet_received.getLast_node_time() + "\t" + Math.round((gridlet_received.getExecStartTime() - gridlet_received.getLast_node_time())*100)/100.0
+                    + "\t" + gridlet_received.isBackfilled() + "\t" + gridlet_received.isCons_backfilled()
+                    + "\t" + Math.round((gi.getJobLimit()-cpu_time)*10) / 10.0 + "\t" + Math.round((gridlet_received.getPredicted_runtime()-cpu_time)*10) / 10.0
+                    + "\t" + Math.abs(Math.round((gridlet_received.getPredicted_runtime()-cpu_time)*10) / 10.0) +"\t"+gridlet_received.getUnderestimated_by()+"\t"+gridlet_received.getProlonged();
 
             //out.writeStringWriter(user_dir + "/jobs" + prob + ".csv", line.replace(".", ","));
             out.writeStringWriter(pw, line.replace(".", ","));
 
         } catch (IOException ex) {
             ex.printStackTrace();
-        }
-
-        for (int j = 0; j < resourceInfoList.size(); j++) {
-            ResourceInfo ri = (ResourceInfo) resourceInfoList.get(j);
-            if (gridlet_received.getResourceID() == ri.resource.getResourceID()) {
-                // we lower the load of resource, update info about overall tardiness and exit cycle
-                ri.lowerResInExec(gi);
-                ri.prev_tard += g_tard;
-                if (g_tard <= 0.0) {
-                    ri.prev_score++;
-                }
-                break;
-            }
-        }
+        }        
 
     }
 
@@ -624,6 +618,7 @@ public class ResultCollector {
 
         ExperimentSetup.users.clear();
         ExperimentSetup.queues.clear();
+        System.out.println("Finished reseting internal values..."); 
     }
 
     private void clear(Double[] field) {

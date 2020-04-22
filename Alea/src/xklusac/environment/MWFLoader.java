@@ -469,7 +469,7 @@ public class MWFLoader extends GridSim {
 
         // create one gridlet from one line in data set file
         ComplexGridlet gl = new ComplexGridlet(id, user, job_limit, new Double(length), estimatedLength, 10, 10,
-                null, null, arrival, deadline, 1, numCPU, estimatedMachine, queue, properties, perc, 0, numNodes, ppn);
+                null, null, arrival, deadline, 1, numCPU, estimatedMachine, queue, properties, perc, 0, numNodes, ppn, null);
         // and set user id to the Scheduler entity - otherwise it would be returned to the JobLoader when completed.        
         gl.setUserID(super.getEntityId("Alea_3.0_scheduler"));
         return gl;

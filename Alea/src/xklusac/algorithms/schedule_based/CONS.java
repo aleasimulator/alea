@@ -4,6 +4,7 @@
  */
 package xklusac.algorithms.schedule_based;
 
+import alea.core.AleaSimTags;
 import java.util.Date;
 import gridsim.GridSim;
 import java.util.ArrayList;
@@ -158,6 +159,17 @@ public class CONS implements SchedulingPolicy {
             if (ri.resSchedule.size() > 0) {
                 GridletInfo gi = (GridletInfo) ri.resSchedule.get(0);
                 if (ri.canExecuteNow(gi)) {
+                    if (GridSim.clock() < gi.getExpectedStartTime()) {
+                        if (ExperimentSetup.pinJob) {
+                            //System.out.println(gi.getID() + " TOO EARLY time: " + GridSim.clock() + ", predicted start: " + gi.getExpectedStartTime() + ", diff: " + Math.round(GridSim.clock() - gi.getExpectedStartTime()) + " pinned:" + gi.isPinned());
+                            //mel bych promyslet, zda toto nezpusobi opozdovani spousteni uloh (bez noveho eventu pro planovac)
+                            scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), (gi.getExpectedStartTime() - GridSim.clock()), AleaSimTags.EVENT_SCHEDULE, "reminder for:" + gi.getID() + " from:" + GridSim.clock());
+                            return scheduled;
+                        } else {
+                            //System.out.println(gi.getID() + " TOO EARLY time: " + GridSim.clock() + ", predicted start: " + gi.getExpectedStartTime() + ", diff: " + Math.round(GridSim.clock() - gi.getExpectedStartTime()) + " pinned:" + gi.isPinned());
+                            ri.forceUpdate(GridSim.clock());
+                        }
+                    }
                     ri.removeFirstGI();
                     ri.addGInfoInExec(gi);
 

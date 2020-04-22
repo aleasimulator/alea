@@ -9,7 +9,6 @@ import xklusac.algorithms.schedule_based.optimization.WeightedRandomSearch;
 import xklusac.algorithms.schedule_based.CONS;
 import xklusac.algorithms.schedule_based.FairshareCONS;
 import xklusac.algorithms.queue_based.multi_queue.EASY_Backfilling;
-import xklusac.algorithms.queue_based.multi_queue.AggressiveBackfilling;
 import xklusac.algorithms.queue_based.multi_queue.FairshareMetaBackfilling;
 import xklusac.algorithms.queue_based.PBS_PRO;
 import xklusac.algorithms.queue_based.multi_queue.FairshareFCFS;
@@ -31,6 +30,7 @@ import java.util.logging.Logger;
 import xklusac.extensions.*;
 import xklusac.extensions.Queue;
 import xklusac.algorithms.*;
+import xklusac.algorithms.queue_based.multi_queue.AggressiveBackfillingFastDeepHold;
 import xklusac.algorithms.schedule_based.FCFS_Plan;
 import xklusac.plugins.Plugin;
 import xklusac.plugins.PluginConfiguration;
@@ -107,7 +107,7 @@ public class ExperimentSetup {
      */
     public static boolean estimates;
     
-    public static int debug_job = -400;
+    public static int debug_job = -674;
     /**
      * set true to use failure trace - if available
      */
@@ -228,6 +228,8 @@ public class ExperimentSetup {
      * simulations
      */
     public static boolean complain;
+    public static boolean pinJob = true;
+    public static int pin_duration = 0;
     /**
      * defines whether to use Tsafrir's esimates (if available in the data set)
      */
@@ -330,6 +332,7 @@ public class ExperimentSetup {
      * througput. (So called nodespec packing option as seen in PBS Pro, etc.)
      */
     public static boolean resource_spec_packing;
+    public static boolean extract_jobs;
     /**
      * defines whether several different queues in the system should be used.
      * Such queues must be specified in a seperate file, along with job and
@@ -358,6 +361,8 @@ public class ExperimentSetup {
     private static String[] dirG = new String[5];
 
     public static LinkedList<Schedule_Visualizator> schedule_windows = new LinkedList();
+    
+    public static double predictor_increase = 1.0;
 
     /**
      * Creates the path for storing simulation results.
@@ -431,6 +436,7 @@ public class ExperimentSetup {
 
         use_heap = aCfg.getBoolean("use_heap");
         sld_tresh = aCfg.getDouble("sld_tresh");
+        predictor_increase = aCfg.getDouble("predictor_increase");
 
         algID = 0;
         prevAlgID = -1;
@@ -453,6 +459,7 @@ public class ExperimentSetup {
         useEventOpt = aCfg.getBoolean("useEventOpt");
 
         limit_schedule_size = aCfg.getBoolean("limit_schedule_size");
+        extract_jobs = aCfg.getBoolean("extract_jobs");
         max_schedule_length = aCfg.getInt("max_schedule_length");
         max_schedule_CPU_request_factor = aCfg.getDouble("max_schedule_CPU_request_factor");
 
@@ -526,6 +533,8 @@ public class ExperimentSetup {
         //use_PercentageLength = aCfg.getBoolean("use_PercentageLength");
         // the minimal length (in seconds) of gap in schedule since when the "on demand" optimization is executed
         gap_length = aCfg.getInt("gap_length");
+        pin_duration = aCfg.getInt("pin_duration");
+        boolean[] pinJobs = aCfg.getBooleanArray("pinJobs");
         fast_schedule_compression = aCfg.getBoolean("fast_schedule_compression");
         // the weight of the fairness criteria in objective function
         int weight_of_fairness[] = aCfg.getIntArray("weight_of_fairness");
@@ -674,6 +683,7 @@ public class ExperimentSetup {
                 use_PercentageLength = estimatePERC[sel_alg];
                 use_MaxPercentageLength = estimateMPERC[sel_alg];
                 estimates = estimate[sel_alg];
+                pinJob = pinJobs[sel_alg];
 
                 resource_spec_packing = use_resource_spec_packing[sel_alg];
                 skipJob = skip[set];
@@ -729,10 +739,11 @@ public class ExperimentSetup {
                     // fixed version of EASY Backfilling
                     suff = "EASY";
                 }
+                
                 if (alg == 3) {
-                    policy = new AggressiveBackfilling(scheduler);
+                    policy = new AggressiveBackfillingFastDeepHold(scheduler);
                     // Backfilling without a reservation
-                    suff = "Aggressive-Backfill";
+                    suff = "Aggressive-Backfill-Fast-Deep-Hold";
                 }
                 if (alg == 4) {
                     policy = new CONS(scheduler);
@@ -889,6 +900,9 @@ public class ExperimentSetup {
                     use_compresion = false; //no need for that (gaps are not used)
                     use_gaps = false;
                     suff = "FCFS_Plan";
+                    if(!estimates){
+                        pinJob = false;
+                    }
                 }
 
                 dirG[4] = (sel_alg + 1) + "-" + suff;
