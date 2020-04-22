@@ -928,6 +928,8 @@ public class Scheduler extends GridSim {
                         break;
                     }
                 }
+                
+                System.out.println("Job "+gridlet_received.getGridletID() + " from "+gridlet_received.getArchRequired()+" returned completed at sim. time = "+GridSim.clock());
 
                 // update and possibly reschedule jobs that were waiting for their predecessors to be finished first
                 if (!DAG_queue.isEmpty()) {
@@ -936,6 +938,8 @@ public class Scheduler extends GridSim {
                         super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
                     }
                 }
+                
+            
 
                 // return jobs that were previously unable to run to the normal queue
                 if (tried_queue.size() > 0) {
