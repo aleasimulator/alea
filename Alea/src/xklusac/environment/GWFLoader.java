@@ -227,7 +227,7 @@ public class GWFLoader extends GridSim {
         double deadline = job_limit * 2;
 
         ComplexGridlet gl = new ComplexGridlet(id, "J", job_limit, new Double(length), estimatedLength, 10, 10,
-                null, null, arrival, deadline, 1, numCPU, 0.0, queue, properties, perc, 0, numNodes, ppn);
+                null, null, arrival, deadline, 1, numCPU, 0.0, queue, properties, perc, 0, numNodes, ppn, null);
 
         // and set user id to the Scheduler entity - otherwise it would be returned to the GWFLoader when completed.
         gl.setUserID(super.getEntityId("Alea_3.0_scheduler"));

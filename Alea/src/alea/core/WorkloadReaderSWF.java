@@ -418,7 +418,7 @@ public class WorkloadReaderSWF {
         double deadline = job_limit * 2;
 
         ComplexGridlet gl = new ComplexGridlet(id, user, job_limit, new Double(length), estimatedLength, 10, 10,
-                "Linux", "Risc arch.", arrival, deadline, 1, numCPU, 0.0, queue, properties, perc, ram, numNodes, ppn);
+                "Linux", "Risc arch.", arrival, deadline, 1, numCPU, 0.0, queue, properties, perc, ram, numNodes, ppn, null);
 
         // and set user id to the Scheduler entity - otherwise it would be returned to the JobLoader when completed.
         //System.out.println(id+" job has limit = "+(job_limit/3600.0)+" queue = "+queue);

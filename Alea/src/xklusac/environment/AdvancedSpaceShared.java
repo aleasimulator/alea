@@ -186,8 +186,11 @@ class AdvancedSpaceShared extends AllocPolicy {
             // Internal Event if the event source is this entity
             if (ev.get_src() == super.myId_ && gridletInExecList_.size() > 0) {
 
-                updateGridletProcessing();   // update Gridlets
-                checkGridletCompletion();    // check for finished Gridlets
+                //updateGridletProcessing();   // update Gridlets
+                //checkGridletCompletion();    // check for finished Gridlets
+                
+                ResGridlet rgl = (ResGridlet) ev.get_data();
+                endGridlet(rgl);
             }
         }
 
@@ -205,6 +208,15 @@ class AdvancedSpaceShared extends AllocPolicy {
             }
         }
     }
+    
+    private void endGridlet(ResGridlet obj){
+        double load = getMIShare(obj.getGridletLength(), obj.getMachineID());
+        obj.updateGridletFinishedSoFar(load);
+        //System.out.println(obj.getGridletID()+ " updated finSoFar by: "+load+ " load at time "+GridSim.clock());
+        gridletInExecList_.remove(obj);
+        gridletFinish(obj, Gridlet.SUCCESS);
+        //System.out.println("END "+obj.getGridletID()+ " finished at time: "+GridSim.clock()+" remain: "+obj.getRemainingGridletLength());
+    }
 
     /**
      * Schedules a new Gridlet that has been received by the GridResource
@@ -220,7 +232,7 @@ class AdvancedSpaceShared extends AllocPolicy {
      */
     public void gridletSubmit(Gridlet gl, boolean ack) {
         // update the current Gridlets in exec list up to this point in time
-        updateGridletProcessing();
+        //updateGridletProcessing();
         boolean success = false;
         boolean failure = false;
         
@@ -736,7 +748,7 @@ class AdvancedSpaceShared extends AllocPolicy {
         // set PEs list
         LinkedList<Integer> PEs = new LinkedList();
         PEs.add(peIndex);
-        ((ComplexGridlet) rgl.getGridlet()).setPEs(PEs);
+        //((ComplexGridlet) rgl.getGridlet()).setPEs(PEs);
         rgl.setGridletStatus(Gridlet.INEXEC);   // change Gridlet status
         // add this Gridlet into execution list
         gridletInExecList_.add(rgl);
@@ -761,7 +773,9 @@ class AdvancedSpaceShared extends AllocPolicy {
         Scheduler.classic_activePEs += 1;
 
         // then send this into itself
-        super.sim_schedule(super.myId_, time, GridSimTags.INSIGNIFICANT);
+        //super.sim_schedule(super.myId_, time, GridSimTags.INSIGNIFICANT);
+        
+        super.sim_schedule(super.myId_, time, GridSimTags.INSIGNIFICANT, rgl);
 
         return true;
     }
@@ -854,7 +868,8 @@ class AdvancedSpaceShared extends AllocPolicy {
 
         // then send this into itself
         //System.out.println(rgl.getGridletID()+" is allocated, will finish in "+time+" seconds, at time "+ (GridSim.clock()+time));
-        super.sim_schedule(super.myId_, time, GridSimTags.INSIGNIFICANT);
+        //super.sim_schedule(super.myId_, time, GridSimTags.INSIGNIFICANT);
+        super.sim_schedule(super.myId_, time, GridSimTags.INSIGNIFICANT, rgl);
 
         return true;
 
