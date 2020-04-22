@@ -502,7 +502,7 @@ public class ResultCollector {
 
             String line = gridlet_received.getGridletID() + "\t" +gridlet_received.getArchRequired()+ "\t" + Math.round(gi.getRelease_date()) + "\t" 
                     + Math.round(Math.max(0.0, (response - cpu_time)) * 10) / 10.0
-                    + "\t" + gridlet_received.getExecStartTime() + "\t" + Math.round(cpu_time * 10) / 10.0 + "\t" + gridlet_received.getFinishTime() +"\t"
+                    + "\t" + Math.round(gridlet_received.getExecStartTime()*10)/10.0 + "\t" + Math.round(cpu_time * 10) / 10.0 + "\t" + Math.round(gridlet_received.getFinishTime()*10)/10.0 +"\t"
                     + gi.getNumPE() + "\t" + gi.getRam() + "\t" + gi.getUser() + "\t" + gi.getQueue() + "\t" + gi.getJobLimit()
                     + "\t" + gridlet_received.getPredicted_wait() + "\t" + gridlet_received.getPredicted_runtime() + "\t" 
                     + gridlet_received.getLast_alloc_time() + "\t" + Math.round((gridlet_received.getExecStartTime() - gridlet_received.getLast_alloc_time())*100)/100.0+ "\t"
