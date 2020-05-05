@@ -198,7 +198,7 @@ public class DynamicLoader extends GridSim {
         // once all agents are finished, we can wrap up the simulation
         // notify the scheduler about the submission completion
         System.out.println("Job Submission from " + data_set + "_DynamicLoader completed ");
-        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.SUBMISSION_DONE, new Integer(jobs_finished));
+        super.sim_schedule(this.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.SUBMISSION_DONE, new Integer(jobs_finished));
 
         // wait for a report back
         while (true) {

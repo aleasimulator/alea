@@ -179,7 +179,7 @@ public class MWFLoader extends GridSim {
                 double delay = Math.max(0.0, (gl.getArrival_time() - super.clock()));
                 submitted++;
                 // some time is needed to transfer this job to the scheduler, i.e., delay should be delay = delay - transfer_time. Fix this in the future.
-                super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), delay, AleaSimTags.GRIDLET_INFO, gl);
+                super.sim_schedule(this.getEntityId("Alea_Job_Scheduler"), delay, AleaSimTags.GRIDLET_INFO, gl);
 
                 delay = Math.max(0.0, (gl.getArrival_time() - super.clock()));
                 if (current_gl < total_jobs) {
@@ -191,7 +191,7 @@ public class MWFLoader extends GridSim {
             }
         }
 
-        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.SUBMISSION_DONE, new Integer(submitted));
+        super.sim_schedule(this.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.SUBMISSION_DONE, new Integer(submitted));
         Sim_event ev = new Sim_event();
         sim_get_next(ev);
 
@@ -471,7 +471,7 @@ public class MWFLoader extends GridSim {
         ComplexGridlet gl = new ComplexGridlet(id, user, job_limit, new Double(length), estimatedLength, 10, 10,
                 null, null, arrival, deadline, 1, numCPU, estimatedMachine, queue, properties, perc, 0, numNodes, ppn, null);
         // and set user id to the Scheduler entity - otherwise it would be returned to the JobLoader when completed.        
-        gl.setUserID(super.getEntityId("Alea_3.0_scheduler"));
+        gl.setUserID(super.getEntityId("Alea_Job_Scheduler"));
         return gl;
     }
 }

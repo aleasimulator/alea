@@ -709,7 +709,7 @@ public class ExperimentSetup {
                 String suff = "";
 
                 // initialize the simulation - create the scheduler
-                String scheduler_name = "Alea_3.0_scheduler";
+                String scheduler_name = "Alea_Job_Scheduler";
                 try {
                     Calendar calendar = Calendar.getInstance();
                     boolean trace_flag = false;  // true means tracing GridSim events

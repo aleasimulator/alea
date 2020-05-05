@@ -181,7 +181,7 @@ public class FCFS_Plan implements SchedulingPolicy {
                         if (ExperimentSetup.pinJob) {
                             //System.out.println(gi.getID() + " TOO EARLY time: " + GridSim.clock() + ", predicted start: " + gi.getExpectedStartTime() + ", diff: " + Math.round(GridSim.clock() - gi.getExpectedStartTime()) + " pinned:" + gi.isPinned());
                             //mel bych promyslet, zda toto nezpusobi opozdovani spousteni uloh (bez noveho eventu pro planovac)
-                            scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), (gi.getExpectedStartTime() - GridSim.clock()), AleaSimTags.EVENT_SCHEDULE, "reminder for:" + gi.getID() + " from:" + GridSim.clock());
+                            scheduler.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), (gi.getExpectedStartTime() - GridSim.clock()), AleaSimTags.EVENT_SCHEDULE, "reminder for:" + gi.getID() + " from:" + GridSim.clock());
                             return scheduled;
                         } else {
                             //System.out.println(gi.getID() + " TOO EARLY time: " + GridSim.clock() + ", predicted start: " + gi.getExpectedStartTime() + ", diff: " + Math.round(GridSim.clock() - gi.getExpectedStartTime()) + " pinned:" + gi.isPinned());
@@ -247,7 +247,7 @@ public class FCFS_Plan implements SchedulingPolicy {
                     }*/
                     //System.out.println(gi.getID() + " is starting at: "+GridSim.clock()+", will finish at: " + (GridSim.clock() + gi.getJobRuntime(1)) + " runtime=" + gi.getJobRuntime(1) + " exp-finish-time=" + gi.getExpectedFinishTime() + " plannedPEs:" + gi.getPlannedPEsString());
                     ri.is_ready = true;
-                    //scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.GRIDLET_SENT, gi);
+                    //scheduler.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.GRIDLET_SENT, gi);
                     scheduled++;
                     return scheduled;
                 }

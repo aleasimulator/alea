@@ -78,7 +78,7 @@ public class PWFLoader extends GridSim {
                 // to synchronize job arrival wrt. the data set.
                 double delay = Math.max(0.0, (gl.getArrival_time() - super.clock()));
                 // some time is needed to transfer this job to the scheduler, i.e., delay should be delay = delay - transfer_time. Fix this in the future.
-                super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), delay, AleaSimTags.GRIDLET_INFO, gl);
+                super.sim_schedule(this.getEntityId("Alea_Job_Scheduler"), delay, AleaSimTags.GRIDLET_INFO, gl);
 
                 delay = Math.max(0.0, (gl.getArrival_time() - super.clock()));
                 if (current_gl < total_jobs) {
@@ -90,7 +90,7 @@ public class PWFLoader extends GridSim {
             }
         }
 
-        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.SUBMISSION_DONE, null);
+        super.sim_schedule(this.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.SUBMISSION_DONE, null);
         Sim_event ev = new Sim_event();
         sim_get_next(ev);
 
@@ -160,7 +160,7 @@ public class PWFLoader extends GridSim {
                 "Linux", "Risc arch.", arrival, deadline_d, 1, numCPU, estimatedMachine, "q3", "", perc,0, numNodes, ppn, null);
 
         // and set user id to the Scheduler entity - otherwise it would be returned to the JobLoader when completed.
-        gl.setUserID(super.getEntityId("Alea_3.0_scheduler"));
+        gl.setUserID(super.getEntityId("Alea_Job_Scheduler"));
 
         return gl;
     }

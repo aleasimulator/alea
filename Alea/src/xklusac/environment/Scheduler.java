@@ -929,7 +929,7 @@ public class Scheduler extends GridSim {
                     }
                 }
                 
-                System.out.println("Job "+gridlet_received.getGridletID() + " from "+gridlet_received.getArchRequired()+" returned completed at sim. time = "+GridSim.clock());
+                System.out.println("[SCHEDULER] Job "+gridlet_received.getGridletID() + " from "+gridlet_received.getArchRequired()+" returned completed at sim. time = "+GridSim.clock());
 
                 // update and possibly reschedule jobs that were waiting for their predecessors to be finished first
                 if (!DAG_queue.isEmpty()) {
@@ -1205,7 +1205,7 @@ public class Scheduler extends GridSim {
                     }
                     // add job to DAG queue of jobs waiting for completed predecessors
                     if (add_to_DAG_queue) {
-                        System.out.println("Job "+gi.getID() + " from "+gi.getGridlet().getArchRequired()+" added to DAG waiting queue -> waiting for completion of jobs: " + gi.getPrecedingJobs().toString());
+                        System.out.println("[SCHEDULER] Job "+gi.getID() + " from "+gi.getGridlet().getArchRequired()+" added to DAG waiting queue -> waiting for completion of jobs: " + gi.getPrecedingJobs().toString());
                         DAG_queue.add(gi);
                     } else {
                         // add job normally
@@ -2284,7 +2284,7 @@ public class Scheduler extends GridSim {
             ExperimentSetup.queues.get(gl.getQueue()).setUsed(ExperimentSetup.queues.get(gl.getQueue()).getUsed() + gl.getNumPE());
         }
         gridletSubmit(gl, resID);
-        System.out.println("Job "+gl.getGridletID()+ " from "+gl.getArchRequired()+" is submitted to cluster "+GridSim.getEntityName(resID)+", FREE CPUs left = " + getFreeCPUs()+" at sim. time = "+GridSim.clock());
+        System.out.println("[SCHEDULER] Job "+gl.getGridletID()+ " from "+gl.getArchRequired()+" is submitted to cluster "+GridSim.getEntityName(resID)+", FREE CPUs left = " + getFreeCPUs()+" at sim. time = "+GridSim.clock());
     }
 
     /**
@@ -2453,7 +2453,7 @@ public class Scheduler extends GridSim {
         int id = gl.getGridletID();
         if (unfinished_predecessors.contains(id)) {
             int index = unfinished_predecessors.indexOf(id);
-            System.out.println("Job "+id + " from "+gl.getArchRequired()+" is completed and removed from the list of unfinished predecessors [from position: " + index+"] at sim. time = "+GridSim.clock());
+            System.out.println("[SCHEDULER] Job "+id + " from "+gl.getArchRequired()+" is completed and removed from the list of unfinished predecessors [from position: " + index+"] at sim. time = "+GridSim.clock());
             unfinished_predecessors.remove(index);
         }
         // next, check if waiting jobs have been waiting for it (then remove it from their list)
@@ -2464,7 +2464,7 @@ public class Scheduler extends GridSim {
                 gi.getPrecedingJobs().remove(index);
                 if (gi.getPrecedingJobs().size() == 0) {
                     DAG_queue.remove(gi);
-                    System.out.println("Job "+gi.getID() + " from "+gi.getGridlet().getArchRequired()+" is now added back to normal queue since all predecessors are completed. Sim. time = "+GridSim.clock());
+                    System.out.println("[SCHEDULER] Job "+gi.getID() + " from "+gi.getGridlet().getArchRequired()+" is now added back to normal queue since all predecessors are completed. Sim. time = "+GridSim.clock());
                     ExperimentSetup.policy.addNewJob(gi);
                     scheduleNow = true;
                     i--;

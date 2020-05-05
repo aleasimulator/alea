@@ -104,7 +104,7 @@ public class GWFLoader extends GridSim {
                 double delay = Math.max(0.0, (gl.getArrival_time() - super.clock()));
                 submitted++;
                 // some time is needed to transfer this job to the scheduler, i.e., delay should be delay = delay - transfer_time. Fix this in the future.
-                super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), delay, AleaSimTags.GRIDLET_INFO, gl);
+                super.sim_schedule(this.getEntityId("Alea_Job_Scheduler"), delay, AleaSimTags.GRIDLET_INFO, gl);
 
                 delay = Math.max(0.0, (gl.getArrival_time() - super.clock()));
                 earliest_end_time = delay + 1;
@@ -117,7 +117,7 @@ public class GWFLoader extends GridSim {
             }
         }
 
-        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), earliest_end_time, AleaSimTags.SUBMISSION_DONE, new Integer(submitted));
+        super.sim_schedule(this.getEntityId("Alea_Job_Scheduler"), earliest_end_time, AleaSimTags.SUBMISSION_DONE, new Integer(submitted));
         Sim_event ev = new Sim_event();
         sim_get_next(ev);
 
@@ -230,7 +230,7 @@ public class GWFLoader extends GridSim {
                 null, null, arrival, deadline, 1, numCPU, 0.0, queue, properties, perc, 0, numNodes, ppn, null);
 
         // and set user id to the Scheduler entity - otherwise it would be returned to the GWFLoader when completed.
-        gl.setUserID(super.getEntityId("Alea_3.0_scheduler"));
+        gl.setUserID(super.getEntityId("Alea_Job_Scheduler"));
 
         return gl;
 

@@ -422,7 +422,7 @@ public class WorkloadReaderSWF {
 
         // and set user id to the Scheduler entity - otherwise it would be returned to the JobLoader when completed.
         //System.out.println(id+" job has limit = "+(job_limit/3600.0)+" queue = "+queue);
-        gl.setUserID(GridSim.getEntityId("Alea_3.0_scheduler"));
+        gl.setUserID(GridSim.getEntityId("Alea_Job_Scheduler"));
         current_job++;
         return gl;
     }
