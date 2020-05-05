@@ -128,7 +128,7 @@ public class SWFLoader extends GridSim {
                 // some time is needed to transfer this job to the scheduler, i.e., delay should be delay = delay - transfer_time. Fix this in the future.
                 //System.out.println("Sending: "+gl.getGridletID());
                 last_delay = delay;
-                super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), delay, AleaSimTags.GRIDLET_INFO, gl);
+                super.sim_schedule(this.getEntityId("Alea_Job_Scheduler"), delay, AleaSimTags.GRIDLET_INFO, gl);
 
                 delay = Math.max(0.0, (gl.getArrival_time() - super.clock()));
                 if (current_gl < total_jobs) {
@@ -140,7 +140,7 @@ public class SWFLoader extends GridSim {
             }
         }
         System.out.println("Shuting down JOB LOADER - last job loaded = " + current_gl + " of " + total_jobs+" expected jobs.");
-        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), Math.round(last_delay + 2), AleaSimTags.SUBMISSION_DONE, new Integer(current_gl));
+        super.sim_schedule(this.getEntityId("Alea_Job_Scheduler"), Math.round(last_delay + 2), AleaSimTags.SUBMISSION_DONE, new Integer(current_gl));
         Sim_event ev = new Sim_event();
         sim_get_next(ev);
 
@@ -171,7 +171,7 @@ public class SWFLoader extends GridSim {
                 } catch (IOException ex) {
                     ex.printStackTrace();
                 }
-                if (!values[0].contains(";")) {
+                if (!values[0].contains(";") && !values[0].contains("id") ) {
                     //System.out.println(j+":"+line+": error --- "+values[0]);
                     if (line.charAt(0) == ' ') {
                         line = line.substring(1);
@@ -367,7 +367,8 @@ public class SWFLoader extends GridSim {
         int numNodes = -1;
         int ppn = -1;
         String properties = "" + values[15];
-        if (values.length > 19) {
+        if (values.length > 20) {
+            //System.out.println(line+" len:"+values[0]);
             properties = values[20];
             
             // PBS-Pro compatible variant
@@ -563,12 +564,14 @@ public class SWFLoader extends GridSim {
             
         }
         String arch = "RISC";
-        if (data_set.contains("jaros.swf")) {
+        if (data_set.contains("jaros")) {
             ppn = 16;
             numNodes = numCPU;
             numCPU = ppn* numNodes;
             properties = "";
-            arch = values[18];
+            arch = values[18]+"["+values[19]+"]";
+            
+            //ram = Math.round(ram/numNodes);
             //System.out.println(id+": reqs "+numCPU+" CPUs using nodes: "+numNodes+" and ncpus: "+ppn+" RAM="+(ram/(1024.0*1024))+" GB.");
 
             
@@ -579,8 +582,8 @@ public class SWFLoader extends GridSim {
                 "Linux", arch, arrival, deadline, 1, numCPU, 0.0, queue, properties, perc, ram, numNodes, ppn,precedingJobs);
 
         // and set user id to the Scheduler entity - otherwise it would be returned to the JobLoader when completed.
-        System.out.println("Sending job "+id+" from "+gl.getArchRequired()+" to scheduler. Job has limit = "+job_limit+" seconds,  requires "+numNodes+" nodes each with "+ppn+" CPUs [total "+numCPU+" CPUs]. RAM rewquired per node = "+(ram/(1024.0*1024))+" GB. Sim. time = "+GridSim.clock());
-        gl.setUserID(super.getEntityId("Alea_3.0_scheduler"));
+        System.out.println("[JOB LOADER] Sending job "+id+" from "+gl.getArchRequired()+" to scheduler. Job has limit = "+job_limit+" seconds,  requires "+numNodes+" nodes each with "+ppn+" CPUs [total "+numCPU+" CPUs]. RAM required per node = "+(ram/(1024.0*1024))+" GB. Sim. time = "+GridSim.clock());
+        gl.setUserID(super.getEntityId("Alea_Job_Scheduler"));
         return gl;
     }
 }

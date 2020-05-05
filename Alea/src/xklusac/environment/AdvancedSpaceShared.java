@@ -141,7 +141,7 @@ class AdvancedSpaceShared extends AllocPolicy {
                 Scheduler.classic_availPEs += this.totalPE_;
                 Scheduler.availPEs += this.totalPE_ * this.resource_.getMIPSRatingOfOnePE();
                 //System.out.println(resName_ + ": restart all="+this.resource_.isWorking());
-                super.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.FAILURE_RESTART, this.resId_);
+                super.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.FAILURE_RESTART, this.resId_);
                 continue;
             }
 
@@ -173,12 +173,12 @@ class AdvancedSpaceShared extends AllocPolicy {
                 allocateQueueGridlet();
                 //System.out.println(resName_ + ": restart some, all on?="+this.resource_.isWorking());
                 //System.out.println(Math.round(GridSim.clock())+": restart of: "+resName_ +" restart: "+ids.length+" machines. ["+ids[0]+"](x2), running: "+getNumRunning()+"/"+this.resource_.getNumPE()+",  from: "+Math.round(failure.getTime()));
-                super.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.FAILURE_RESTART, this.resId_);
+                super.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.FAILURE_RESTART, this.resId_);
                 continue;
             }
             if (ev.get_tag() == AleaSimTags.FAILURE_START) {
-                super.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.FAILURE_START, this.resId_+"x"+this.killed_cpus);
-                //super.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.FAILURE_START, this.killed_cpus);
+                super.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.FAILURE_START, this.resId_+"x"+this.killed_cpus);
+                //super.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.FAILURE_START, this.killed_cpus);
                 continue;
             }
 
@@ -299,7 +299,7 @@ class AdvancedSpaceShared extends AllocPolicy {
         // allow next scheduling run
         if (failure == false && success == true) {
             //System.out.println(gl.getGridletID()+": has started, requiring CPUs: "+gl.getNumPE());
-            sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.GRIDLET_STARTED, gl);
+            sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.GRIDLET_STARTED, gl);
         }
     }
 
@@ -973,7 +973,7 @@ class AdvancedSpaceShared extends AllocPolicy {
         }
 
         //super.sendFinishGridlet( rgl.getGridlet() );
-        super.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, GridSimTags.GRIDLET_RETURN, rgl.getGridlet());
+        super.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, GridSimTags.GRIDLET_RETURN, rgl.getGridlet());
 
         //update machine usage
         Scheduler.load += (Scheduler.activePEs / Scheduler.availPEs) * (GridSim.clock() - Scheduler.last_event);
@@ -1078,7 +1078,7 @@ class AdvancedSpaceShared extends AllocPolicy {
                 last_time = now;
                 super.sim_schedule(super.myId_, 0.01, AleaSimTags.FAILURE_START, null);
             }
-            //super.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.FAILURE_START, this.resId_);
+            //super.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.FAILURE_START, this.resId_);
             super.sim_schedule(super.myId_, duration, AleaSimTags.FAILURE_RESTART2, failure);
 
         } else if (ev.get_tag() == AleaSimTags.FAILURE_INFO) {
@@ -1090,7 +1090,7 @@ class AdvancedSpaceShared extends AllocPolicy {
             wfailure_time += duration * this.resource_.getMIPSRating();
             Scheduler.failure_time += duration * this.resource_.getNumPE();
             Scheduler.wfailure_time += duration * this.resource_.getMIPSRating();
-            super.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.FAILURE_START, this.resId_);
+            super.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.FAILURE_START, this.resId_);
             super.sim_schedule(super.myId_, duration, AleaSimTags.FAILURE_FINISHED);
 
         } else {
