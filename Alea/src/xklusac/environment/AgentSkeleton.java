@@ -113,7 +113,7 @@ public abstract class AgentSkeleton extends GridSim {
                     waiting_job.setOnJobFail(this.getEntityName());
                     waiting_job.setOnJobStart(this.getEntityName());
                     // job information event for scheduler
-                    super.sim_schedule(super.getEntityId("Alea_3.0_scheduler"), delay, AleaSimTags.GRIDLET_INFO, waiting_job);
+                    super.sim_schedule(super.getEntityId("Alea_Job_Scheduler"), delay, AleaSimTags.GRIDLET_INFO, waiting_job);
                     sent_jobs++;
 
                     need_reset = need_reset || this.onJobEnqueued(waiting_job);

@@ -1,4 +1,5 @@
 package xklusac.environment;
+
 import xklusac.algorithms.schedule_based.BestGap;
 import xklusac.algorithms.schedule_based.BF_CONS_Fair;
 import xklusac.algorithms.schedule_based.optimization.GapSearch;
@@ -8,7 +9,6 @@ import xklusac.algorithms.schedule_based.optimization.WeightedRandomSearch;
 import xklusac.algorithms.schedule_based.CONS;
 import xklusac.algorithms.schedule_based.FairshareCONS;
 import xklusac.algorithms.queue_based.multi_queue.EASY_Backfilling;
-import xklusac.algorithms.queue_based.multi_queue.AggressiveBackfilling;
 import xklusac.algorithms.queue_based.multi_queue.FairshareMetaBackfilling;
 import xklusac.algorithms.queue_based.PBS_PRO;
 import xklusac.algorithms.queue_based.multi_queue.FairshareFCFS;
@@ -24,39 +24,40 @@ import java.io.IOException;
 import java.util.*;
 import gridsim.*;
 import java.io.File;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import xklusac.extensions.*;
 import xklusac.extensions.Queue;
 import xklusac.algorithms.*;
+import xklusac.algorithms.queue_based.multi_queue.AggressiveBackfillingFastDeepHold;
+import xklusac.algorithms.schedule_based.FCFS_Plan;
 import xklusac.plugins.Plugin;
 import xklusac.plugins.PluginConfiguration;
 import xklusac.plugins.PluginFactory;
 
 /**
- * Class ExperimentSetup <p> This is the main class. It creates all entities,
- * such as Scheduler, Resources and and performs the whole experiment. <br>It
- * allows to run multiple passes with different settings such as job parameters,
- * data-sets and algorithms. This parameters has to be properly set manually.
- * The results are printed on the screen and also stored in a text files when
- * the simulation is finished. Information about various objectives (machine
- * usage, slowdown, deadlines,...) are stored.<p> Alea 4.0 partially
- * supports <b>scheduling with RAM requirements</b> beside the common CPU
- * requests.<p>
+ * Class ExperimentSetup
+ * <p>
+ * This is the main class. It creates all entities, such as Scheduler, Resources
+ * and and performs the whole experiment. <br>It allows to run multiple passes
+ * with different settings such as job parameters, data-sets and algorithms.
+ * This parameters has to be properly set manually. The results are printed on
+ * the screen and also stored in a text files when the simulation is finished.
+ * Information about various objectives (machine usage, slowdown, deadlines,...)
+ * are stored.<p>
+ * Alea 4.0 partially supports <b>scheduling with RAM requirements</b> beside
+ * the common CPU requests.<p>
  *
  * Most recent versions of <b>Alea</b> are available at: <a
  * href="http://www.fi.muni.cz/~xklusac/alea">http://www.fi.muni.cz/~xklusac/alea</a><br>
- * To run the simulation with Alea 4.0, Java 1.6 or newer is needed and
- * the latest GridSim should be used.
+ * To run the simulation with Alea 4.0, Java 1.6 or newer is needed and the
+ * latest GridSim should be used.
  *
  * @author Dalibor Klusacek
  */
 public class ExperimentSetup {
-    
+
     private static AleaConfiguration aCfg;
 
     /**
@@ -96,7 +97,7 @@ public class ExperimentSetup {
      * Use only for testing or if you want to obtain graphical output.
      */
     public static boolean visualize_schedule;
-    
+
     /**
      * set true to use specific job requirements
      */
@@ -105,6 +106,8 @@ public class ExperimentSetup {
      * set true to use job runtime estimates
      */
     public static boolean estimates;
+    
+    public static int debug_job = -674;
     /**
      * set true to use failure trace - if available
      */
@@ -118,19 +121,21 @@ public class ExperimentSetup {
      */
     static boolean use_LastLength;
     /**
-     * set true to use avg. perc. difference of all jobs to adjust runtime estimate
+     * set true to use avg. perc. difference of all jobs to adjust runtime
+     * estimate
      */
     static boolean use_PercentageLength;
     /**
-     * set true to min. perc. difference of last few jobs to adjust runtime estimate
+     * set true to min. perc. difference of last few jobs to adjust runtime
+     * estimate
      */
-    static boolean use_MinPercentageLength;
-    
+    static boolean use_MaxPercentageLength;
+
     /**
      * set true to use on-demand LS-based optimization
      */
     static boolean useEventOpt;
-    
+
     /**
      * defines whether heap is used to store schedule-data. Should be true, as
      * heap is faster than the default array.
@@ -144,14 +149,7 @@ public class ExperimentSetup {
      * defines how many times the default max-time job's limit has been used
      */
     public static int max_estim;
-    /**
-     * allows to increase job's runtime by given factor
-     */
-    static int runtime_multiplicator;
-    /**
-     * auxiliary variable
-     */
-    static String path;
+
     /**
      * set of users in the system
      */
@@ -181,6 +179,8 @@ public class ExperimentSetup {
      * optimization
      */
     static int gap_length;
+
+    public static boolean fast_schedule_compression;
     /**
      * ID of current sched. algorithm
      */
@@ -218,10 +218,18 @@ public class ExperimentSetup {
      * defines whether to use schedule compression upon early job completion
      */
     public static boolean use_compresion;
+
+    public static boolean limit_schedule_size = false;
+
+    public static int max_schedule_length = 36000;
+    public static double max_schedule_CPU_request_factor = 1.5;
     /**
-     * defines whether to emulate user dissatisfaction in dynamic-workload simulations
+     * defines whether to emulate user dissatisfaction in dynamic-workload
+     * simulations
      */
     public static boolean complain;
+    public static boolean pinJob = true;
+    public static int pin_duration = 0;
     /**
      * defines whether to use Tsafrir's esimates (if available in the data set)
      */
@@ -230,6 +238,7 @@ public class ExperimentSetup {
      * defines whether to use machine's speeds to adjust job execution time
      */
     public static boolean use_speeds;
+    public static boolean enforce_partition;
     /**
      * can be used to compress job inter-arrival times (1.0 = original, 2.0 =
      * twice that fast)
@@ -256,12 +265,12 @@ public class ExperimentSetup {
      * defines whether to use fairshare at all
      */
     public static boolean use_fairshare;
-    
+
     /**
      * a reference to the job scheduler
      */
     public static Scheduler scheduler = null;
-    
+
     /**
      * defines whether to use fairshare decay
      */
@@ -299,10 +308,11 @@ public class ExperimentSetup {
      */
     public static int backfilled;
     /**
-     * counter measuring the number of backfilled jobs that actually must fit before a later job starts
+     * counter measuring the number of backfilled jobs that actually must fit
+     * before a later job starts
      */
     public static int backfilled_cons;
-    
+
     /**
      * the speed by which the schedule is updated in GUI
      */
@@ -322,53 +332,57 @@ public class ExperimentSetup {
      * througput. (So called nodespec packing option as seen in PBS Pro, etc.)
      */
     public static boolean resource_spec_packing;
+    public static boolean extract_jobs;
     /**
      * defines whether several different queues in the system should be used.
      * Such queues must be specified in a seperate file, along with job and
      * machine descriptions.
      */
     public static boolean use_queues;
-    
+    public static boolean use_gaps = true;
+
     public static ResultCollector result_collector = null;
-    
+
     //private static String subDir;
-    
     public static String alea_version = "4.0";
-    
+
     /**
-     * if several different queues in the system should are defined, this variable
-     * defines whether they will be used separately (queue-by-queue in a defined priority
-     * order) or they will only be used to guard queue-limits.
+     * if several different queues in the system should are defined, this
+     * variable defines whether they will be used separately (queue-by-queue in
+     * a defined priority order) or they will only be used to guard
+     * queue-limits.
      */
     public static boolean by_queue;
 
     public static String data_sets;
-    
+
     private static String[] dir = new String[4];
-    
+
     private static String[] dirG = new String[5];
-    
+
     public static LinkedList<Schedule_Visualizator> schedule_windows = new LinkedList();
     
+    public static double predictor_increase = 1.0;
+
     /**
      * Creates the path for storing simulation results.
-     * 
+     *
      * @param level the depth of directory tree
-     * 
+     *
      * @return the path to the appropriate directory at the specified level
      */
     public static String getDir(DirectoryLevel level) {
         String directory = dir[0];
-        for (int i=1; i<level.ordinal(); i++) {
+        for (int i = 1; i < level.ordinal(); i++) {
             directory += File.separator;
             directory += dir[i];
         }
         return directory;
     }
-    
-        public static String getDirG(DirectoryLevel level) {
+
+    public static String getDirG(DirectoryLevel level) {
         String directory = ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT);
-        for (int i=2; i<level.ordinal(); i++) {
+        for (int i = 2; i < level.ordinal(); i++) {
             directory += File.separator;
             directory += dirG[i];
         }
@@ -379,10 +393,9 @@ public class ExperimentSetup {
     /*public static String getDir() {
         return subDir;
     }*/
-    
     /**
      * This method returns the current date.
-     * 
+     *
      * @return the date
      */
     public static String getDate() {
@@ -391,7 +404,9 @@ public class ExperimentSetup {
         return date;
     }
 
-    public static int getFirstArrival() { return firstArrival; }
+    public static int getFirstArrival() {
+        return firstArrival;
+    }
 
     /**
      * The main method - create all entities and start the simulation. <br> It
@@ -400,35 +415,36 @@ public class ExperimentSetup {
      */
     public static void main(String[] args) {
         String user_dir = System.getProperty("user.dir");
-        
+
         Registration.register();
-        
+
         try {
             aCfg = new AleaConfiguration();
-        } catch (IOException e) { 
-            System.err.println("Could not load configuration file!"+e);
+        } catch (IOException e) {
+            System.err.println("Could not load configuration file!" + e);
             return;
         }
-        
+
         baudRate = aCfg.getDouble("baudRate");
         entities = aCfg.getInt("entities");
-        
+
         maxPE = 1;
-        
+
         visualize = aCfg.getBoolean("visualize");
-        visualize_schedule = aCfg.getBoolean("visualize_schedule");        
+        visualize_schedule = aCfg.getBoolean("visualize_schedule");
         schedule_repaint_delay = aCfg.getInt("schedule_repaint_delay");
-        
+
         use_heap = aCfg.getBoolean("use_heap");
         sld_tresh = aCfg.getDouble("sld_tresh");
-        
-        
+        predictor_increase = aCfg.getDouble("predictor_increase");
+
         algID = 0;
         prevAlgID = -1;
         name = "";
-        
+
         use_tsafrir = aCfg.getBoolean("use_tsafrir");
         use_speeds = aCfg.getBoolean("use_speeds");
+        enforce_partition = aCfg.getBoolean("enforce_partition");
         arrival_rate_multiplier = aCfg.getDouble("arrival_rate_multiplier");
         runtime_minimizer = aCfg.getDouble("runtime_minimizer");
         use_RAM = aCfg.getBoolean("use_RAM");
@@ -441,18 +457,23 @@ public class ExperimentSetup {
         use_SQRT = aCfg.getBoolean("use_SQRT");
         sum_multiplications = aCfg.getBoolean("sum_multiplications");
         useEventOpt = aCfg.getBoolean("useEventOpt");
-        
+
+        limit_schedule_size = aCfg.getBoolean("limit_schedule_size");
+        extract_jobs = aCfg.getBoolean("extract_jobs");
+        max_schedule_length = aCfg.getInt("max_schedule_length");
+        max_schedule_CPU_request_factor = aCfg.getDouble("max_schedule_CPU_request_factor");
+
         avail_RAM = 0.0;
         avail_CPUs = 0.0;
-        
+
         backfilled = 0;
         backfilled_cons = 0;
-        
+
         // set true to use different queues
         use_queues = aCfg.getBoolean("use_queues");
         by_queue = aCfg.getBoolean("by_queue");
         data_sets = aCfg.getString("data_set_dir");
-        
+
         // if required - start the graphical output using -v parameter
         if (args.length > 0) {
             if (args[0].equals("-v")) {
@@ -470,8 +491,7 @@ public class ExperimentSetup {
         String data_sets[] = aCfg.getStringArray("data_sets");
         // number of gridlets in data set
         int total_gridlet[] = aCfg.getIntArray("total_gridlet");
-        
-        
+
         /*String user_dir = "";
         if (ExperimentSetup.meta) {
             
@@ -480,26 +500,24 @@ public class ExperimentSetup {
         } else {
             user_dir = System.getProperty("user.dir");
         }*/
-        /*try {
+ /*try {
             Output out = new Output();
             out.deleteResults(user_dir + "/jobs(" + problem + "" + ExperimentSetup.algID + ").csv");
         } catch (IOException ex) {
             ex.printStackTrace();
         }*/
-
         // stores references to animation windows
         LinkedList<Visualizator> windows = new LinkedList();
         // if true then create windows with graps.
         if (visualize) {
             Visualizator.createGUI(windows);
         }
-        
-        
+
         // if true then create windows with graps.
         if (visualize_schedule) {
             Schedule_Visualizator.createGUI(schedule_windows);
         }
-        
+
         complain = aCfg.getBoolean("complain");
 
         // set true to use failures
@@ -507,14 +525,17 @@ public class ExperimentSetup {
         // set true to use specific job requirements
         reqs = aCfg.getBoolean("reqs");
         // set true to use runtime estimates
-        estimates = aCfg.getBoolean("estimates");
+        //estimates = aCfg.getBoolean("estimates");
         // set true to refine estimates using job avg. length
-        use_AvgLength = aCfg.getBoolean("use_AvgLength");
+        //use_AvgLength = aCfg.getBoolean("use_AvgLength");
         // set true to use last job length as a new runtime estimate
-        use_LastLength = aCfg.getBoolean("use_LastLength");
-        use_PercentageLength = aCfg.getBoolean("use_PercentageLength");
+        //use_LastLength = aCfg.getBoolean("use_LastLength");
+        //use_PercentageLength = aCfg.getBoolean("use_PercentageLength");
         // the minimal length (in seconds) of gap in schedule since when the "on demand" optimization is executed
         gap_length = aCfg.getInt("gap_length");
+        pin_duration = aCfg.getInt("pin_duration");
+        boolean[] pinJobs = aCfg.getBooleanArray("pinJobs");
+        fast_schedule_compression = aCfg.getBoolean("fast_schedule_compression");
         // the weight of the fairness criteria in objective function
         int weight_of_fairness[] = aCfg.getIntArray("weight_of_fairness");
 
@@ -553,20 +574,13 @@ public class ExperimentSetup {
         on_demand_time_limit = aCfg.getInt("on_demand_time_limit");
         // time limit for optimization during regular periodic optimization
         time_limit = aCfg.getInt("time_limit");
-        // factor by which the previous runtime is increased when historical estimates are used
-        runtime_multiplicator = aCfg.getInt("runtime_multiplicator");
-
-
-        // used only when executed on a real cluster (do not change)
-        path = aCfg.getString("path");
-        
 
         // creates Result Collector
         result_collector = new ResultCollector(results, problem);
         System.out.println("Working directory: " + System.getProperty("user.dir"));
-        
+
         //folder for all results
-        dir[0]="results";
+        dir[0] = "results";
         File resultsFile = new File(ExperimentSetup.getDir(DirectoryLevel.RESULT_ROOT));
         if (!resultsFile.exists()) {
             resultsFile.mkdir();
@@ -576,9 +590,9 @@ public class ExperimentSetup {
         dir[1] = getDate();
         File runDirF = new File(ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT));
         runDirF.mkdir();
-        
+
         System.out.println("result root: " + runDirF.getPath());
-        
+
         //copies the configuration file to the new folder
         File configurationF = aCfg.getFile();
         File destinationF = new File(ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT) + File.separator + aCfg.getFileName());
@@ -594,21 +608,21 @@ public class ExperimentSetup {
             //File graphs = new File(user_dir + File.separator + ExperimentSetup.getDir(DirectoryLevel.EXPERIMENT_ROOT) + File.separator + "graphs");
             File graphs = new File(ExperimentSetup.getDirG(DirectoryLevel.DATA_SET));
             graphs.mkdir();
-            
+
         }
-        
+
         String[] pluginsString = aCfg.getStringArray("plugins");
         List<Map<String, String>> pluginConfigurations = new ArrayList<Map<String, String>>();
         String[] pluginHeaders = new String[pluginsString.length];
-        
+
         //loads pluginConfigurations from config file
-        for (int i=0; i<pluginsString.length; i++) {
+        for (int i = 0; i < pluginsString.length; i++) {
             Map<String, String> plugincfg = aCfg.getPluginConfiguration(i);
             String header = plugincfg.get(PluginConfiguration.RESULT_HEADER);
             pluginHeaders[i] = header;
-            pluginConfigurations.add(plugincfg);      
+            pluginConfigurations.add(plugincfg);
         }
-        
+
         // this cycle selects data set from data_sets[] list
         for (int set = 0; set < data_sets.length; set++) {
             //creates new folder for each data set in the new setup folder
@@ -616,15 +630,15 @@ public class ExperimentSetup {
             dir[2] = data_sets[set] + "_" + date;
             File dataSetDirF = new File(ExperimentSetup.getDir(DirectoryLevel.DATA_SET));
             dataSetDirF.mkdir();
-            
+
             dirG[3] = data_sets[set] + "_" + date;
             File dataSetGraphs = new File(ExperimentSetup.getDirG(DirectoryLevel.ALGORITHM));
             dataSetGraphs.mkdir();
             //subDir = dir + File.separator + data_sets[set] + "_" + date;
             //File subDirF = new File(subDir);
             //subDirF.mkdir();
-            
-            if(data_sets[set].equals("sandia.swf")){
+
+            if (data_sets[set].equals("sandia.swf")) {
                 failures = true;
             }
             String prob = problem;
@@ -637,13 +651,12 @@ public class ExperimentSetup {
             // write down the IDs of algorithm that you want to use (FCFS = 0, EDF = 1, EASY = 2, AgresiveBF = 3, CONS compression = 4, PBS PRO = 5, SJF = 6, FairShareFCFS = 7, 
             // (FCFS = 0, EDF = 1, EASY = 2, AgresiveBF = 3, CONS compression = 4, PBS PRO = 5, SJF = 6, FairShareFCFS = 7, 
             // FairShareMetaBackfilling = 8, FairShareCONS = 9, BestGap = 10, BestGap+RandomSearch = 11, FairShareOptimizedMetaBackfilling = 12
-            // 18 = CONS+Tabu Search, 19 = CONS + Gap Search, 20 = CONS + RandomSearch, CONS no compression = 21,
-
+            // 18 = CONS+Tabu Search, 19 = CONS + Gap Search, 20 = CONS + RandomSearch, CONS no compression = 21, FCFS_Plan = 100
             boolean use_anti_starvation[] = aCfg.getBooleanArray("use_anti_starvation");
             boolean estimateAVG[] = aCfg.getBooleanArray("estimateAVG");
             boolean estimateLAST[] = aCfg.getBooleanArray("estimateLAST");
             boolean estimatePERC[] = aCfg.getBooleanArray("estimatePERC");
-            boolean estimateMPERC[] = aCfg.getBooleanArray("estimateMinPERC");
+            boolean estimateMPERC[] = aCfg.getBooleanArray("estimateMaxPERC");
             boolean estimate[] = aCfg.getBooleanArray("estimate");
             boolean use_resource_spec_packing[] = aCfg.getBooleanArray("use_resource_spec_packing");
             int skip[] = aCfg.getIntArray("skip");
@@ -657,20 +670,21 @@ public class ExperimentSetup {
                             Integer.toString(myCal.get(Calendar.MINUTE)) + ":" + Integer.toString(myCal.get(Calendar.SECOND)) + ").");
                 }
             }*/
-            
+
             int algorithms[] = aCfg.getIntArray("algorithms");
 
             // select which algorithms from the algorithms[] list will be used.
             for (int sel_alg = 0; sel_alg < algorithms.length; sel_alg++) {
 
                 anti_starvation = use_anti_starvation[sel_alg];
-                
+
                 use_AvgLength = estimateAVG[sel_alg];
                 use_LastLength = estimateLAST[sel_alg];
                 use_PercentageLength = estimatePERC[sel_alg];
-                use_MinPercentageLength = estimateMPERC[sel_alg];
+                use_MaxPercentageLength = estimateMPERC[sel_alg];
                 estimates = estimate[sel_alg];
-                
+                pinJob = pinJobs[sel_alg];
+
                 resource_spec_packing = use_resource_spec_packing[sel_alg];
                 skipJob = skip[set];
                 firstArrival = timeskip[set];
@@ -693,11 +707,9 @@ public class ExperimentSetup {
 
                 // used for output description
                 String suff = "";
-                
+
                 // initialize the simulation - create the scheduler
-                
-                
-                String scheduler_name = "Alea_3.0_scheduler";
+                String scheduler_name = "Alea_Job_Scheduler";
                 try {
                     Calendar calendar = Calendar.getInstance();
                     boolean trace_flag = false;  // true means tracing GridSim events
@@ -727,18 +739,20 @@ public class ExperimentSetup {
                     // fixed version of EASY Backfilling
                     suff = "EASY";
                 }
+                
                 if (alg == 3) {
-                    policy = new AggressiveBackfilling(scheduler);
+                    policy = new AggressiveBackfillingFastDeepHold(scheduler);
                     // Backfilling without a reservation
-                    suff = "Aggressive-Backfill";
+                    suff = "Aggressive-Backfill-Fast-Deep-Hold";
                 }
                 if (alg == 4) {
                     policy = new CONS(scheduler);
                     // Conservative backfilling (no RAM support)
                     use_compresion = true;
+                    use_gaps = true;
                     suff = "CONS+compression";
                 }
-                
+
                 if (alg == 5) {
                     policy = new PBS_PRO(scheduler);
                     // do not use PBS-PRO on other than "metacentrum.mwf" data - not enough information is available.
@@ -862,12 +876,11 @@ public class ExperimentSetup {
                     }
                 }
 
-                
                 if (alg == 21) {
                     suff = "CONS-no-compress";
                     policy = new CONS(scheduler);
                 }
-                
+
                 if (alg == 22) {
                     policy = new Fairshare_EASY_Backfilling(scheduler);
                     // fixed version of EASY Backfilling
@@ -881,42 +894,52 @@ public class ExperimentSetup {
                     use_compresion = true;
                     suff = "CONS-Fair-compr.";
                 }
+                if (alg == 100) {
+                    policy = new FCFS_Plan(scheduler);
+                    // Plan build by FCFS (no RAM support)
+                    use_compresion = false; //no need for that (gaps are not used)
+                    use_gaps = false;
+                    suff = "FCFS_Plan";
+                    if(!estimates){
+                        pinJob = false;
+                    }
+                }
 
-                dirG[4] = (sel_alg+1) + "-" + suff;
+                dirG[4] = (sel_alg + 1) + "-" + suff;
                 File algDirGraphs = new File(ExperimentSetup.getDirG(DirectoryLevel.GRAPHSALG));
-                algDirGraphs.mkdir();               
-                
-                dir[3] = (sel_alg+1) + "-" + suff;
+                algDirGraphs.mkdir();
+
+                dir[3] = (sel_alg + 1) + "-" + suff;
                 File algDirF = new File(ExperimentSetup.getDir(DirectoryLevel.ALGORITHM));
                 algDirF.mkdir();
-                if(estimates){
-                    suff+="-EST";
-                }                
-                
-                if(use_AvgLength){
-                    suff+="-AVG-L";
+                if (estimates) {
+                    suff += "-EST";
                 }
-                if(use_LastLength){
-                    suff+="-LAST-L";
+
+                if (use_AvgLength) {
+                    suff += "-AVG-L";
                 }
-                if(use_PercentageLength){
-                    suff+="-PERC-L";
+                if (use_LastLength) {
+                    suff += "-LAST-L";
                 }
-                if(use_MinPercentageLength){
-                    suff+="-MinPERC-L";
+                if (use_PercentageLength) {
+                    suff += "-PERC-L";
+                }
+                if (use_MaxPercentageLength) {
+                    suff += "-MaxPERC-L";
                 }
                 result_collector.deleteSchedResults(suff);//originally in Scheduler constructor
-                
+
                 System.out.println("Now scheduling " + total_gridlet[set] + " jobs by: " + suff + ", using " + data_sets[set] + " data set.");
 
                 suff += "@" + data_sets[set];
-                
+
                 // this cycle may be used when some modifications of one data set are required in multiple runs of Alea 3.0 over same data-set.
                 for (int pass_count = 1; pass_count <= experiment_count; pass_count++) {
                     List<Plugin> plugins = new ArrayList<Plugin>();
                     //create instances of plugins and add them to the list
                     //if the plugin implementation is outside this project, the classpath should be entered. If not, we suppose it is in the package plugins of this project.
-                    for (int i = 0; i< pluginsString.length; i++) {
+                    for (int i = 0; i < pluginsString.length; i++) {
                         String pluginString = pluginsString[i];
                         if (!pluginString.contains(".")) {
                             pluginString = "xklusac.plugins." + pluginString;
@@ -926,7 +949,7 @@ public class ExperimentSetup {
                         plugins.add(pl);
                     }
                     result_collector.setPlugins(plugins);
-                    
+
                     avail_RAM = 0;
                     avail_CPUs = 0;
 
@@ -943,7 +966,7 @@ public class ExperimentSetup {
                         // creates all grid resources
                         MachineLoader m_loader = new MachineLoader(10000, 3.0, data_sets[set]);
                         rnd_seed = sel_alg;
-                        System.out.println("The system has "+Math.round(avail_CPUs) + " CPUs and " + Math.round(avail_RAM/(1024*1024))+" GBs of RAM.");
+                        System.out.println("The system has " + Math.round(avail_CPUs) + " CPUs and " + Math.round(avail_RAM / (1024 * 1024)) + " GBs of RAM.");
 
                         // creates job loader
                         JobLoader job_loader = new JobLoader(job_loader_name, baudRate, total_gridlet[set], data_sets[set], maxPE, minPErating, maxPErating,
@@ -955,8 +978,8 @@ public class ExperimentSetup {
                             FailureLoaderNew failure = new FailureLoaderNew(failure_loader_name, baudRate, data_sets[set], clusterNames, machineNames, 0);
                         }
                         // start the simulation
-                        System.out.println("Starting simulation using Alea "+alea_version);
-                        
+                        System.out.println("Starting simulation using Alea " + alea_version);
+
                         GridSim.startGridSimulation();
                     } catch (Exception e) {
                         System.out.println("Unwanted errors happened!");
@@ -991,7 +1014,7 @@ public class ExperimentSetup {
                     result_collector.reset();
                     results.clear();
                     System.out.println("Max. estimate has been used = " + max_estim + " backfilled jobs = " + backfilled);
-                    System.gc();                    
+                    System.gc();
                 }
             }
         }

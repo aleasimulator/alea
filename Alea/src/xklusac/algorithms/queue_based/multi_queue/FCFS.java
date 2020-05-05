@@ -67,7 +67,7 @@ public class FCFS implements SchedulingPolicy {
                     gi.setResourceID(r_cand.resource.getResourceID());
                     scheduler.submitJob(gi.getGridlet(), r_cand.resource.getResourceID());
                     r_cand.is_ready = true;
-                    //scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.GRIDLET_SENT, gi);
+                    //scheduler.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.GRIDLET_SENT, gi);
                     //System.out.println(gi.getID()+": sended on res="+r_cand.resource.getResourceName()+" resFree="+r_cand.getNumFreePE()+" req="+gi.getNumPE()+" prop="+gi.getProperties());
                     scheduled++;
                     r_cand = null;

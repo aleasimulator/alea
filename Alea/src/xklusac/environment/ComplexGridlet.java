@@ -1,6 +1,7 @@
 package xklusac.environment;
 
 import gridsim.*;
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 /**
@@ -11,6 +12,34 @@ import java.util.LinkedList;
  * @author Dalibor Klusacek
  */
 public class ComplexGridlet extends Gridlet {
+
+    /**
+     * @return the predicted_wait
+     */
+    public double getPredicted_wait() {
+        return predicted_wait;
+    }
+
+    /**
+     * @param predicted_wait the predicted_wait to set
+     */
+    public void setPredicted_wait(double predicted_wait) {
+        this.predicted_wait = predicted_wait;
+    }
+
+    /**
+     * @return the predicted_runtime
+     */
+    public double getPredicted_runtime() {
+        return predicted_runtime;
+    }
+
+    /**
+     * @param predicted_runtime the predicted_runtime to set
+     */
+    public void setPredicted_runtime(double predicted_runtime) {
+        this.predicted_runtime = predicted_runtime;
+    }
 
     /**
      * required architecture
@@ -55,18 +84,24 @@ public class ComplexGridlet extends Gridlet {
     private String properties;
     private boolean repeated;
     private String user = "";
-    private LinkedList<Integer> PEs = new LinkedList();
+    private ArrayList<Integer> PEs = new ArrayList();
     private long job_limit;
     private double expectedFinishtime;
     private double percentage;
     private long ram;
     private int numNodes;
     private int ppn;
-    private boolean backfilled;
+    private int backfilled;
+    private int cons_backfilled;
+    private double predicted_wait = -1.0;
+    private double predicted_runtime = -1.0;
 
     private String onJobStart = null;
     private String onJobCompl = null;
     private String onJobFail = null;
+    private double underestimated_by = 0.0;
+    private int prolonged = 0;
+    
 
     public String getOnJobStart() {
         return onJobStart;
@@ -91,6 +126,11 @@ public class ComplexGridlet extends Gridlet {
     public void setOnJobFail(String agent) {
         onJobFail = agent;
     }
+    
+    private double last_alloc_time = -1.0;
+    private double last_node_time = -1.0;
+    
+    private ArrayList<Integer> precedingJobs = null;
 
     /**
      * Creates a new instance of ComplexGridlet representing one Job
@@ -111,7 +151,8 @@ public class ComplexGridlet extends Gridlet {
      */
     public ComplexGridlet(int gridletID, String user, long job_limit, double gridletLength, double estimatedLength, long gridletFileSize,
             long gridletOutputSize, String oSrequired, String archRequired,
-            double arrival_time, double due_date, int priority, int numPE, double estMach, String queue, String properties, double percentage, long ram, int numNodes, int ppn) {
+            double arrival_time, double due_date, int priority, int numPE, double estMach, String queue, String properties, 
+            double percentage, long ram, int numNodes, int ppn, ArrayList precedingJobs) {
         // call Gridlet constructor
         super(gridletID, gridletLength, gridletFileSize, gridletOutputSize);
         this.setOpSystemRequired(oSrequired);
@@ -133,6 +174,15 @@ public class ComplexGridlet extends Gridlet {
         this.setRam(ram);
         this.setPpn(ppn);
         this.setNumNodes(numNodes);
+        this.setPredicted_runtime(-1.0);
+        this.setPredicted_wait(-1.0);       
+        this.setLast_alloc_time(-1.0);
+        this.setLast_node_time(-1.0);
+        this.setBackfilled(0);
+        this.setCons_backfilled(0);
+        this.setUnderestimated_by(0.0);
+        this.setProlonged(0);
+        this.setPrecedingJobs(precedingJobs);
     }
 
     /**
@@ -285,12 +335,23 @@ public class ComplexGridlet extends Gridlet {
         this.user = user;
     }
 
-    public LinkedList<Integer> getPEs() {
+    public ArrayList<Integer> getPEs() {
         return PEs;
     }
 
-    public void setPEs(LinkedList<Integer> PEs) {
+    public void setPEs(ArrayList<Integer> PEs) {
         this.PEs = PEs;
+    }
+    public String getPlannedPEsString() {
+        String pes = "";
+        for (int i = 0; i < PEs.size(); i++) {
+            if (i < this.PEs.size() - 1) {
+                pes += PEs.get(i) + ",";
+            } else {
+                pes += PEs.get(i) + "";
+            }
+        }
+        return pes;
     }
 
     public long getJobLimit() {
@@ -363,15 +424,99 @@ public class ComplexGridlet extends Gridlet {
     /**
      * @return the backfilled
      */
-    public boolean isBackfilled() {
+    public int isBackfilled() {
         return backfilled;
     }
 
     /**
      * @param backfilled the backfilled to set
      */
-    public void setBackfilled(boolean backfilled) {
+    public void setBackfilled(int backfilled) {
         this.backfilled = backfilled;
+    }
+
+    /**
+     * @return the last_alloc_time
+     */
+    public double getLast_alloc_time() {
+        return last_alloc_time;
+    }
+
+    /**
+     * @param last_alloc_time the last_alloc_time to set
+     */
+    public void setLast_alloc_time(double last_alloc_time) {
+        this.last_alloc_time = last_alloc_time;
+    }
+
+    /**
+     * @return the last_node_time
+     */
+    public double getLast_node_time() {
+        return last_node_time;
+    }
+
+    /**
+     * @param last_node_time the last_node_time to set
+     */
+    public void setLast_node_time(double last_node_time) {
+        this.last_node_time = last_node_time;
+    }
+
+    /**
+     * @return the cons_backfilled
+     */
+    public int isCons_backfilled() {
+        return cons_backfilled;
+    }
+
+    /**
+     * @param cons_backfilled the cons_backfilled to set
+     */
+    public void setCons_backfilled(int cons_backfilled) {
+        this.cons_backfilled = cons_backfilled;
+    }
+
+    /**
+     * @return the underestimated_by
+     */
+    public double getUnderestimated_by() {
+        return underestimated_by;
+    }
+
+    /**
+     * @param underestimated_by the underestimated_by to set
+     */
+    public void setUnderestimated_by(double underestimated_by) {
+        this.underestimated_by = underestimated_by;
+    }
+
+    /**
+     * @return the prolonged
+     */
+    public int getProlonged() {
+        return prolonged;
+    }
+
+    /**
+     * @param prolonged the prolonged to set
+     */
+    public void setProlonged(int prolonged) {
+        this.prolonged = prolonged;
+    }
+
+    /**
+     * @return the precedingJobs
+     */
+    public ArrayList<Integer> getPrecedingJobs() {
+        return precedingJobs;
+    }
+
+    /**
+     * @param precedingJobs the precedingJobs to set
+     */
+    public void setPrecedingJobs(ArrayList<Integer> precedingJobs) {
+        this.precedingJobs = precedingJobs;
     }
 
 }

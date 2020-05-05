@@ -66,7 +66,17 @@ public class Scheduler extends GridSim {
      * incoming job queue
      */
     public static LinkedList<GridletInfo> queue = new LinkedList();
+
+    public static LinkedList<GridletInfo> hold_queue = new LinkedList();
+
+    public static LinkedList<GridletInfo> tried_queue = new LinkedList();
+
+    public static LinkedList<GridletInfo> DAG_queue = new LinkedList();
+    public static LinkedList<Integer> unfinished_predecessors = new LinkedList();
+
     public static LinkedList<String> all_queues_names = new LinkedList();
+
+    public static boolean schedule_too_long = false;
     /**
      * incoming job queue
      */
@@ -633,8 +643,6 @@ public class Scheduler extends GridSim {
                     // Get Resource Characteristic Info
                     ComplexResourceCharacteristics res = (ComplexResourceCharacteristics) super.getResourceCharacteristics(res_id);
                     ResourceInfo ri = new ResourceInfo(res);
-                    cl_names.add(ri.resource.getResourceName());
-                    cl_CPUs.add(ri.resource.getNumPE());
 
                     // increase number of available PEs
                     availPEs += ri.resource.getNumPE() * ri.resource.getMIPSRatingOfOnePE();
@@ -650,20 +658,28 @@ public class Scheduler extends GridSim {
                             if (ri.resource.getNumPE() >= rj.resource.getNumPE()) {
                                 if (ri.resource.getNumPE() == rj.resource.getNumPE() && ri.resource.getMIPSRatingOfOnePE() > rj.resource.getMIPSRatingOfOnePE()) {
                                     resourceInfoList.add(j, ri);
+                                    cl_names.add(j, ri.resource.getResourceName());
+                                    cl_CPUs.add(j, ri.resource.getNumPE());
                                     break;
                                 }
                                 if (ri.resource.getNumPE() > rj.resource.getNumPE()) {
                                     resourceInfoList.add(j, ri);
+                                    cl_names.add(j, ri.resource.getResourceName());
+                                    cl_CPUs.add(j, ri.resource.getNumPE());
                                     break;
                                 }
                             }
                             if (j == resourceInfoList.size() - 1) {
                                 resourceInfoList.add(ri);
+                                cl_names.add(ri.resource.getResourceName());
+                                cl_CPUs.add(ri.resource.getNumPE());
                                 break;
                             }
                         }
                     } else {
                         resourceInfoList.add(ri);
+                        cl_names.add(ri.resource.getResourceName());
+                        cl_CPUs.add(ri.resource.getNumPE());
                     }
                 }
                 ResourceInfo best = (ResourceInfo) resourceInfoList.get(0);
@@ -712,7 +728,8 @@ public class Scheduler extends GridSim {
             super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.FAIRSHARE_WEIGHT_DECAY);
         }
         // periodic update of fairshare weights according to currently running jobs
-        double fairdelay = 100 - GridSim.clock();
+        double fairdelay = 3600.0;
+        //System.out.println("Fairdelay: " + fairdelay);
         super.sim_schedule(this.getEntityId(this.getEntityName()), fairdelay, AleaSimTags.FAIRSHARE_UPDATE);
         //super.sim_schedule(this.getEntityId(this.getEntityName()), fairdelay + 2, AleaSimTags.SCHEDULER_PRINT_FIRST_JOB_IN_QUEUE);
 
@@ -818,7 +835,7 @@ public class Scheduler extends GridSim {
             if (ev.get_tag() == AleaSimTags.SUBMISSION_DONE) {
                 end_of_submission = true;
                 this.submitted = (Integer) ev.get_data();
-                System.out.println("End of submission... " + in_job_counter + " arrived, > received " + received + " subm = " + submitted);
+                System.out.println("End of new job submissions from JOB LOADER recorded by scheduler... " + in_job_counter + " jobs arrived. So far received " + received + " jobs. Submitted jobs = " + submitted);
                 continue;
             }
 
@@ -866,6 +883,9 @@ public class Scheduler extends GridSim {
                 continue;
             }
             if (ev.get_tag() == AleaSimTags.EVENT_SCHEDULE) {
+                /*if(ev.get_data()!=null){
+                    System.out.println(GridSim.clock()+": SCHEDULER: scheduling due to: "+ev.get_data());
+                }*/
 
                 // do another scheduling round
                 if (prev_scheduled == 0) {
@@ -893,6 +913,65 @@ public class Scheduler extends GridSim {
             // gridlet was finished. Get it, record results and do another scheduling run
             if (ev.get_tag() == GridSimTags.GRIDLET_RETURN) {
                 ComplexGridlet gridlet_received = (ComplexGridlet) ev.get_data();
+                // remove job from schedule on resource
+                for (int j = 0; j < resourceInfoList.size(); j++) {
+                    ResourceInfo ri = (ResourceInfo) resourceInfoList.get(j);
+                    if (gridlet_received.getResourceID() == ri.resource.getResourceID()) {
+                        // we lower the load of resource, update info about overall tardiness and exit cycle
+
+                        ri.lowerResInExec(gridlet_received.getGridletID(), gridlet_received.getUserID());
+                        double g_tard = Math.max(0, gridlet_received.getFinishTime() - gridlet_received.getDue_date());
+                        ri.prev_tard += g_tard;
+                        if (g_tard <= 0.0) {
+                            ri.prev_score++;
+                        }
+                        break;
+                    }
+                }
+                
+                System.out.println("[SCHEDULER] Job "+gridlet_received.getGridletID() + " from "+gridlet_received.getArchRequired()+" returned completed at sim. time = "+GridSim.clock());
+
+                // update and possibly reschedule jobs that were waiting for their predecessors to be finished first
+                if (!DAG_queue.isEmpty()) {
+                    boolean returned = updateDAGqueueUponJobComplete(gridlet_received);
+                    if (returned && prev_scheduled == 0) {
+                        super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
+                    }
+                }
+                
+            
+
+                // return jobs that were previously unable to run to the normal queue
+                if (tried_queue.size() > 0) {
+                    int return_counter = 0;
+                    while (tried_queue.size() > 0 && return_counter < 100) {
+                        GridletInfo gi = tried_queue.removeFirst();
+                        //System.out.println(gi.getID() + ": is returned to the normal queue.");
+                        return_counter++;
+                        ExperimentSetup.policy.addNewJob(gi);
+                    }
+                    if (prev_scheduled == 0) {
+                        super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
+                        //scheduleGridlets();
+                    }
+                }
+
+                if (hold_queue.size() > 0 && ExperimentSetup.limit_schedule_size) {
+                    //System.out.println("hold queue, job end: "+GridSim.clock());
+                    updateResourceInfos(clock(), "hold queue");
+                    //(getScheduleSize() > ExperimentSetup.max_schedule_size || (classic_availPEs * ExperimentSetup.max_schedule_CPU_request_factor) < getScheduleCPUSize())
+                    while (hold_queue.size() > 0 && ((classic_availPEs * ExperimentSetup.max_schedule_CPU_request_factor) > getScheduleCPUSize() && !schedule_too_long)) {
+                        GridletInfo gi = hold_queue.removeFirst();
+                        //System.out.println(gi.getID() + ": is returned. Requested " + getScheduleCPUSize() + " CPUs by " + getScheduleSize() + " jobs in schedule.");
+                        ExperimentSetup.policy.addNewJob(gi);
+                        if (prev_scheduled == 0) {
+                            super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
+                            //scheduleGridlets();
+                        }
+                    }
+                }
+
+                //System.out.println(gridlet_received.getGridletID() + " finished at: " + GridSim.clock());
                 boolean optimize = false;
 
                 if (ExperimentSetup.use_queues) {
@@ -923,8 +1002,9 @@ public class Scheduler extends GridSim {
                     if (ExperimentSetup.fix_alg != null) {
                         if (gridlet_received.getExpectedFinishTime() > gridlet_received.getFinishTime() && gridlet_received.getFinishTime() >= 0) {
                             double diff = gridlet_received.getExpectedFinishTime() - gridlet_received.getFinishTime();
+                            //System.out.println("shorter than expected");
                             // job finished earlier than expected - do optimization of schedule if the gap is large enough
-                            updateResourceInfos(clock());
+                            updateResourceInfos(clock(), "shorter than expected");
                             if (diff > ExperimentSetup.gap_length) {
                                 //System.out.println("SHORTER actual time hole...");
                                 optimize = true;
@@ -933,7 +1013,8 @@ public class Scheduler extends GridSim {
                         if (!optimize && ExperimentSetup.use_LastLength && gridlet_received.getExpectedFinishTime() < gridlet_received.getFinishTime() && gridlet_received.getFinishTime() >= 0) {
                             double diff = gridlet_received.getFinishTime() - gridlet_received.getExpectedFinishTime();
                             // job finished later than expected - do optimization of schedule if the gap is large enough
-                            updateResourceInfos(clock());
+                            //System.out.println("longer");
+                            updateResourceInfos(clock(), "longer");
                             if (diff > ExperimentSetup.gap_length) {
                                 //System.out.println("Later by: "+Math.round(diff)+" seconds.");
                                 optimize = true;
@@ -945,25 +1026,52 @@ public class Scheduler extends GridSim {
                         if (gridlet_received.getExpectedFinishTime() > gridlet_received.getFinishTime() && gridlet_received.getFinishTime() >= 0) {
                             double diff = gridlet_received.getExpectedFinishTime() - gridlet_received.getFinishTime();
                             // job finished earlier than expected - do compression of schedule
-                            if (diff > 60.0) {
+                            if (diff > ExperimentSetup.gap_length) {
                                 int id = gridlet_received.getResourceID();
-                                compressSchedule(id);
+                                if (ExperimentSetup.fast_schedule_compression) {
+                                    compressScheduleFast(id);
+                                } else {
+                                    compressSchedule(id);
+                                }
                             }
                         }
                     }
+
                 }
+
+                // update job's allocations when previous job finished earlier (avoid CPU-mapping mismatch)
+                if (!ExperimentSetup.use_compresion && ExperimentSetup.estimates) {
+                    if (gridlet_received.getExpectedFinishTime() > gridlet_received.getFinishTime() && gridlet_received.getFinishTime() >= 0) {
+                        double diff = gridlet_received.getExpectedFinishTime() - gridlet_received.getFinishTime();
+                        // job finished earlier than expected - update job's CPU allocations in schedule
+                        if (diff > 0.0) {
+                            int id = gridlet_received.getResourceID();
+                            //System.out.println(GridSim.clock() + ": gi:" + gridlet_received.getGridletID() + ": Updating schedule due to earlier completion. "
+                            //       + "Diff: " + diff + " estL:" + gridlet_received.getEstimatedLength() + " actF:" + gridlet_received.getFinishTime() + " estF:" + gridlet_received.getExpectedFinishTime());
+
+                            //System.out.println(GridSim.clock() + ": completes: " + gridlet_received.getGridletID() + " EARLIER than exp. | releasing: " + gridlet_received.getPlannedPEsString());
+                            updateScheduleOnRes(id);
+
+                        }
+                    }
+                }
+                //System.out.println("************************");
+                //System.out.println(GridSim.clock() + ": completes: " + gridlet_received.getGridletID() + " releasing: " + gridlet_received.getPlannedPEsString() + " FREE: " + this.getFreeCPUs());
+                //System.out.println("************************");
 
                 rc.addFinishedJobToResults(gridlet_received, resourceInfoList);
 
                 // update of user's resource consuption
                 updateLengthStatistics(gridlet_received, cpu_time);
 
-                if (received % 100 == 0) {
+                if (received % 10 == 0) {
                     /*if ((algorithm >= 9 && algorithm != 12) || algorithm == 4) {
                         System.out.println("<<< " + received + " so far completed, in schedule = " + getScheduleSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs free CPUs = " + getFreeCPUs());
                     } else {*/
                     String dated = new java.text.SimpleDateFormat("dd-MM-yyyy").format(new java.util.Date(Math.round(clock()) * 1000));
-                    System.out.println("<<< " + received + " so far completed, in queue/schedule = " + getQueueSize() + " jobs, requiring = " + getQueueCPUSize() + " CPUs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs free CPUs = " + getFreeCPUs() + ", Day: " + dated);
+                    System.out.println("<<< " + received + " so far completed, in queue/schedule = " + getQueueSize() + " jobs, requiring = " + getQueueCPUSize() +
+                            " CPUs, held jobs = " + hold_queue.size() + ", at time = " + Math.round(clock()) + " running = " + getRunningJobs() +
+                            " jobs free CPUs = " + getFreeCPUs() + ", Free RAM = " + Math.round(getFreeRAM() / (1024.0 * 1024)) + " GB, Day: " + dated + ", tried jobs = " + tried_queue.size());
                     /*
                          * Enumeration keys = ExperimentSetup.queues.keys(); int
                          * avail = 0; int used = 0; for (int i = 0; i <
@@ -1074,17 +1182,48 @@ public class Scheduler extends GridSim {
                 Date d = new Date();
                 clock1 = d.getTime();
 
-                // call scheduling algorithm here
-                ExperimentSetup.policy.addNewJob(gi);
+                // if job has no predecessors, handle it normally
+                if (gi.getPrecedingJobs().size() == 0) {
+                    // call scheduling algorithm here
+                    if (((classic_availPEs * ExperimentSetup.max_schedule_CPU_request_factor) < getScheduleCPUSize() || schedule_too_long) && ExperimentSetup.limit_schedule_size) {
+                        //System.out.println(gi.getID() + ": is held at time: " + GridSim.clock() + ". Requested " + getScheduleCPUSize() + " CPUs by " + getScheduleSize() + " jobs in schedule. Too long:" + schedule_too_long);
+                        hold_queue.add(gi);
+                        //updateResourceInfos(clock());
+                        //super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
+                    } else {
+                        // add job normally
+                        ExperimentSetup.policy.addNewJob(gi);
+                    }
+                } else {
+                    //check predecessors
+                    boolean add_to_DAG_queue = false;
+                    for (int pr = 0; pr < gi.getPrecedingJobs().size(); pr++) {
+                        int predecessor = gi.getPrecedingJobs().get(pr);
+                        if (unfinished_predecessors.contains(predecessor)) {
+                            add_to_DAG_queue = true;
+                        }
+                    }
+                    // add job to DAG queue of jobs waiting for completed predecessors
+                    if (add_to_DAG_queue) {
+                        System.out.println("[SCHEDULER] Job "+gi.getID() + " from "+gi.getGridlet().getArchRequired()+" added to DAG waiting queue -> waiting for completion of jobs: " + gi.getPrecedingJobs().toString());
+                        DAG_queue.add(gi);
+                    } else {
+                        // add job normally
+                        ExperimentSetup.policy.addNewJob(gi);
+                    }
+
+                }
 
                 // write on screen info so that the simulation progress can be seen
-                if (in_job_counter % 100 == 0) {
+                if (in_job_counter % 10 == 0) {
                     /*if ((algorithm >= 9 && algorithm != 12) || algorithm == 4) {
                         System.out.println(">>> " + in_job_counter + " so far arrived, in schedule = " + getScheduleSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + "jobs,  FREE CPUs = " + getFreeCPUs());
                     } else {*/
-                    String dated = new java.text.SimpleDateFormat("dd-MM-yyyy").format(new java.util.Date(Math.round(clock()) * 1000));
+                    String dated = new java.text.SimpleDateFormat("dd-MM-yyyy-hh:mm:ss").format(new java.util.Date(Math.round(clock()) * 1000));
                     //System.out.println(">>> " + in_job_counter + " so far arrived, in queue = " + getQueueSize() + " jobs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs, free CPUs = " + getFreeCPUs() + ", #" + queue.getFirst().getID() + " is the first waiting job in queue. Day: " + dated);
-                    System.out.println(">>> " + in_job_counter + " so far arrived, in queue/schedule = " + getQueueSize() + " jobs, requiring = " + getQueueCPUSize() + " CPUs, at time = " + Math.round(clock()) + " running = " + getRunningJobs() + " jobs, free CPUs = " + getFreeCPUs() + ", Day: " + dated);
+                    System.out.println(">>> " + in_job_counter + " so far arrived, in queue/schedule = " + getQueueSize() + " jobs, requiring = " + getQueueCPUSize()
+                            + " CPUs, held jobs = " + hold_queue.size() + ", at time = " + Math.round(clock()) + " running = " + getRunningJobs()
+                            + " jobs, free CPUs = " + getFreeCPUs() + ", Free RAM = " + Math.round(getFreeRAM() / (1024.0 * 1024)) + " GB, Day: " + dated + ", tried jobs = " + tried_queue.size());
 
                 }
 
@@ -1094,7 +1233,9 @@ public class Scheduler extends GridSim {
                 clock += clock2 - clock1;
 
                 // try to schedule according to prepared queue/schedule
+                //System.out.println(GridSim.clock() + ": Try Scheduling gridlets from schedule of size: " + getQueueSize() + " prev_scheduled = " + prev_scheduled);
                 if (prev_scheduled == 0) {
+                    //System.out.println(GridSim.clock() + ": Scheduling gridlets from schedule of size: " + getQueueSize());
                     super.sim_schedule(this.getEntityId(this.getEntityName()), 0.0, AleaSimTags.EVENT_SCHEDULE);
                     //scheduleGridlets();
                 }
@@ -1144,7 +1285,24 @@ public class Scheduler extends GridSim {
         Date d = new Date();
         clock1 = d.getTime();
         // try to schedule according to prepared queue/schedule
-        prev_scheduled = ExperimentSetup.policy.selectJob();
+        /*System.out.println(GridSim.clock() + " OK, scheduling from following schedule:");
+        for (int i = 0; i < resourceInfoList.size(); i++) {
+            ResourceInfo ri = (ResourceInfo) resourceInfoList.get(i);
+            ri.printSchedule();
+        }*/
+        for (int i = 0; i < resourceInfoList.size(); i++) {
+            ResourceInfo ri = (ResourceInfo) resourceInfoList.get(i);
+            for (int jobID = 0; jobID < ri.resInExec.size(); jobID++) {
+                GridletInfo gi = ri.resInExec.get(jobID);
+                // job exceeds its runtime - perform prolongation
+                if (gi.getExpectedFinishTime() <= (GridSim.clock() + 0.1)) {
+                    ri.forceUpdate(GridSim.clock());
+                    break;
+                }
+            }
+        }
+
+        prev_scheduled += ExperimentSetup.policy.selectJob();
         Date d2 = new Date();
         clock2 = d2.getTime();
         clock += clock2 - clock1;
@@ -1185,6 +1343,19 @@ public class Scheduler extends GridSim {
             runningJobs += ri.resInExec.size();
         }
         return runningJobs;
+    }
+
+    private long getFreeRAM() {
+        long freeRAM = 0;
+        for (int i = 0; i < resourceInfoList.size(); i++) {
+            ResourceInfo ri = (ResourceInfo) resourceInfoList.get(i);
+            MachineList machines = ri.resource.getMachineList();
+            for (int ii = 0; ii < machines.size(); ii++) {
+                MachineWithRAM machine = (MachineWithRAM) machines.get(ii);
+                freeRAM += machine.getFreeRam();
+            }
+        }
+        return freeRAM;
     }
 
     private int getFreeCPUs() {
@@ -1255,11 +1426,29 @@ public class Scheduler extends GridSim {
      * @param current_time current simulation time used to predict total
      * tardiness of all jobs in this moment
      */
+    public static void updateResourceInfos(double current_time, String message) {
+
+        for (int i = 0; i < resourceInfoList.size(); i++) {
+            ResourceInfo ri = (ResourceInfo) resourceInfoList.get(i);
+            ri.update(current_time, "up res infos from:" + message);
+
+        }
+    }
+
     public static void updateResourceInfos(double current_time) {
 
         for (int i = 0; i < resourceInfoList.size(); i++) {
             ResourceInfo ri = (ResourceInfo) resourceInfoList.get(i);
-            ri.update(current_time);
+            ri.update(current_time, "up res infos from:");
+
+        }
+    }
+
+    public static void forceUpdateResourceInfos(double current_time) {
+
+        for (int i = 0; i < resourceInfoList.size(); i++) {
+            ResourceInfo ri = (ResourceInfo) resourceInfoList.get(i);
+            ri.forceUpdate(current_time);
 
         }
     }
@@ -1513,7 +1702,7 @@ public class Scheduler extends GridSim {
 
         if (!reqs) {
             if (ri.canExecuteEver(gi)) {
-                ri.update(current_time);
+                ri.update(current_time, "new job arrival:" + gi.getID());
                 return true;
             } else {
                 return false;
@@ -1662,6 +1851,7 @@ public class Scheduler extends GridSim {
             } else {
                 HashMap h = gi.getResourceSuitable();
                 h.put(ri.resource.getResourceID(), false);
+                //System.out.println(gi.getID() + ": cannot run on:"+ri.resource.getResourceName()+" CPU=" + cpuok + " RAM=" + ramok + " req: ppn=" + gi.getPpn() + " nodes=" + gi.getNumNodes() + " RAM=" + gi.getRam()+" suit="+isGridletSuitable(ri, gi));
             }
         }
 
@@ -2036,6 +2226,57 @@ public class Scheduler extends GridSim {
     }
 
     /**
+     * Algorithm that quickly compresses the schedule when early job completion
+     * is detected. typically used by Conservative backfilling. Jobs are not
+     * reinserted, just compressed.
+     */
+    private void compressScheduleFast(int resid) {
+        if (!ExperimentSetup.use_fairshare || ExperimentSetup.algID == 4) {
+            ResourceInfo ri = null;
+            double runtime1 = new Date().getTime();
+
+            for (int i = 0; i < resourceInfoList.size(); i++) {
+                ri = (ResourceInfo) resourceInfoList.get(i);
+                if (ri.resource.getResourceID() == resid) {
+                    break;
+                }
+            }
+            ri.stable = false;
+            ri.holes.clear();
+            double current_time = clock();
+            ri.update(current_time);
+
+            runtime += (new Date().getTime() - runtime1);
+            clock += new Date().getTime() - runtime1;
+        } else {
+            // do nothing as the schedule will be compressed via fair-share mechanism
+        }
+    }
+
+    private void updateScheduleOnRes(int resid) {
+        if (!ExperimentSetup.use_fairshare || ExperimentSetup.algID == 100) {
+            ResourceInfo ri = null;
+            double runtime1 = new Date().getTime();
+
+            for (int i = 0; i < resourceInfoList.size(); i++) {
+                ri = (ResourceInfo) resourceInfoList.get(i);
+                if (ri.resource.getResourceID() == resid) {
+                    break;
+                }
+            }
+            ri.stable = false;
+            ri.holes.clear();
+            double current_time = clock();
+            ri.update(current_time, "early compl.");
+
+            runtime += (new Date().getTime() - runtime1);
+            clock += new Date().getTime() - runtime1;
+        } else {
+            // do nothing as the schedule will be compressed via fair-share mechanism
+        }
+    }
+
+    /**
      * This method submits job to a specified resource
      */
     public void submitJob(ComplexGridlet gl, int resID) {
@@ -2043,7 +2284,7 @@ public class Scheduler extends GridSim {
             ExperimentSetup.queues.get(gl.getQueue()).setUsed(ExperimentSetup.queues.get(gl.getQueue()).getUsed() + gl.getNumPE());
         }
         gridletSubmit(gl, resID);
-        //System.out.println(gl.getGridletID()+ " is submitted to "+GridSim.getEntityName(resID)+", FREE CPUs left = " + getFreeCPUs());
+        System.out.println("[SCHEDULER] Job "+gl.getGridletID()+ " from "+gl.getArchRequired()+" is submitted to cluster "+GridSim.getEntityName(resID)+", FREE CPUs left = " + getFreeCPUs()+" at sim. time = "+GridSim.clock());
     }
 
     /**
@@ -2204,5 +2445,32 @@ public class Scheduler extends GridSim {
             }
 
         }
+    }
+
+    private boolean updateDAGqueueUponJobComplete(ComplexGridlet gl) {
+        boolean scheduleNow = false;
+        //first, remove this job from unfinished predecessors
+        int id = gl.getGridletID();
+        if (unfinished_predecessors.contains(id)) {
+            int index = unfinished_predecessors.indexOf(id);
+            System.out.println("[SCHEDULER] Job "+id + " from "+gl.getArchRequired()+" is completed and removed from the list of unfinished predecessors [from position: " + index+"] at sim. time = "+GridSim.clock());
+            unfinished_predecessors.remove(index);
+        }
+        // next, check if waiting jobs have been waiting for it (then remove it from their list)
+        for (int i = 0; i < DAG_queue.size(); i++) {
+            GridletInfo gi = DAG_queue.get(i);
+            if (gi.getPrecedingJobs().contains(id)) {
+                int index = gi.getPrecedingJobs().indexOf(id);
+                gi.getPrecedingJobs().remove(index);
+                if (gi.getPrecedingJobs().size() == 0) {
+                    DAG_queue.remove(gi);
+                    System.out.println("[SCHEDULER] Job "+gi.getID() + " from "+gi.getGridlet().getArchRequired()+" is now added back to normal queue since all predecessors are completed. Sim. time = "+GridSim.clock());
+                    ExperimentSetup.policy.addNewJob(gi);
+                    scheduleNow = true;
+                    i--;
+                }
+            }
+        }
+        return scheduleNow;
     }
 }

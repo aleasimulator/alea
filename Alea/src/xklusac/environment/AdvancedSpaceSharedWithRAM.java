@@ -4,6 +4,8 @@ import alea.core.AleaSimTags;
 import gridsim.*;
 import eduni.simjava.Sim_event;
 import eduni.simjava.Sim_system;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.LinkedList;
 import xklusac.environment.FailureLoaderNew.Failure;
 
@@ -135,7 +137,7 @@ public class AdvancedSpaceSharedWithRAM extends AllocPolicy {
                 Scheduler.classic_availPEs += this.totalPE_;
                 Scheduler.availPEs += this.totalPE_ * this.resource_.getMIPSRatingOfOnePE();
                 //System.out.println(resName_ + ": restart all="+this.resource_.isWorking());
-                super.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.FAILURE_RESTART, this.resId_);
+                super.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.FAILURE_RESTART, this.resId_);
                 continue;
             }
 
@@ -167,28 +169,32 @@ public class AdvancedSpaceSharedWithRAM extends AllocPolicy {
                 allocateQueueGridlet();
                 //System.out.println(resName_ + ": restart some, all on?="+this.resource_.isWorking());
                 //System.out.println(Math.round(GridSim.clock())+": restart of: "+resName_ +" restart: "+ids.length+" machines. ["+ids[0]+"](x2), running: "+getNumRunning()+"/"+this.resource_.getNumPE()+",  from: "+Math.round(failure.getTime()));
-                super.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.FAILURE_RESTART, this.resId_);
+                super.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.FAILURE_RESTART, this.resId_);
                 continue;
             }
             if (ev.get_tag() == AleaSimTags.FAILURE_START) {
-                super.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.FAILURE_START, this.resId_ + "x" + this.killed_cpus);
-                //super.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.FAILURE_START, this.killed_cpus);
+                super.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.FAILURE_START, this.resId_ + "x" + this.killed_cpus);
+                //super.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.FAILURE_START, this.killed_cpus);
                 continue;
             }
 
             if (ev.get_src() == super.myId_ && gridletInExecList_.size() > 0 && ev.get_tag() == GridSimTags.INSIGNIFICANT) {
 
-                updateGridletProcessing();   // update Gridlets
-                checkGridletCompletion2();    // check for finished Gridlets
+                //updateGridletProcessing();   // update Gridlets
+                //checkGridletCompletion2();    // check for finished Gridlets
+                ResGridlet rgl = (ResGridlet) ev.get_data();
+                endGridlet(rgl);
                 continue;
             }
 
 
             // Internal Event if the event source is this entity
             if (ev.get_src() == super.myId_ && gridletInExecList_.size() > 0) {
+                ResGridlet rgl = (ResGridlet) ev.get_data();
+                endGridlet(rgl);
 
-                updateGridletProcessing();   // update Gridlets
-                checkGridletCompletion();    // check for finished Gridlets
+                //updateGridletProcessing();   // update Gridlets
+                //checkGridletCompletion();    // check for finished Gridlets
             }
         }
 
@@ -220,7 +226,7 @@ public class AdvancedSpaceSharedWithRAM extends AllocPolicy {
      */
     public void gridletSubmit(Gridlet gl, boolean ack) {
         // update the current Gridlets in exec list up to this point in time
-        updateGridletProcessing();
+        //updateGridletProcessing();
         boolean success = false;
         boolean failure = false;
 
@@ -285,7 +291,7 @@ public class AdvancedSpaceSharedWithRAM extends AllocPolicy {
         }
         // allow next scheduling run
         if (failure == false && success == true) {
-            sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.GRIDLET_STARTED, gl);
+            sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.GRIDLET_STARTED, gl);
         }
 
     }
@@ -707,7 +713,7 @@ public class AdvancedSpaceSharedWithRAM extends AllocPolicy {
         rgl.setMachineAndPEID(myMachine.getMachineID(), freePE);
 
         // set PEs list
-        LinkedList<Integer> PEs = new LinkedList();
+        ArrayList<Integer> PEs = new ArrayList();
         PEs.add(peIndex);
         ((ComplexGridlet) rgl.getGridlet()).setPEs(PEs);
         rgl.setGridletStatus(Gridlet.INEXEC);   // change Gridlet status
@@ -734,11 +740,21 @@ public class AdvancedSpaceSharedWithRAM extends AllocPolicy {
         Scheduler.classic_activePEs += 1;
 
         // then send this into itself
-        super.sim_schedule(super.myId_, roundUpTime, GridSimTags.INSIGNIFICANT);
+        super.sim_schedule(super.myId_, roundUpTime, GridSimTags.INSIGNIFICANT, rgl);
 
         return true;
     }
 
+    private void endGridlet(ResGridlet obj){
+        obj.getGridletID();
+        //System.out.println("END "+obj.getGridletID()+ " finished at time: "+GridSim.clock());
+        double load = getMIShare(obj.getGridletLength(), obj.getMachineID());
+        obj.updateGridletFinishedSoFar(load);
+        //System.out.println(obj.getGridletID()+ " updated finSoFar by: "+load+ " load at time "+GridSim.clock());
+        gridletInExecList_.remove(obj);
+        gridletFinish(obj, Gridlet.SUCCESS);
+        //System.out.println("END "+obj.getGridletID()+ " finished at time: "+GridSim.clock()+" remain: "+obj.getRemainingGridletLength());
+    }
     /**
      * Allocates a Gridlet requiring multiple PEs into a free PEs and sets the
      * Gridlet status into INEXEC and PEs status into busy afterwards.
@@ -754,7 +770,7 @@ public class AdvancedSpaceSharedWithRAM extends AllocPolicy {
         MachineList machines = resource_.getMachineList();
         int allocate = numPE;
         int peIndex = -1;
-        LinkedList<Integer> PEs = new LinkedList();
+        ArrayList<Integer> PEs = new ArrayList();
 
         for (int i = 0; i < machines.size(); i++) {
             MachineWithRAM machine = (MachineWithRAM) machines.get(i);
@@ -850,7 +866,7 @@ public class AdvancedSpaceSharedWithRAM extends AllocPolicy {
         MachineList machines = resource_.getMachineList();
         int allocateNodes = numNodes;
         int peIndex = -1;
-        LinkedList<Integer> PEs = new LinkedList();
+        ArrayList<Integer> PEs = new ArrayList();
 
         for (int i = 0; i < machines.size(); i++) {
             MachineWithRAM machine = (MachineWithRAM) machines.get(i);
@@ -935,7 +951,7 @@ public class AdvancedSpaceSharedWithRAM extends AllocPolicy {
         //System.out.println(rgl.getGridletID()+ " skonci v case "+Math.round(GridSim.clock()+roundUpTime)+" nyni = "+Math.round(GridSim.clock()));
         MachineWithRAM mach = (MachineWithRAM) machines.get(ids[0]);
         //System.out.println(rgl.getGridlet().getGridletID()+" needs "+ram+" avail now after = "+mach.getFreeRam()+" and used = "+mach.getUsedRam()+" tot="+mach.getRam());
-        super.sim_schedule(super.myId_, roundUpTime, GridSimTags.INSIGNIFICANT);
+        super.sim_schedule(super.myId_, roundUpTime, GridSimTags.INSIGNIFICANT, rgl);
 
         return true;
 
@@ -1102,7 +1118,7 @@ public class AdvancedSpaceSharedWithRAM extends AllocPolicy {
         }
 
         //super.sendFinishGridlet( rgl.getGridlet() );
-        super.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, GridSimTags.GRIDLET_RETURN, rgl.getGridlet());
+        super.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, GridSimTags.GRIDLET_RETURN, rgl.getGridlet());
 
         //update machine usage
         Scheduler.load += (Scheduler.activePEs / Scheduler.availPEs) * (GridSim.clock() - Scheduler.last_event);
@@ -1205,7 +1221,7 @@ public class AdvancedSpaceSharedWithRAM extends AllocPolicy {
                 last_time = now;
                 super.sim_schedule(super.myId_, 0.01, AleaSimTags.FAILURE_START, null);
             }
-            //super.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.FAILURE_START, this.resId_);
+            //super.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.FAILURE_START, this.resId_);
             super.sim_schedule(super.myId_, duration, AleaSimTags.FAILURE_RESTART2, failure);
 
         } else if (ev.get_tag() == AleaSimTags.FAILURE_INFO) {
@@ -1217,7 +1233,7 @@ public class AdvancedSpaceSharedWithRAM extends AllocPolicy {
             wfailure_time += duration * this.resource_.getMIPSRating();
             Scheduler.failure_time += duration * this.resource_.getNumPE();
             Scheduler.wfailure_time += duration * this.resource_.getMIPSRating();
-            super.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.FAILURE_START, this.resId_);
+            super.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.FAILURE_START, this.resId_);
             super.sim_schedule(super.myId_, duration, AleaSimTags.FAILURE_FINISHED);
 
         } else {

@@ -155,7 +155,7 @@ public class BF_CONS_Fair implements SchedulingPolicy {
                     scheduler.submitJob(gi.getGridlet(), ri.resource.getResourceID());
 
                     ri.is_ready = true;
-                    //scheduler.sim_schedule(GridSim.getEntityId("Alea_3.0_scheduler"), 0.0, AleaSimTags.GRIDLET_SENT, gi);
+                    //scheduler.sim_schedule(GridSim.getEntityId("Alea_Job_Scheduler"), 0.0, AleaSimTags.GRIDLET_SENT, gi);
                     scheduled++;
                     return scheduled;
                 }

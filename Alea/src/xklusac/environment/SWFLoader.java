@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.Random;
 import xklusac.extensions.*;
 import eduni.simjava.distributions.Sim_normal_obj;
+import java.util.ArrayList;
 
 /**
  * Class SWFLoader<p>
@@ -46,7 +47,8 @@ public class SWFLoader extends GridSim {
     /**
      * start time (for UNIX epoch converting)
      */
-    int start_time = -1;
+    long start_time = -1;
+    long time_diff = -1;
     /**
      * number of PEs in the "biggest" resource
      */
@@ -126,7 +128,7 @@ public class SWFLoader extends GridSim {
                 // some time is needed to transfer this job to the scheduler, i.e., delay should be delay = delay - transfer_time. Fix this in the future.
                 //System.out.println("Sending: "+gl.getGridletID());
                 last_delay = delay;
-                super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), delay, AleaSimTags.GRIDLET_INFO, gl);
+                super.sim_schedule(this.getEntityId("Alea_Job_Scheduler"), delay, AleaSimTags.GRIDLET_INFO, gl);
 
                 delay = Math.max(0.0, (gl.getArrival_time() - super.clock()));
                 if (current_gl < total_jobs) {
@@ -137,13 +139,13 @@ public class SWFLoader extends GridSim {
                 continue;
             }
         }
-        System.out.println("Shuting down - last gridlet = " + current_gl + " of " + total_jobs);
-        super.sim_schedule(this.getEntityId("Alea_3.0_scheduler"), Math.round(last_delay + 2), AleaSimTags.SUBMISSION_DONE, new Integer(current_gl));
+        System.out.println("Shuting down JOB LOADER - last job loaded = " + current_gl + " of " + total_jobs+" expected jobs.");
+        super.sim_schedule(this.getEntityId("Alea_Job_Scheduler"), Math.round(last_delay + 2), AleaSimTags.SUBMISSION_DONE, new Integer(current_gl));
         Sim_event ev = new Sim_event();
         sim_get_next(ev);
 
         if (ev.get_tag() == GridSimTags.END_OF_SIMULATION) {
-            System.out.println("Shuting down the " + data_set + "_PWALoader... with: " + fail + " failed or skipped jobs");
+            System.out.println("Shuting down the " + data_set + " JOB LOADER ... with: " + fail + " failed or skipped jobs");
         }
         shutdownUserEntity();
         super.terminateIOEntities();
@@ -162,13 +164,15 @@ public class SWFLoader extends GridSim {
             while (true) {
                 try {
                     for (int s = 0; s < ExperimentSetup.skipJob; s++) {
+                        //System.out.println(j+":"+line+"");
                         line = br.readLine();
                     }
                     values = line.split("\t");
                 } catch (IOException ex) {
                     ex.printStackTrace();
                 }
-                if (!values[0].contains(";")) {
+                if (!values[0].contains(";") && !values[0].contains("id") ) {
+                    //System.out.println(j+":"+line+": error --- "+values[0]);
                     if (line.charAt(0) == ' ') {
                         line = line.substring(1);
                     }
@@ -184,7 +188,7 @@ public class SWFLoader extends GridSim {
                     values = line.split("\\s+");
                     break;
                 } else {
-                    //System.out.println("error --- "+values[0]);
+                    //System.out.println("comment--- "+values[0]);
                 }
             }
         } else {
@@ -211,6 +215,7 @@ public class SWFLoader extends GridSim {
                 ex.printStackTrace();
             }
         }
+        
         // such line is not a job description - it is a typo in the SWF file
         if (values.length < 5 || values[1].equals("-1")) {
             fail++;
@@ -229,6 +234,10 @@ public class SWFLoader extends GridSim {
         int numCPU;
         try {
             numCPU = Integer.parseInt(values[4]);
+            if (data_set.equals("thunder.swf")) {
+                numCPU = Math.max(1, (numCPU / 4));
+                //System.out.println(values[0] + ": wants: " + values[4]+" gets "+numCPU);
+            }
         } catch (NumberFormatException ex) {
             System.out.println(values[0] + ": Number parsing error: " + values[4]);
             //ex.printStackTrace();
@@ -247,12 +256,17 @@ public class SWFLoader extends GridSim {
         if (start_time < 0) {
             //System.out.println("prvni: "+j+" start at:"+values[1]+" line="+line);
             start_time = Integer.parseInt(values[1]);
-            arrival = 0;
-
+            if(start_time < Math.round(GridSim.clock())){
+               arrival = Math.round(GridSim.clock()); 
+               time_diff = start_time - Math.round(GridSim.clock());
+            }else{
+               arrival = Math.round(GridSim.clock()); 
+               time_diff = Math.round(Integer.parseInt(values[1]) - GridSim.clock());
+            }            
+            //System.out.println(id+": serizujeme..."+arrival+" diff "+time_diff);
         } else {
-
-            arrival = ((Integer.parseInt(values[1]) - start_time));
-            //System.out.println("pokracujeme..."+arrival);
+            arrival = ((Integer.parseInt(values[1]) - time_diff));
+            //System.out.println(id+": pokracujeme..."+arrival+" diff "+time_diff);
 
         }
         arrival = Math.round(new Double(arrival) / ExperimentSetup.arrival_rate_multiplier);
@@ -299,12 +313,19 @@ public class SWFLoader extends GridSim {
          */
         // finally create gridlet
         //numCPU = 1;
-        long job_limit = Integer.parseInt(values[8]);
+        long job_limit = 0;
+        if (values[8].contains(".")) {
+            //System.out.println("old="+values[8]);
+            values[8] = values[8].substring(0, values[8].indexOf("."));
+            //System.out.println("new="+values[8]);
+        }
+        job_limit = Integer.parseInt(values[8]);
         if (job_limit < 0) {
             // atlas = 432000
             // thunder = 432000
             if (data_set.equals("thunder.swf")) {
-                job_limit = 48000; //13 hours 20 min
+                job_limit = 360000; //~100 hours
+                // System.out.println(values[0] + ": limit: " + job_limit);
                 ExperimentSetup.max_estim++;
             } else if (data_set.equals("atlas.swf")) {
                 job_limit = 73200; //20 hours 20 minutes
@@ -345,11 +366,51 @@ public class SWFLoader extends GridSim {
         //System.out.println(id + " requests " + ram + " KB RAM per " + numCPU + " CPUs, user: " + user + ", length: " + length + " estimatedLength: " + estimatedLength);
         int numNodes = -1;
         int ppn = -1;
-        String properties = "";
-        if (values.length > 19) {
+        String properties = "" + values[15];
+        if (values.length > 20) {
+            //System.out.println(line+" len:"+values[0]);
             properties = values[20];
+            
+            // PBS-Pro compatible variant
+            if (data_set.contains("2019m.")) {
+                String[] req_nodes = values[20].split(":");
+                properties = values[20];
+                for (int r = 0; r < req_nodes.length; r++) {
+                    if (req_nodes[r].contains("ncpus=")) {
+                        String ppns = req_nodes[r].replace("ncpus=", "");
+                        if (ppns.contains("#")) {
+                            int ind = ppns.indexOf("#");
+                            ppns = ppns.substring(0, ind);
+                        }
+                        // remove floating point values
+                        if (ppns.contains(".")) {
+                            int ind = ppns.indexOf('.');
+                            ppns = ppns.substring(0, ind);
+                        }
 
-            if (data_set.contains("wagap") || data_set.contains("meta") || data_set.contains("ncbr") || data_set.contains("fairshare")) {
+                        // to do: 1:ppn=1+3:ppn=2 
+                        if (ppns.contains("+")) {
+                            break;
+                        }                        
+                        ppn = Integer.parseInt(ppns);                        
+                    }
+                }
+
+                if (ppn != -1) {
+                    // korekce chyby ve workloadu
+                    if (numCPU < ppn) {
+                        System.out.println(id + ": CPUs mismatch CPUs = " + numCPU + " nodespec = " + properties);
+                        numCPU = ppn;
+                    }
+                    numNodes = numCPU / ppn;
+                } else {
+                    numNodes = 1;
+                    ppn = numCPU;
+                }
+                //System.out.println(id+" | "+values[20]+" nodes="+numNodes+" ncpus="+ppn);
+            }
+
+            else if (data_set.contains("wagap") || data_set.contains("meta") || data_set.contains("ncbr") || data_set.contains("fairshare")) {
                 String[] req_nodes = values[20].split(":");
                 properties = values[20];
                 for (int r = 0; r < req_nodes.length; r++) {
@@ -407,6 +468,9 @@ public class SWFLoader extends GridSim {
                 if (ppn * numNodes != numCPU) {
                     System.out.println(id + ": numNodes value is wrong, CPUs = " + numCPU + " ppn = " + ppn);
                 }
+            } else if (data_set.contains("all18-19")) {
+                numNodes = numCPU;
+                ppn = 1;
             }
 
             if (ppn * numNodes != numCPU) {
@@ -454,12 +518,72 @@ public class SWFLoader extends GridSim {
 
         // manually established - fix it according to your needs
         double deadline = job_limit * 2;
-        ComplexGridlet gl = new ComplexGridlet(id, user, job_limit, new Double(length), estimatedLength, 10, 10,
-                "Linux", "Risc arch.", arrival, deadline, 1, numCPU, 0.0, queue, properties, perc, ram, numNodes, ppn);
+        if (data_set.contains("KIT-FH2-2016-1.swf")) {
+            //System.out.println(id+" "+numCPU+" --> "+Math.round(numCPU/20));
+            numCPU = Math.round(numCPU / 20);
+
+        }
+        if (data_set.contains("all18-19.swf")) {
+            //System.out.println(id+" "+numCPU+" --> "+Math.round(numCPU/20));
+            properties = "";
+            numNodes = numCPU;
+            ppn = 1;
+
+        }
+        if (data_set.contains("FIT.swf")) {
+            //System.out.println(id+" "+numCPU+" --> "+Math.round(numCPU/20));
+            properties = "";
+            ppn = 16;
+            if (numCPU > ppn) {
+                Long nn = Math.round(Math.ceil(numCPU / ppn));
+                numNodes = nn.intValue();
+            } else {
+                numNodes = 1;
+                ppn = numCPU;
+            }
+        }
+
+        String[] pjobs = values[16].split("&");
+        ArrayList<Integer> precedingJobs = new ArrayList();
+        for (int pj = 0; pj < pjobs.length; pj++) {
+            if (!pjobs[pj].equals("-1")) {
+                //System.out.println(id + " has predecessor " + pjobs[pj]);
+                int predecessor = Integer.parseInt(pjobs[pj]);
+                precedingJobs.add(predecessor);
+                if(!ExperimentSetup.scheduler.unfinished_predecessors.contains(predecessor)){
+                    ExperimentSetup.scheduler.unfinished_predecessors.add(predecessor);
+                }
+            }
+        }
+        
+        if (data_set.contains("2019m.swf")) {
+            ram = ram * ppn;
+            properties = "";
+            //System.out.println(id+": reqs "+numCPU+" CPUs using nodes: "+numNodes+" and ncpus: "+ppn+" RAM="+(ram/(1024.0*1024))+" GB.");
+
+            
+        }
+        String arch = "RISC";
+        if (data_set.contains("jaros")) {
+            ppn = 16;
+            numNodes = numCPU;
+            numCPU = ppn* numNodes;
+            properties = "";
+            arch = values[18]+"["+values[19]+"]";
+            
+            //ram = Math.round(ram/numNodes);
+            //System.out.println(id+": reqs "+numCPU+" CPUs using nodes: "+numNodes+" and ncpus: "+ppn+" RAM="+(ram/(1024.0*1024))+" GB.");
+
+            
+        }
+        
+
+        ComplexGridlet gl = new ComplexGridlet(id, user, job_limit, new Double(length), estimatedLength, 0, 0,
+                "Linux", arch, arrival, deadline, 1, numCPU, 0.0, queue, properties, perc, ram, numNodes, ppn,precedingJobs);
 
         // and set user id to the Scheduler entity - otherwise it would be returned to the JobLoader when completed.
-        //System.out.println(id+" job has limit = "+(job_limit/3600.0)+" queue = "+queue);
-        gl.setUserID(super.getEntityId("Alea_3.0_scheduler"));
+        System.out.println("[JOB LOADER] Sending job "+id+" from "+gl.getArchRequired()+" to scheduler. Job has limit = "+job_limit+" seconds,  requires "+numNodes+" nodes each with "+ppn+" CPUs [total "+numCPU+" CPUs]. RAM required per node = "+(ram/(1024.0*1024))+" GB. Sim. time = "+GridSim.clock());
+        gl.setUserID(super.getEntityId("Alea_Job_Scheduler"));
         return gl;
     }
 }

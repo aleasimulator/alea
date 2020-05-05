@@ -96,6 +96,13 @@ public class MachineLoader {
             int totalPE = Integer.parseInt(values[3]);
             int peRating = Integer.parseInt(values[4]);
             String name = values[1];
+            String description = "";
+            if (values.length > 6) {
+                //partition
+                description = values[6];
+            }else{
+                description = values[0];
+            }
 
             // for JobLoader's purposes
             max = totalPE * totalMachine;
@@ -142,7 +149,7 @@ public class MachineLoader {
 
             double time_zone = 0.0;         // time zone this resource located
 
-            String properties = "";
+            String properties = description;
 
             //name = name;
             name_id++;
