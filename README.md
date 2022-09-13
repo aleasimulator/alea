@@ -16,12 +16,13 @@ The data sets are available at http://www.fi.muni.cz/~xklusac/workload and http:
 So, in the following example we have two clusters (zewura/zegox), having 20/48 nodes, each having 80/12 CPUs per node (with default speed 1) and approx. 500/90 GB of RAM per each node:
 <pre><code>0	zewura	20	80	1	529426432
 1	zegox	48	12	1	94035968 </code></pre>
-For further information, please refer to http://www.fi.muni.cz/~xklusac/alea/index.html.
+
 
 ##### Software licence:
 This software is provided as is, free of charge under the terms of the LGPL licence. 
 
 ##### Important
 When using Alea in your paper or presentation, please use the following citations as an acknowledgement. Thank you!
+- Dalibor Klusáček, Mehmet Soysal and Frederic Suter. Alea - Complex Job Scheduling Simulator. In Proceedings of PPAM 2019: Parallel Processing and Applied Mathematics, pages 217–229, 2019. 
 - Dalibor Klusáček, Gabriela Podolníková and Šimon Tóth. Complex Job Scheduling Simulations with Alea 4. In Proceedings of the 9th EAI International Conference on Simulation Tools and Techniques, pages 124-129, 2016. 
 - Dalibor Klusáček and Hana Rudová. Alea 2 - Job Scheduling Simulator. In proceedings of the 3rd International ICST Conference on Simulation Tools and Techniques (SIMUTools 2010), ICST, 2010. [download](http://www.fi.muni.cz/~xklusac/pub/alea2.pdf)
