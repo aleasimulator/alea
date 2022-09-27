@@ -30,7 +30,8 @@ import java.util.logging.Logger;
  * @author Dalibor Klusacek
  */
 public class ResultCollector {
-
+String run = "";
+double runavg = 0.0;
     int tot = 0;
     public LinkedList results;
     public String data_set;
@@ -331,6 +332,11 @@ public class ResultCollector {
                     + Math.round(backfilled * 100.0) / (experiment_count * 100.0) + "\t"
                     + Math.round(backfilled_cons * 100.0) / (experiment_count * 100.0)
                     + pluginResultString).replace(".", ","));
+            
+            run = run + " , "+Math.round(avg_time * 100.0) / (experiment_count * 100.0);
+            runavg += Math.round(avg_time * 100.0) / (experiment_count * 100.0);
+            System.out.println("runtime [s]: "+Math.round(avg_time * 100.0) / (experiment_count * 100.0));
+            System.out.println("runtimes [s]: "+run+" | avg = "+Math.round(runavg*10.0)/50.0);
 
         } catch (IOException ex) {
             ex.printStackTrace();
