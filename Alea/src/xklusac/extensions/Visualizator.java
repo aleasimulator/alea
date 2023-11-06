@@ -1251,7 +1251,14 @@ public class Visualizator extends JPanel implements Runnable {
             }
             for (int i = 1; i <= days.size(); i++) {
                 for (int c = 0; c < cl_count; c++) {
-                    double ut = cl_util.get(cl_pointer);
+                    double ut = 0.0;
+                    try {
+                        ut = cl_util.get(cl_pointer);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        System.out.println(cl_pointer + " vs. " + cl_util.size());
+                        System.exit(0);
+                    }
                     if (ut < 0.0) {
                         Color cl = new Color(68, 68, 68);
                         g2.setColor(cl);
@@ -1363,7 +1370,7 @@ public class Visualizator extends JPanel implements Runnable {
     public void reDrawUsage(LinkedList days, LinkedList util, long timeS) {
         this.usage = true;
         this.time = timeS;
-        this.days = days;
+        this.days = (LinkedList<Integer>) days.clone();
         this.util = util;
         repaint();
     }
@@ -1385,7 +1392,7 @@ public class Visualizator extends JPanel implements Runnable {
     public void reDrawClusterUsage(LinkedList days, LinkedList cl_util, long timeS, int cl_count, LinkedList cl_names) {
         this.cl_usage = true;
         this.time = timeS;
-        this.days = days;
+        this.days = (LinkedList<Integer>) days.clone();
         this.cl_util = cl_util;
         this.cl_names = cl_names;
         this.cl_count = Math.min(cl_util.size(), cl_count);
@@ -1398,7 +1405,7 @@ public class Visualizator extends JPanel implements Runnable {
     public void reDrawClusterUsageCol(LinkedList days, LinkedList cl_util, long timeS, int cl_count, LinkedList cl_names, LinkedList cl_CPUs) {
         this.cl_usage_col = true;
         this.time = timeS;
-        this.days = days;
+        this.days = (LinkedList<Integer>) days.clone();
         this.cl_util = cl_util;
         this.cl_names = cl_names;
         this.cl_CPUs = cl_CPUs;
@@ -1412,7 +1419,7 @@ public class Visualizator extends JPanel implements Runnable {
     public void reDrawClusterWeightedUsageCol(LinkedList days, LinkedList cl_util, long timeS, int cl_count, LinkedList cl_names, LinkedList cl_CPUs) {
         this.cl_wusage_col = true;
         this.time = timeS;
-        this.days = days;
+        this.days = (LinkedList<Integer>) days.clone();
         this.cl_util = cl_util;
         this.cl_names = cl_names;
         this.cl_CPUs = cl_CPUs;
@@ -1426,7 +1433,7 @@ public class Visualizator extends JPanel implements Runnable {
     public void reDrawClusterStatusCol(LinkedList days, LinkedList cl_status, long timeS, int cl_count, LinkedList cl_names) {
         this.cl_status_col = true;
         this.time = timeS;
-        this.days = days;
+        this.days = (LinkedList<Integer>) days.clone();
         this.cl_status = cl_status;
         this.cl_names = cl_names;
         this.cl_count = Math.min(cl_status.size(), cl_count);
@@ -1439,7 +1446,7 @@ public class Visualizator extends JPanel implements Runnable {
     public void reDrawDayClusterUsage(LinkedList days, LinkedList cl_util_h, long timeS, int cl_count, LinkedList cl_names) {
         this.dcl_usage = true;
         this.time = timeS;
-        this.days = days;
+        this.days = (LinkedList<Integer>) days.clone();
         this.cl_util_h = cl_util_h;
         this.cl_names = cl_names;
         this.cl_count = Math.min(cl_util_h.size(), cl_count);
@@ -1451,7 +1458,7 @@ public class Visualizator extends JPanel implements Runnable {
      */
     public void reDrawRW(LinkedList days, LinkedList waiting, LinkedList running, long timeS) {
         this.rw = true;
-        this.days = days;
+        this.days = (LinkedList<Integer>) days.clone();
         this.time = timeS;
         this.waiting = waiting;
         this.running = running;
@@ -1463,7 +1470,7 @@ public class Visualizator extends JPanel implements Runnable {
      */
     public void reDrawRU(LinkedList days, LinkedList requested, LinkedList used, long timeS, int totCPUs, LinkedList availCPUs) {
         this.ru = true;
-        this.days = days;
+        this.days = (LinkedList<Integer>) days.clone();
         this.time = timeS;
         this.requested = requested;
         this.used = used;

@@ -929,7 +929,7 @@ public class Scheduler extends GridSim {
                     }
                 }
 
-                System.out.println("[SCHEDULER] Job " + gridlet_received.getGridletID() + " from " + gridlet_received.getArchRequired() + " returned completed at sim. time = " + GridSim.clock());
+                //System.out.println("[SCHEDULER] Job " + gridlet_received.getGridletID() + " from " + gridlet_received.getArchRequired() + " returned completed at sim. time = " + GridSim.clock());
 
                 Date dd = new Date();
                 clock1 = dd.getTime();
@@ -1855,7 +1855,7 @@ public class Scheduler extends GridSim {
             } else {
                 HashMap h = gi.getResourceSuitable();
                 h.put(ri.resource.getResourceID(), false);
-                //System.out.println(gi.getID() + ": cannot run on:"+ri.resource.getResourceName()+" CPU=" + cpuok + " RAM=" + ramok + " req: ppn=" + gi.getPpn() + " nodes=" + gi.getNumNodes() + " RAM=" + gi.getRam()+" suit="+isGridletSuitable(ri, gi));
+                System.out.println(gi.getID() + ": cannot run on:"+ri.resource.getResourceName()+" CPU=" + cpuok + " RAM=" + ramok + " req: ppn=" + gi.getPpn() + " nodes=" + gi.getNumNodes() + " RAM=" + gi.getRam()+" suit="+isGridletSuitable(ri, gi));
             }
         }
 
@@ -2288,7 +2288,7 @@ public class Scheduler extends GridSim {
             ExperimentSetup.queues.get(gl.getQueue()).setUsed(ExperimentSetup.queues.get(gl.getQueue()).getUsed() + gl.getNumPE());
         }
         gridletSubmit(gl, resID);
-        System.out.println("[SCHEDULER] Job " + gl.getGridletID() + " from " + gl.getArchRequired() + " is submitted to cluster " + GridSim.getEntityName(resID) + ", FREE CPUs left = " + getFreeCPUs() + " at sim. time = " + GridSim.clock());
+        //System.out.println("[SCHEDULER] Job " + gl.getGridletID() + " from " + gl.getArchRequired() + " is submitted to cluster " + GridSim.getEntityName(resID) + ", FREE CPUs left = " + getFreeCPUs() + " at sim. time = " + GridSim.clock());
     }
 
     /**
@@ -2381,8 +2381,8 @@ public class Scheduler extends GridSim {
             anim = windows.get(6);
             anim.reDrawClusterUsageCol(days, cl_util, Math.round(clock()), totalResource, cl_names, cl_CPUs);
 
-            anim = windows.get(7);
-            anim.reDrawClusterStatusCol(days, cl_status, Math.round(clock()), totalResource, cl_names);
+            //anim = windows.get(7);
+            //anim.reDrawClusterStatusCol(days, cl_status, Math.round(clock()), totalResource, cl_names);
 
             anim = windows.get(8);
             anim.reDrawClusterWeightedUsageCol(days, cl_util, Math.round(clock()), totalResource, cl_names, cl_CPUs);
